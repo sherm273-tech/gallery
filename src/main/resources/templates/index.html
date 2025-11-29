@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Slideshow</title>
+    <style>
+        body {
+            background: #000;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            cursor: default;
+        }
+
+        img#slideshow {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 10px;
+            object-fit: contain;
+            transition: opacity 0.8s ease-in-out;
+            opacity: 0;
+        }
+
+        #startButton {
+            position: absolute;
+            z-index: 10;
+            padding: 15px 30px;
+            font-size: 24px;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            background: #ffffffdd;
+            color: #000;
+        }
+
+        /* Fullscreen styles */
+        body:-webkit-full-screen {
+            width: 100%;
+            height: 100%;
+        }
+        body:-moz-full-screen {
+            width: 100%;
+            height: 100%;
+        }
+        body:-ms-fullscreen {
+            width: 100%;
+            height: 100%;
+        }
+        body:fullscreen {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <button id="startButton">Start Slideshow</button>
+    <img id="slideshow" src="" alt="Slideshow Image"/>
+
+    <script>
+        const imgEl = document.getElementById("slideshow");
+        const startBtn = document.getElementById("startButton");
+        let images = [];
+        let index = 0;
+        const delay = 5000; // 5 seconds per slide
+        let intervalId;
+        let wakeLock = null;
+        let keepAwakeInterval;
+
+        async function loadImages() {
+            console.log('Loading images...');
+            const response = await fetch("/api/images/list");
+            images = await response.json();
+            console.log('Images loaded:', images.length);
+        }
+
+        function showImage(i) {
+            const url = "/images/" + images[i];
+            console.log('Showing image:', url);
+            const preload = new Image();
+            preload.onload = () => {
+                imgEl.style.opacity = 0;
+                setTimeout(() => {
+                    imgEl.src = url;
+                    imgEl.style.opacity = 1;
+                }, 200);
+            };
+            preload.onerror = () => {
+                console.error('Failed to load image:', url);
+            };
+            preload.src = url;
+        }
+
+        function nextImage() {
+            index = (index + 1) % images.length; // loops back to 0
+            showImage(index);
+        }
+
+        // Request fullscreen
+        async function requestFullscreen() {
+            try {
+                if (document.documentElement.requestFullscreen) {
+                    await document.documentElement.requestFullscreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    await document.documentElement.webkitRequestFullscreen();
+                } else if (document.documentElement.mozRequestFullScreen) {
+                    await document.documentElement.mozRequestFullScreen();
+                } else if (document.documentElement.msRequestFullscreen) {
+                    await document.documentElement.msRequestFullscreen();
+                }
+                console.log('Fullscreen active');
+            } catch (err) {
+                console.log('Fullscreen error:', err);
+            }
+        }
+
+        // Request wake lock to prevent screensaver
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    console.log('Wake Lock active');
+                    
+                    wakeLock.addEventListener('release', () => {
+                        console.log('Wake Lock released');
+                    });
+                }
+            } catch (err) {
+                console.log('Wake Lock error:', err);
+            }
+        }
+
+        // Simulate activity to prevent screensaver
+        function simulateActivity() {
+            // Create a tiny, imperceptible mouse movement
+            const event = new MouseEvent('mousemove', {
+                view: window,
+                bubbles: true,
+                cancelable: true,
+                clientX: 1,
+                clientY: 1
+            });
+            document.dispatchEvent(event);
+        }
+
+        // Re-acquire wake lock if page becomes visible again
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible') {
+                await requestWakeLock();
+            }
+        });
+
+        // Handle fullscreen changes
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                console.log('Exited fullscreen');
+            }
+        });
+
+        startBtn.addEventListener("click", async () => {
+            startBtn.style.display = "none";  // hide button
+            document.body.style.cursor = "none"; // hide cursor
+            
+            // Activate fullscreen
+            await requestFullscreen();
+            
+            // Activate wake lock
+            await requestWakeLock();
+            
+            // Simulate activity every 30 seconds as backup
+            keepAwakeInterval = setInterval(simulateActivity, 30000);
+            
+            await loadImages();
+            if (images.length > 0) {
+                showImage(0);
+                intervalId = setInterval(nextImage, delay);
+            }
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (wakeLock !== null) {
+                wakeLock.release();
+            }
+            if (keepAwakeInterval) {
+                clearInterval(keepAwakeInterval);
+            }
+        });
+    </script>
+
+</body>
+</html>
