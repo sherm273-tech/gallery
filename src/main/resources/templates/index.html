@@ -20,20 +20,62 @@
             max-height: 100%;
             border-radius: 10px;
             object-fit: contain;
-            transition: opacity 0.8s ease-in-out;
-            opacity: 0;
+        }
+
+        #controls {
+            position: absolute;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 15px;
+        }
+
+        #folderSelect, #speedSelect {
+            padding: 10px 20px;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            background: #ffffffdd;
+            color: #000;
+            cursor: pointer;
+            min-width: 250px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #randomizeCheckbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
         }
 
         #startButton {
-            position: absolute;
-            z-index: 10;
             padding: 15px 30px;
             font-size: 24px;
             cursor: pointer;
             border: none;
             border-radius: 8px;
-            background: #ffffffdd;
-            color: #000;
+            background: #4CAF50;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        #startButton:hover {
+            background: #45a049;
+        }
+
+        label {
+            color: #fff;
+            font-size: 18px;
+            font-family: Arial, sans-serif;
         }
 
         /* Fullscreen styles */
@@ -57,49 +99,113 @@
 </head>
 <body>
 
-    <button id="startButton">Start Slideshow</button>
+    <div id="controls">
+        <label for="folderSelect">Select starting folder (optional):</label>
+        <select id="folderSelect">
+            <option value="">Random Order</option>
+        </select>
+        
+        <div class="checkbox-container">
+            <input type="checkbox" id="randomizeCheckbox" checked>
+            <label for="randomizeCheckbox">Randomise images within folders</label>
+        </div>
+
+        <label for="speedSelect">Image display duration:</label>
+        <select id="speedSelect">
+            <option value="500">Very Very Quick (0.5 second)</option>
+            <option value="1000">Very Quick (1 second)</option>
+            <option value="2000">Fast (2 seconds)</option>
+            <option value="3000">Medium (3 seconds)</option>
+            <option value="5000" selected>Normal (5 seconds)</option>
+            <option value="7000">Slow (7 seconds)</option>
+            <option value="10000">Very Slow (10 seconds)</option>
+        </select>
+        
+        <button id="startButton">Start Slideshow</button>
+    </div>
+    
     <img id="slideshow" src="" alt="Slideshow Image"/>
 
     <script>
         const imgEl = document.getElementById("slideshow");
         const startBtn = document.getElementById("startButton");
+        const folderSelect = document.getElementById("folderSelect");
+        const randomizeCheckbox = document.getElementById("randomizeCheckbox");
+        const speedSelect = document.getElementById("speedSelect");
+        const controls = document.getElementById("controls");
         let images = [];
         let index = 0;
-        const delay = 5000; // 5 seconds per slide
+        let delay = 5000; // default 5 seconds per slide
         let intervalId;
         let wakeLock = null;
         let keepAwakeInterval;
+        let nextImagePreloaded = null; // Buffer for next image
+
+        // Load folder list on page load
+        async function loadFolders() {
+            try {
+                const response = await fetch("/api/folders/list");
+                const folders = await response.json();
+                
+                folders.forEach(folder => {
+                    const option = document.createElement("option");
+                    option.value = folder;
+                    option.textContent = folder;
+                    folderSelect.appendChild(option);
+                });
+            } catch (err) {
+                console.error("Error loading folders:", err);
+            }
+        }
 
         async function loadImages() {
             console.log('Loading images...');
-            const response = await fetch("/api/images/list");
+            const selectedFolder = folderSelect.value;
+            const randomize = randomizeCheckbox.checked;
+            
+            let url = '/api/images/list?randomize=' + randomize;
+            if (selectedFolder) {
+                url += '&startFolder=' + encodeURIComponent(selectedFolder);
+            }
+            
+            console.log('Fetching URL:', url);
+            const response = await fetch(url);
             images = await response.json();
             console.log('Images loaded:', images.length);
+        }
+
+        function preloadNextImage(nextIndex) {
+            if (nextIndex >= images.length) return;
+            
+            const nextUrl = "/images/" + images[nextIndex];
+            nextImagePreloaded = new Image();
+            nextImagePreloaded.src = nextUrl;
+            console.log('Preloading next image:', nextUrl);
         }
 
         function showImage(i) {
             const url = "/images/" + images[i];
             console.log('Showing image:', url);
-            const preload = new Image();
-            preload.onload = () => {
-                imgEl.style.opacity = 0;
-                setTimeout(() => {
-                    imgEl.src = url;
-                    imgEl.style.opacity = 1;
-                }, 200);
-            };
-            preload.onerror = () => {
-                console.error('Failed to load image:', url);
-            };
-            preload.src = url;
+            
+            // If we have a preloaded image, use it
+            if (nextImagePreloaded && nextImagePreloaded.src.endsWith(images[i])) {
+                imgEl.src = nextImagePreloaded.src;
+                console.log('Used preloaded image');
+            } else {
+                // Fallback: load immediately
+                imgEl.src = url;
+            }
+            
+            // Preload the next image
+            const nextIndex = (i + 1) % images.length;
+            preloadNextImage(nextIndex);
         }
 
         function nextImage() {
-            index = (index + 1) % images.length; // loops back to 0
+            index = (index + 1) % images.length;
             showImage(index);
         }
 
-        // Request fullscreen
         async function requestFullscreen() {
             try {
                 if (document.documentElement.requestFullscreen) {
@@ -117,7 +223,6 @@
             }
         }
 
-        // Request wake lock to prevent screensaver
         async function requestWakeLock() {
             try {
                 if ('wakeLock' in navigator) {
@@ -133,9 +238,7 @@
             }
         }
 
-        // Simulate activity to prevent screensaver
         function simulateActivity() {
-            // Create a tiny, imperceptible mouse movement
             const event = new MouseEvent('mousemove', {
                 view: window,
                 bubbles: true,
@@ -146,14 +249,12 @@
             document.dispatchEvent(event);
         }
 
-        // Re-acquire wake lock if page becomes visible again
         document.addEventListener('visibilitychange', async () => {
             if (wakeLock !== null && document.visibilityState === 'visible') {
                 await requestWakeLock();
             }
         });
 
-        // Handle fullscreen changes
         document.addEventListener('fullscreenchange', () => {
             if (!document.fullscreenElement) {
                 console.log('Exited fullscreen');
@@ -161,16 +262,15 @@
         });
 
         startBtn.addEventListener("click", async () => {
-            startBtn.style.display = "none";  // hide button
-            document.body.style.cursor = "none"; // hide cursor
+            // Get selected speed
+            delay = parseInt(speedSelect.value);
             
-            // Activate fullscreen
+            controls.style.display = "none";
+            document.body.style.cursor = "none";
+            
             await requestFullscreen();
-            
-            // Activate wake lock
             await requestWakeLock();
             
-            // Simulate activity every 30 seconds as backup
             keepAwakeInterval = setInterval(simulateActivity, 30000);
             
             await loadImages();
@@ -180,7 +280,6 @@
             }
         });
 
-        // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
             if (wakeLock !== null) {
                 wakeLock.release();
@@ -189,6 +288,9 @@
                 clearInterval(keepAwakeInterval);
             }
         });
+
+        // Load folders when page loads
+        loadFolders();
     </script>
 
 </body>

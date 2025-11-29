@@ -6,6 +6,7 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.HandlerMapping;
 
@@ -23,112 +24,132 @@ import java.util.stream.Stream;
 public class ImageController {
 
     @Value("${image.folder}")
-    private String imageFolder;  // e.g., C:/gallery
+    private String imageFolder;
 
     @GetMapping("/")
     public String index() {
-        System.out.println("=== Index page requested ===");
         return "index";
     }
 
-    // Returns all images recursively from subfolders with randomized subfolder order
-    @GetMapping("/api/images/list")
+    @GetMapping("/api/folders/list")
     @ResponseBody
-    public List<String> getImageList() throws IOException {
-        System.out.println("=== Getting image list ===");
-        System.out.println("Image folder: " + imageFolder);
-        
+    public List<String> getFolderList() throws IOException {
         Path folderPath = Paths.get(imageFolder);
-        System.out.println("Folder path exists: " + Files.exists(folderPath));
-        System.out.println("Folder path is directory: " + Files.isDirectory(folderPath));
 
-        // Collect all image files with their paths
-        List<Path> allImages;
+        // Get all directories recursively
         try (Stream<Path> paths = Files.walk(folderPath)) {
-            allImages = paths
-                    .filter(Files::isRegularFile)
-                    .filter(f -> {
-                        String fileName = f.getFileName().toString().toLowerCase();
-                        boolean matches = fileName.matches(".*\\.(png|jpg|jpeg|gif|webp)$");
-                        if (matches) {
-                            System.out.println("Found image: " + f);
-                        }
-                        return matches;
-                    })
-                    .collect(Collectors.toList());
-        }
-
-        System.out.println("Total images found: " + allImages.size());
-
-        // Group images by their immediate parent folder
-        Map<Path, List<Path>> imagesByFolder = allImages.stream()
-                .collect(Collectors.groupingBy(Path::getParent));
-
-        System.out.println("Number of folders: " + imagesByFolder.size());
-        imagesByFolder.keySet().forEach(folder -> 
-            System.out.println("  Folder: " + folder + " -> " + imagesByFolder.get(folder).size() + " images")
-        );
-
-        // Get list of folders and shuffle them randomly
-        List<Path> folders = new ArrayList<>(imagesByFolder.keySet());
-        Collections.shuffle(folders);
-
-        System.out.println("Shuffled folder order:");
-        folders.forEach(folder -> System.out.println("  " + folder));
-
-        // Build final list: iterate through randomized folders,
-        // add their images in sorted order
-        List<String> result = new ArrayList<>();
-        for (Path folder : folders) {
-            List<String> folderImages = imagesByFolder.get(folder).stream()
+            return paths
+                    .filter(Files::isDirectory)
+                    .filter(p -> !p.equals(folderPath))
+                    .filter(p -> hasImages(p)) // Only include folders that contain images
                     .map(folderPath::relativize)
                     .map(Path::toString)
                     .map(p -> p.replace("\\", "/"))
                     .sorted()
                     .collect(Collectors.toList());
-            result.addAll(folderImages);
+        }
+    }
+
+    // Helper method to check if a folder contains images
+    private boolean hasImages(Path folder) {
+        try (Stream<Path> files = Files.list(folder)) {
+            return files.anyMatch(f -> Files.isRegularFile(f) && 
+                    f.getFileName().toString().toLowerCase()
+                            .matches(".*\\.(png|jpg|jpeg|gif|webp)$"));
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    @GetMapping("/api/images/list")
+    @ResponseBody
+    public List<String> getImageList(
+            @RequestParam(required = false) String startFolder,
+            @RequestParam(required = false, defaultValue = "false") boolean randomize) throws IOException {
+        
+        Path folderPath = Paths.get(imageFolder);
+
+        // Collect all image files
+        List<Path> allImages;
+        try (Stream<Path> paths = Files.walk(folderPath)) {
+            allImages = paths
+                    .filter(Files::isRegularFile)
+                    .filter(f -> f.getFileName().toString().toLowerCase()
+                            .matches(".*\\.(png|jpg|jpeg|gif|webp)$"))
+                    .collect(Collectors.toList());
         }
 
-        System.out.println("Total images in result: " + result.size());
-        System.out.println("First 5 images:");
-        result.stream().limit(5).forEach(img -> System.out.println("  " + img));
-        System.out.println("=== End image list ===\n");
+        // Group images by their immediate parent folder
+        Map<Path, List<Path>> imagesByFolder = allImages.stream()
+                .collect(Collectors.groupingBy(Path::getParent));
+
+        // Get list of folders
+        List<Path> folders = new ArrayList<>(imagesByFolder.keySet());
+        
+        // Sort folders to have consistent ordering before shuffling
+        folders.sort(Comparator.comparing(Path::toString));
+
+        // If startFolder is specified, move it to the front
+        if (startFolder != null && !startFolder.isEmpty()) {
+            Path startFolderPath = Paths.get(imageFolder, startFolder);
+            
+            // Remove the start folder from the list if it exists
+            folders.removeIf(folder -> folder.equals(startFolderPath));
+            
+            // Shuffle remaining folders
+            Collections.shuffle(folders);
+            
+            // Add start folder at the beginning only if it has images
+            if (imagesByFolder.containsKey(startFolderPath)) {
+                folders.add(0, startFolderPath);
+            }
+        } else {
+            // No start folder specified, just shuffle all
+            Collections.shuffle(folders);
+        }
+
+        // Build final list with ordered folders
+        List<String> result = new ArrayList<>();
+        for (Path folder : folders) {
+            if (imagesByFolder.containsKey(folder)) {
+                Stream<String> folderImagesStream = imagesByFolder.get(folder).stream()
+                        .map(folderPath::relativize)
+                        .map(Path::toString)
+                        .map(p -> p.replace("\\", "/"));
+                
+                // Sort or randomize based on parameter
+                List<String> folderImages;
+                if (randomize) {
+                    folderImages = folderImagesStream.collect(Collectors.toList());
+                    Collections.shuffle(folderImages);
+                } else {
+                    folderImages = folderImagesStream.sorted().collect(Collectors.toList());
+                }
+                
+                result.addAll(folderImages);
+            }
+        }
 
         return result;
     }
 
-    // Serves image by URL
     @GetMapping("/images/**")
     @ResponseBody
     public Resource getImage(HttpServletRequest request) throws MalformedURLException {
-        System.out.println("=== Image requested ===");
-        
         String pathWithinHandler = (String) request.getAttribute(
                 HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
         String bestMatchPattern = (String) request.getAttribute(
                 HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
 
-        System.out.println("Path within handler: " + pathWithinHandler);
-        System.out.println("Best matching pattern: " + bestMatchPattern);
-
         String relativePath = new AntPathMatcher()
                 .extractPathWithinPattern(bestMatchPattern, pathWithinHandler);
 
-        System.out.println("Relative path: " + relativePath);
-
         Path filePath = Paths.get(imageFolder, relativePath.split("/"));
-        System.out.println("Full file path: " + filePath.toAbsolutePath());
-        System.out.println("File exists: " + Files.exists(filePath));
-        System.out.println("Is regular file: " + Files.isRegularFile(filePath));
 
         if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
-            System.out.println("ERROR: File not found or not a regular file!");
             throw new RuntimeException("File not found: " + filePath.toAbsolutePath());
         }
 
-        System.out.println("Serving file successfully");
-        System.out.println("=== End image request ===\n");
-        
         return new UrlResource(filePath.toUri());
     }
 }
