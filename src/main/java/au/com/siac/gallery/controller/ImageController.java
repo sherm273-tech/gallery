@@ -1,17 +1,21 @@
 package au.com.siac.gallery.controller;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.HandlerMapping;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -196,8 +200,10 @@ public class ImageController {
     }
 
     @GetMapping("/music/**")
-    @ResponseBody
-    public Resource getMusic(HttpServletRequest request) throws MalformedURLException {
+    public ResponseEntity<Resource> getMusic(
+            HttpServletRequest request,
+            @RequestHeader(value = "Range", required = false) String rangeHeader) throws IOException {
+        
         String pathWithinHandler = (String) request.getAttribute(
                 HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
         String bestMatchPattern = (String) request.getAttribute(
@@ -216,6 +222,35 @@ public class ImageController {
             throw new RuntimeException("Music file not found: " + filePath.toAbsolutePath());
         }
 
-        return new UrlResource(filePath.toUri());
+        Resource resource = new UrlResource(filePath.toUri());
+        long fileSize = Files.size(filePath);
+
+        // Handle range requests for streaming (required for many Smart TVs/monitors)
+        if (rangeHeader != null && rangeHeader.startsWith("bytes=")) {
+            String[] ranges = rangeHeader.substring(6).split("-");
+            long start = Long.parseLong(ranges[0]);
+            long end = ranges.length > 1 && !ranges[1].isEmpty() 
+                    ? Long.parseLong(ranges[1]) 
+                    : fileSize - 1;
+
+            long contentLength = end - start + 1;
+
+            InputStream inputStream = Files.newInputStream(filePath);
+            inputStream.skip(start);
+
+            return ResponseEntity.status(206) // 206 Partial Content
+                    .header("Content-Type", "audio/mpeg")
+                    .header("Accept-Ranges", "bytes")
+                    .header("Content-Range", "bytes " + start + "-" + end + "/" + fileSize)
+                    .header("Content-Length", String.valueOf(contentLength))
+                    .body(new InputStreamResource(inputStream));
+        }
+
+        // Normal response (full file)
+        return ResponseEntity.ok()
+                .header("Content-Type", "audio/mpeg")
+                .header("Accept-Ranges", "bytes")
+                .header("Content-Length", String.valueOf(fileSize))
+                .body(resource);
     }
 }
