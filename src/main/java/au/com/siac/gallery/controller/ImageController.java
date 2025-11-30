@@ -28,6 +28,9 @@ public class ImageController {
     @Value("${image.folder}")
     private String imageFolder;
 
+    @Value("${music.folder}")
+    private String musicFolder;
+
     @GetMapping("/")
     public String index() {
         return "index";
@@ -44,6 +47,27 @@ public class ImageController {
                     .filter(Files::isDirectory)
                     .filter(p -> !p.equals(folderPath))
                     .filter(p -> hasImages(p)) // Only include folders that contain images
+                    .map(folderPath::relativize)
+                    .map(Path::toString)
+                    .map(p -> p.replace("\\", "/"))
+                    .sorted()
+                    .collect(Collectors.toList());
+        }
+    }
+
+    @GetMapping("/api/music/list")
+    @ResponseBody
+    public List<String> getMusicList() throws IOException {
+        Path folderPath = Paths.get(musicFolder);
+
+        if (!Files.exists(folderPath) || !Files.isDirectory(folderPath)) {
+            return new ArrayList<>();
+        }
+
+        try (Stream<Path> paths = Files.walk(folderPath)) {
+            return paths
+                    .filter(Files::isRegularFile)
+                    .filter(f -> f.getFileName().toString().toLowerCase().endsWith(".mp3"))
                     .map(folderPath::relativize)
                     .map(Path::toString)
                     .map(p -> p.replace("\\", "/"))
@@ -166,6 +190,30 @@ public class ImageController {
 
         if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
             throw new RuntimeException("File not found: " + filePath.toAbsolutePath());
+        }
+
+        return new UrlResource(filePath.toUri());
+    }
+
+    @GetMapping("/music/**")
+    @ResponseBody
+    public Resource getMusic(HttpServletRequest request) throws MalformedURLException {
+        String pathWithinHandler = (String) request.getAttribute(
+                HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+        String bestMatchPattern = (String) request.getAttribute(
+                HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+
+        String relativePath = new AntPathMatcher()
+                .extractPathWithinPattern(bestMatchPattern, pathWithinHandler);
+
+        // Decode URL-encoded path (e.g., %20 becomes space)
+        relativePath = URLDecoder.decode(relativePath, StandardCharsets.UTF_8);
+
+        // Use Paths.get with the relative path directly
+        Path filePath = Paths.get(musicFolder).resolve(relativePath);
+
+        if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
+            throw new RuntimeException("Music file not found: " + filePath.toAbsolutePath());
         }
 
         return new UrlResource(filePath.toUri());

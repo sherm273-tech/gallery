@@ -32,6 +32,8 @@
             background: rgba(0, 0, 0, 0.8);
             padding: 30px;
             border-radius: 15px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         #folderSelect, #speedSelect {
@@ -51,7 +53,7 @@
             gap: 10px;
         }
 
-        #randomizeCheckbox, #shuffleAllCheckbox {
+        #randomizeCheckbox, #shuffleAllCheckbox, #randomizeMusicCheckbox {
             width: 20px;
             height: 20px;
             cursor: pointer;
@@ -76,6 +78,81 @@
             color: #fff;
             font-size: 18px;
             font-family: Arial, sans-serif;
+        }
+
+        #musicList {
+            max-height: 250px;
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            width: 100%;
+        }
+
+        .music-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+            margin-bottom: 5px;
+            border-radius: 5px;
+            cursor: move;
+            transition: background 0.2s;
+        }
+
+        .music-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .music-item.dragging {
+            opacity: 0.5;
+            background: rgba(76, 175, 80, 0.3);
+        }
+
+        .music-item.drag-over {
+            border-top: 3px solid #4CAF50;
+        }
+
+        .drag-handle {
+            cursor: move;
+            font-size: 18px;
+            color: #aaa;
+        }
+
+        .music-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .music-item label {
+            font-size: 14px;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        #selectAllMusic, #selectNoMusic {
+            padding: 5px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background: #2196F3;
+            color: #fff;
+            margin: 5px;
+        }
+
+        #selectNoMusic {
+            background: #f44336;
+        }
+
+        .music-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+            flex-wrap: wrap;
         }
 
         /* Fullscreen styles */
@@ -125,11 +202,29 @@
             <option value="7000">Slow (7 seconds)</option>
             <option value="10000">Very Slow (10 seconds)</option>
         </select>
+
+        <label>Select Music (drag to reorder):</label>
+        <div class="music-controls">
+            <button id="selectAllMusic">Select All</button>
+            <button id="selectNoMusic">No Music</button>
+        </div>
+        <div class="checkbox-container">
+            <input type="checkbox" id="randomizeMusicCheckbox">
+            <label for="randomizeMusicCheckbox">Randomize music order</label>
+        </div>
+        <div id="musicList">
+            <p style="color: #aaa;">Loading music...</p>
+        </div>
         
         <button id="startButton">Start Slideshow</button>
+        
+        <div style="color: #aaa; font-size: 14px; text-align: center; margin-top: 10px;">
+            <p>Controls: Space/P = Pause/Play | ← → = Previous/Next</p>
+        </div>
     </div>
     
     <img id="slideshow" src="" alt="Slideshow Image"/>
+    <audio id="audioPlayer" style="display: none;"></audio>
 
     <script>
         const imgEl = document.getElementById("slideshow");
@@ -137,15 +232,27 @@
         const folderSelect = document.getElementById("folderSelect");
         const randomizeCheckbox = document.getElementById("randomizeCheckbox");
         const shuffleAllCheckbox = document.getElementById("shuffleAllCheckbox");
+        const randomizeMusicCheckbox = document.getElementById("randomizeMusicCheckbox");
         const speedSelect = document.getElementById("speedSelect");
         const controls = document.getElementById("controls");
+        const musicList = document.getElementById("musicList");
+        const selectAllMusicBtn = document.getElementById("selectAllMusic");
+        const selectNoMusicBtn = document.getElementById("selectNoMusic");
+        const audioPlayer = document.getElementById("audioPlayer");
+        
         let images = [];
+        let musicFiles = [];
+        let selectedMusic = [];
+        let currentMusicIndex = 0;
         let index = 0;
-        let delay = 5000; // default 5 seconds per slide
+        let delay = 5000;
         let intervalId;
         let wakeLock = null;
         let keepAwakeInterval;
-        let nextImagePreloaded = null; // Buffer for next image
+        let nextImagePreloaded = null;
+        let draggedElement = null;
+        let isPaused = false;
+        let slideshowStarted = false;
 
         // When shuffleAll is checked, disable other options
         shuffleAllCheckbox.addEventListener('change', function() {
@@ -160,7 +267,7 @@
             }
         });
 
-        // Load folder list on page load
+        // Load folder list
         async function loadFolders() {
             try {
                 const response = await fetch("/api/folders/list");
@@ -175,6 +282,240 @@
             } catch (err) {
                 console.error("Error loading folders:", err);
             }
+        }
+
+        // Load music list
+        async function loadMusicFiles() {
+            try {
+                const response = await fetch("/api/music/list");
+                musicFiles = await response.json();
+                
+                musicList.innerHTML = '';
+                
+                if (musicFiles.length === 0) {
+                    musicList.innerHTML = '<p style="color: #aaa;">No music files found</p>';
+                    return;
+                }
+                
+                musicFiles.forEach((file, idx) => {
+                    createMusicItem(file, idx);
+                });
+            } catch (err) {
+                console.error("Error loading music:", err);
+                musicList.innerHTML = '<p style="color: #aaa;">Error loading music files</p>';
+            }
+        }
+
+        function createMusicItem(file, idx) {
+            const div = document.createElement("div");
+            div.className = "music-item";
+            div.draggable = true;
+            div.dataset.file = file;
+            
+            const dragHandle = document.createElement("span");
+            dragHandle.className = "drag-handle";
+            dragHandle.innerHTML = "⋮⋮";
+            
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.id = `music-${idx}`;
+            checkbox.value = file;
+            
+            const label = document.createElement("label");
+            label.htmlFor = `music-${idx}`;
+            label.textContent = file;
+            
+            div.appendChild(dragHandle);
+            div.appendChild(checkbox);
+            div.appendChild(label);
+            
+            // Drag and drop events
+            div.addEventListener('dragstart', handleDragStart);
+            div.addEventListener('dragover', handleDragOver);
+            div.addEventListener('drop', handleDrop);
+            div.addEventListener('dragend', handleDragEnd);
+            div.addEventListener('dragenter', handleDragEnter);
+            div.addEventListener('dragleave', handleDragLeave);
+            
+            musicList.appendChild(div);
+        }
+
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            if (this !== draggedElement) {
+                this.classList.add('drag-over');
+            }
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            
+            if (draggedElement !== this) {
+                const allItems = [...musicList.querySelectorAll('.music-item')];
+                const draggedIndex = allItems.indexOf(draggedElement);
+                const targetIndex = allItems.indexOf(this);
+                
+                if (draggedIndex < targetIndex) {
+                    this.parentNode.insertBefore(draggedElement, this.nextSibling);
+                } else {
+                    this.parentNode.insertBefore(draggedElement, this);
+                }
+            }
+            
+            this.classList.remove('drag-over');
+            return false;
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            const items = musicList.querySelectorAll('.music-item');
+            items.forEach(item => item.classList.remove('drag-over'));
+        }
+
+        // Select all music
+        selectAllMusicBtn.addEventListener('click', () => {
+            const checkboxes = musicList.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = true);
+        });
+
+        // Select no music
+        selectNoMusicBtn.addEventListener('click', () => {
+            const checkboxes = musicList.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = false);
+        });
+
+        // Get selected music in order
+        function getSelectedMusic() {
+            const items = musicList.querySelectorAll('.music-item');
+            const selected = [];
+            
+            items.forEach(item => {
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                if (checkbox && checkbox.checked) {
+                    selected.push(checkbox.value);
+                }
+            });
+            
+            // Randomize if checkbox is checked
+            if (randomizeMusicCheckbox.checked && selected.length > 0) {
+                for (let i = selected.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [selected[i], selected[j]] = [selected[j], selected[i]];
+                }
+                console.log('Music randomized');
+            }
+            
+            return selected;
+        }
+
+        // Play music playlist
+        function playMusic() {
+            selectedMusic = getSelectedMusic();
+            
+            if (selectedMusic.length === 0) {
+                console.log('No music selected');
+                return;
+            }
+            
+            console.log('Playlist order:', selectedMusic);
+            currentMusicIndex = 0;
+            playCurrentTrack();
+            
+            // When track ends, play next
+            audioPlayer.addEventListener('ended', () => {
+                currentMusicIndex = (currentMusicIndex + 1) % selectedMusic.length;
+                playCurrentTrack();
+            });
+        }
+
+        function playCurrentTrack() {
+            if (selectedMusic.length === 0) return;
+            
+            const track = selectedMusic[currentMusicIndex];
+            audioPlayer.src = '/music/' + track;
+            audioPlayer.play().catch(err => console.error('Audio play error:', err));
+            console.log('Playing:', track);
+        }
+
+        function togglePause() {
+            if (!slideshowStarted) return;
+            
+            isPaused = !isPaused;
+            
+            if (isPaused) {
+                // Pause slideshow
+                clearInterval(intervalId);
+                
+                // Pause music
+                if (!audioPlayer.paused) {
+                    audioPlayer.pause();
+                    console.log('Music paused');
+                }
+                
+                console.log('Slideshow paused');
+            } else {
+                // Resume slideshow
+                intervalId = setInterval(nextImage, delay);
+                
+                // Resume music
+                if (selectedMusic.length > 0) {
+                    audioPlayer.play().catch(err => console.error('Audio resume error:', err));
+                    console.log('Music resumed');
+                }
+                
+                console.log('Slideshow resumed');
+            }
+        }
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (!slideshowStarted) return;
+            
+            switch(e.key) {
+                case ' ':  // Spacebar
+                case 'p':  // P key
+                case 'P':
+                    e.preventDefault();
+                    togglePause();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    if (isPaused) {
+                        nextImage();
+                    }
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    if (isPaused) {
+                        previousImage();
+                    }
+                    break;
+            }
+        });
+
+        function previousImage() {
+            index = (index - 1 + images.length) % images.length;
+            showImage(index);
         }
 
         async function loadImages() {
@@ -200,23 +541,17 @@
             const nextUrl = "/images/" + images[nextIndex];
             nextImagePreloaded = new Image();
             nextImagePreloaded.src = nextUrl;
-            console.log('Preloading next image:', nextUrl);
         }
 
         function showImage(i) {
             const url = "/images/" + images[i];
-            console.log('Showing image:', url);
             
-            // If we have a preloaded image, use it
             if (nextImagePreloaded && nextImagePreloaded.src.endsWith(images[i])) {
                 imgEl.src = nextImagePreloaded.src;
-                console.log('Used preloaded image');
             } else {
-                // Fallback: load immediately
                 imgEl.src = url;
             }
             
-            // Preload the next image
             const nextIndex = (i + 1) % images.length;
             preloadNextImage(nextIndex);
         }
@@ -282,7 +617,6 @@
         });
 
         startBtn.addEventListener("click", async () => {
-            // Get selected speed
             delay = parseInt(speedSelect.value);
             
             controls.style.display = "none";
@@ -293,8 +627,12 @@
             
             keepAwakeInterval = setInterval(simulateActivity, 30000);
             
+            // Start music
+            playMusic();
+            
             await loadImages();
             if (images.length > 0) {
+                slideshowStarted = true;
                 showImage(0);
                 intervalId = setInterval(nextImage, delay);
             }
@@ -309,8 +647,9 @@
             }
         });
 
-        // Load folders when page loads
+        // Load folders and music on page load
         loadFolders();
+        loadMusicFiles();
     </script>
 
 </body>
