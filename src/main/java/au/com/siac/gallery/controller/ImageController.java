@@ -7,10 +7,7 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AntPathMatcher;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.HandlerMapping;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,6 +31,26 @@ public class ImageController {
 
     @Value("${music.folder}")
     private String musicFolder;
+
+    // Request DTO for image list
+    public static class ImageListRequest {
+        private String startFolder;
+        private boolean randomize;
+        private boolean shuffleAll;
+        private List<String> selectedFolders;
+
+        public String getStartFolder() { return startFolder; }
+        public void setStartFolder(String startFolder) { this.startFolder = startFolder; }
+        
+        public boolean isRandomize() { return randomize; }
+        public void setRandomize(boolean randomize) { this.randomize = randomize; }
+        
+        public boolean isShuffleAll() { return shuffleAll; }
+        public void setShuffleAll(boolean shuffleAll) { this.shuffleAll = shuffleAll; }
+        
+        public List<String> getSelectedFolders() { return selectedFolders; }
+        public void setSelectedFolders(List<String> selectedFolders) { this.selectedFolders = selectedFolders; }
+    }
 
     @GetMapping("/")
     public String index() {
@@ -91,12 +108,13 @@ public class ImageController {
         }
     }
 
-    @GetMapping("/api/images/list")
+    @PostMapping("/api/images/list")
     @ResponseBody
-    public List<String> getImageList(
-            @RequestParam(required = false) String startFolder,
-            @RequestParam(required = false, defaultValue = "false") boolean randomize,
-            @RequestParam(required = false, defaultValue = "false") boolean shuffleAll) throws IOException {
+    public List<String> getImageList(@RequestBody ImageListRequest request) throws IOException {
+        String startFolder = request.getStartFolder();
+        boolean randomize = request.isRandomize();
+        boolean shuffleAll = request.isShuffleAll();
+        List<String> selectedFolders = request.getSelectedFolders();
         
         Path folderPath = Paths.get(imageFolder);
 
@@ -107,6 +125,17 @@ public class ImageController {
                     .filter(Files::isRegularFile)
                     .filter(f -> f.getFileName().toString().toLowerCase()
                             .matches(".*\\.(png|jpg|jpeg|gif|webp)$"))
+                    .collect(Collectors.toList());
+        }
+
+        // Filter by selected folders if provided
+        if (selectedFolders != null && !selectedFolders.isEmpty()) {
+            Set<Path> selectedFolderPaths = selectedFolders.stream()
+                    .map(folder -> Paths.get(imageFolder, folder))
+                    .collect(Collectors.toSet());
+            
+            allImages = allImages.stream()
+                    .filter(image -> selectedFolderPaths.contains(image.getParent()))
                     .collect(Collectors.toList());
         }
 
@@ -126,10 +155,21 @@ public class ImageController {
                 .collect(Collectors.groupingBy(Path::getParent));
 
         // Get list of folders
-        List<Path> folders = new ArrayList<>(imagesByFolder.keySet());
+        List<Path> folders = new ArrayList<>();
         
-        // Sort folders to have consistent ordering before shuffling
-        folders.sort(Comparator.comparing(Path::toString));
+        // If selectedFolders is provided and not empty, use that order
+        if (selectedFolders != null && !selectedFolders.isEmpty()) {
+            for (String folder : selectedFolders) {
+                Path folderFullPath = Paths.get(imageFolder, folder);
+                if (imagesByFolder.containsKey(folderFullPath)) {
+                    folders.add(folderFullPath);
+                }
+            }
+        } else {
+            // Otherwise use all folders with images
+            folders = new ArrayList<>(imagesByFolder.keySet());
+            folders.sort(Comparator.comparing(Path::toString));
+        }
 
         // If startFolder is specified, move it to the front
         if (startFolder != null && !startFolder.isEmpty()) {
@@ -138,16 +178,20 @@ public class ImageController {
             // Remove the start folder from the list if it exists
             folders.removeIf(folder -> folder.equals(startFolderPath));
             
-            // Shuffle remaining folders
-            Collections.shuffle(folders);
+            // Shuffle remaining folders if selectedFolders was not provided
+            if (selectedFolders == null || selectedFolders.isEmpty()) {
+                Collections.shuffle(folders);
+            }
             
             // Add start folder at the beginning only if it has images
             if (imagesByFolder.containsKey(startFolderPath)) {
                 folders.add(0, startFolderPath);
             }
         } else {
-            // No start folder specified, just shuffle all
-            Collections.shuffle(folders);
+            // No start folder specified, shuffle only if no explicit folder order
+            if (selectedFolders == null || selectedFolders.isEmpty()) {
+                Collections.shuffle(folders);
+            }
         }
 
         // Build final list with ordered folders
