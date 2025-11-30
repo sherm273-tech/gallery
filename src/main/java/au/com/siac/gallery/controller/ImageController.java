@@ -13,6 +13,8 @@ import org.springframework.web.servlet.HandlerMapping;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -65,7 +67,8 @@ public class ImageController {
     @ResponseBody
     public List<String> getImageList(
             @RequestParam(required = false) String startFolder,
-            @RequestParam(required = false, defaultValue = "false") boolean randomize) throws IOException {
+            @RequestParam(required = false, defaultValue = "false") boolean randomize,
+            @RequestParam(required = false, defaultValue = "false") boolean shuffleAll) throws IOException {
         
         Path folderPath = Paths.get(imageFolder);
 
@@ -77,6 +80,17 @@ public class ImageController {
                     .filter(f -> f.getFileName().toString().toLowerCase()
                             .matches(".*\\.(png|jpg|jpeg|gif|webp)$"))
                     .collect(Collectors.toList());
+        }
+
+        // If shuffleAll is true, just shuffle everything and return
+        if (shuffleAll) {
+            List<String> result = allImages.stream()
+                    .map(folderPath::relativize)
+                    .map(Path::toString)
+                    .map(p -> p.replace("\\", "/"))
+                    .collect(Collectors.toList());
+            Collections.shuffle(result);
+            return result;
         }
 
         // Group images by their immediate parent folder
@@ -144,7 +158,11 @@ public class ImageController {
         String relativePath = new AntPathMatcher()
                 .extractPathWithinPattern(bestMatchPattern, pathWithinHandler);
 
-        Path filePath = Paths.get(imageFolder, relativePath.split("/"));
+        // Decode URL-encoded path (e.g., %20 becomes space)
+        relativePath = URLDecoder.decode(relativePath, StandardCharsets.UTF_8);
+
+        // Use Paths.get with the relative path directly
+        Path filePath = Paths.get(imageFolder).resolve(relativePath);
 
         if (!Files.exists(filePath) || !Files.isRegularFile(filePath)) {
             throw new RuntimeException("File not found: " + filePath.toAbsolutePath());

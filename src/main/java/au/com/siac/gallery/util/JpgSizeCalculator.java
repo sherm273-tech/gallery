@@ -8,7 +8,7 @@ public class JpgSizeCalculator {
 
     public static void main(String[] args) {
         // Replace with the source directory path
-        String sourceDirPath = "F:\\DCIM";
+        String sourceDirPath = "E:\\Photos South America";
         Path sourcePath = Paths.get(sourceDirPath);
 
         if (!Files.exists(sourcePath) || !Files.isDirectory(sourcePath)) {

@@ -1,17 +1,22 @@
 package au.com.siac.gallery.util;
 
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
+import java.util.Iterator;
 
 public class JpgFolderStructureCopier {
 
     public static void main(String[] args) {
-        // Source folder (external drive)
-        String sourceDirPath = "F:\\DCIM";
-
-        // Target parent folder
-        String targetDirPath = "C:\\gallery\\europe";
+        String sourceDirPath = "E:\\Photos South America";
+        String targetDirPath = "C:\\gallery\\south_america_2020";
 
         Path sourcePath = Paths.get(sourceDirPath);
         Path targetPath = Paths.get(targetDirPath);
@@ -22,40 +27,39 @@ public class JpgFolderStructureCopier {
         }
 
         try {
-            copyJpgFilesWithStructure(sourcePath, targetPath);
-            System.out.println("All JPG files copied successfully from " + sourcePath + " to " + targetPath);
+            copyAndCompressJpgFiles(sourcePath, targetPath, 0.8f); // 0.8 = 80% quality
+            System.out.println("All JPG files copied and compressed successfully.");
         } catch (IOException e) {
             System.err.println("Error copying JPG files: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    private static void copyJpgFilesWithStructure(Path sourcePath, Path targetPath) throws IOException {
+    private static void copyAndCompressJpgFiles(Path sourcePath, Path targetPath, float quality) throws IOException {
         Files.walkFileTree(sourcePath, new SimpleFileVisitor<Path>() {
 
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                // Only copy .jpg files (case-insensitive)
                 if (Files.isRegularFile(file) && file.toString().toLowerCase().endsWith(".jpg")) {
-                    // Compute relative path from source folder
                     Path relativePath = sourcePath.relativize(file);
                     Path targetFile = targetPath.resolve(relativePath);
 
-                    // Create parent directories in the target folder if they don't exist
                     if (!Files.exists(targetFile.getParent())) {
                         Files.createDirectories(targetFile.getParent());
                     }
 
-                    // Copy the JPG file
-                    Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING);
-                    System.out.println("Copied: " + file + " -> " + targetFile);
+                    long originalSize = Files.size(file);
+                    compressJpg(file.toFile(), targetFile.toFile(), quality);
+                    long newSize = Files.size(targetFile);
+
+                    System.out.printf("Copied & compressed: %s -> %s | Original: %.2f MB | New: %.2f MB%n",
+                            file, targetFile, originalSize / (1024.0 * 1024.0), newSize / (1024.0 * 1024.0));
                 }
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                // Create the directory in the target path before visiting files
                 Path relativeDir = sourcePath.relativize(dir);
                 Path targetDir = targetPath.resolve(relativeDir);
                 if (!Files.exists(targetDir)) {
@@ -65,4 +69,32 @@ public class JpgFolderStructureCopier {
             }
         });
     }
+
+    private static void compressJpg(File input, File output, float quality) throws IOException {
+        BufferedImage image = ImageIO.read(input);
+        if (image == null) {
+            System.err.println("Skipping non-image file: " + input);
+            return;
+        }
+
+        Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpg");
+        if (!writers.hasNext())
+            throw new IllegalStateException("No writers found for JPG format");
+
+        ImageWriter writer = writers.next();
+        ImageOutputStream ios = ImageIO.createImageOutputStream(output);
+        writer.setOutput(ios);
+
+        ImageWriteParam param = writer.getDefaultWriteParam();
+        if (param.canWriteCompressed()) {
+            param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+            param.setCompressionQuality(quality); // 0.0 = max compression, 1.0 = max quality
+        }
+
+        writer.write(null, new IIOImage(image, null, null), param);
+
+        ios.close();
+        writer.dispose();
+    }
 }
+

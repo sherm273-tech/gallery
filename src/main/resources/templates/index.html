@@ -51,7 +51,7 @@
             gap: 10px;
         }
 
-        #randomizeCheckbox {
+        #randomizeCheckbox, #shuffleAllCheckbox {
             width: 20px;
             height: 20px;
             cursor: pointer;
@@ -106,6 +106,11 @@
         </select>
         
         <div class="checkbox-container">
+            <input type="checkbox" id="shuffleAllCheckbox">
+            <label for="shuffleAllCheckbox">Shuffle ALL images together (ignore folders)</label>
+        </div>
+
+        <div class="checkbox-container">
             <input type="checkbox" id="randomizeCheckbox" checked>
             <label for="randomizeCheckbox">Randomise images within folders</label>
         </div>
@@ -131,6 +136,7 @@
         const startBtn = document.getElementById("startButton");
         const folderSelect = document.getElementById("folderSelect");
         const randomizeCheckbox = document.getElementById("randomizeCheckbox");
+        const shuffleAllCheckbox = document.getElementById("shuffleAllCheckbox");
         const speedSelect = document.getElementById("speedSelect");
         const controls = document.getElementById("controls");
         let images = [];
@@ -140,6 +146,19 @@
         let wakeLock = null;
         let keepAwakeInterval;
         let nextImagePreloaded = null; // Buffer for next image
+
+        // When shuffleAll is checked, disable other options
+        shuffleAllCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                folderSelect.disabled = true;
+                randomizeCheckbox.disabled = true;
+                folderSelect.style.opacity = '0.5';
+            } else {
+                folderSelect.disabled = false;
+                randomizeCheckbox.disabled = false;
+                folderSelect.style.opacity = '1';
+            }
+        });
 
         // Load folder list on page load
         async function loadFolders() {
@@ -162,9 +181,10 @@
             console.log('Loading images...');
             const selectedFolder = folderSelect.value;
             const randomize = randomizeCheckbox.checked;
+            const shuffleAll = shuffleAllCheckbox.checked;
             
-            let url = '/api/images/list?randomize=' + randomize;
-            if (selectedFolder) {
+            let url = '/api/images/list?randomize=' + randomize + '&shuffleAll=' + shuffleAll;
+            if (selectedFolder && !shuffleAll) {
                 url += '&startFolder=' + encodeURIComponent(selectedFolder);
             }
             
