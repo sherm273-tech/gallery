@@ -36,6 +36,45 @@
             overflow-y: auto;
         }
 
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        #loadingOverlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            border: 8px solid #333;
+            border-top: 8px solid #4CAF50;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #loadingText {
+            color: #fff;
+            font-size: 24px;
+            font-family: Arial, sans-serif;
+        }
+
         #folderSelect, #speedSelect {
             padding: 10px 20px;
             font-size: 18px;
@@ -176,6 +215,11 @@
 </head>
 <body>
 
+    <div id="loadingOverlay">
+        <div class="spinner"></div>
+        <div id="loadingText">Preloading images...</div>
+    </div>
+
     <div id="controls">
         <label for="folderSelect">Select starting folder (optional):</label>
         <select id="folderSelect">
@@ -224,7 +268,7 @@
     </div>
     
     <img id="slideshow" src="" alt="Slideshow Image"/>
-    <audio id="audioPlayer" style="display: none;"></audio>
+    <audio id="audioPlayer" preload="auto" style="display: none;"></audio>
 
     <script>
         const imgEl = document.getElementById("slideshow");
@@ -239,6 +283,8 @@
         const selectAllMusicBtn = document.getElementById("selectAllMusic");
         const selectNoMusicBtn = document.getElementById("selectNoMusic");
         const audioPlayer = document.getElementById("audioPlayer");
+        const loadingOverlay = document.getElementById("loadingOverlay");
+        const loadingText = document.getElementById("loadingText");
         
         let images = [];
         let musicFiles = [];
@@ -249,7 +295,8 @@
         let intervalId;
         let wakeLock = null;
         let keepAwakeInterval;
-        let nextImagePreloaded = null;
+        let imageCache = new Map(); // Cache for preloaded images
+        const PRELOAD_COUNT = 5; // Number of images to preload ahead
         let draggedElement = null;
         let isPaused = false;
         let slideshowStarted = false;
@@ -453,6 +500,7 @@
             
             const track = selectedMusic[currentMusicIndex];
             audioPlayer.src = '/music/' + track;
+            audioPlayer.load(); // Explicitly load to ensure proper buffering
             audioPlayer.play().catch(err => console.error('Audio play error:', err));
             console.log('Playing:', track);
         }
@@ -533,27 +581,61 @@
             const response = await fetch(url);
             images = await response.json();
             console.log('Images loaded:', images.length);
+            
+            // Preload first batch of images
+            preloadImages(0, Math.min(PRELOAD_COUNT, images.length));
         }
 
-        function preloadNextImage(nextIndex) {
-            if (nextIndex >= images.length) return;
+        // Preload multiple images ahead
+        function preloadImages(startIndex, count) {
+            for (let i = 0; i < count; i++) {
+                const imageIndex = (startIndex + i) % images.length;
+                const url = "/images/" + images[imageIndex];
+                
+                // Skip if already cached
+                if (imageCache.has(url)) {
+                    continue;
+                }
+                
+                const img = new Image();
+                img.onload = () => {
+                    console.log('Preloaded:', images[imageIndex]);
+                };
+                img.onerror = () => {
+                    console.error('Failed to preload:', images[imageIndex]);
+                };
+                img.src = url;
+                imageCache.set(url, img);
+            }
             
-            const nextUrl = "/images/" + images[nextIndex];
-            nextImagePreloaded = new Image();
-            nextImagePreloaded.src = nextUrl;
+            // Clean up old cached images (keep only recent ones)
+            if (imageCache.size > PRELOAD_COUNT * 2) {
+                const keysToDelete = [];
+                let deleteCount = 0;
+                for (const key of imageCache.keys()) {
+                    if (deleteCount++ < imageCache.size - PRELOAD_COUNT * 2) {
+                        keysToDelete.push(key);
+                    } else {
+                        break;
+                    }
+                }
+                keysToDelete.forEach(key => imageCache.delete(key));
+            }
         }
 
         function showImage(i) {
             const url = "/images/" + images[i];
             
-            if (nextImagePreloaded && nextImagePreloaded.src.endsWith(images[i])) {
-                imgEl.src = nextImagePreloaded.src;
+            // Use cached image if available
+            if (imageCache.has(url)) {
+                imgEl.src = imageCache.get(url).src;
             } else {
                 imgEl.src = url;
             }
             
-            const nextIndex = (i + 1) % images.length;
-            preloadNextImage(nextIndex);
+            // Preload next batch of images
+            const nextBatchStart = (i + 1) % images.length;
+            preloadImages(nextBatchStart, PRELOAD_COUNT);
         }
 
         function nextImage() {
@@ -620,6 +702,7 @@
             delay = parseInt(speedSelect.value);
             
             controls.style.display = "none";
+            loadingOverlay.classList.add("active");
             document.body.style.cursor = "none";
             
             await requestFullscreen();
@@ -631,11 +714,24 @@
             playMusic();
             
             await loadImages();
-            if (images.length > 0) {
-                slideshowStarted = true;
-                showImage(0);
-                intervalId = setInterval(nextImage, delay);
-            }
+            
+            // Wait for initial images to preload
+            let preloadedCount = 0;
+            const checkInterval = setInterval(() => {
+                preloadedCount = imageCache.size;
+                loadingText.textContent = `Preloading images... (${preloadedCount}/${Math.min(PRELOAD_COUNT, images.length)})`;
+                
+                if (preloadedCount >= Math.min(PRELOAD_COUNT, images.length) || preloadedCount >= images.length) {
+                    clearInterval(checkInterval);
+                    loadingOverlay.classList.remove("active");
+                    
+                    if (images.length > 0) {
+                        slideshowStarted = true;
+                        showImage(0);
+                        intervalId = setInterval(nextImage, delay);
+                    }
+                }
+            }, 100);
         });
 
         window.addEventListener('beforeunload', () => {
