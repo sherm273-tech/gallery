@@ -93,61 +93,11 @@ async function updateForecast() {
         
         if (data.error) return;
         
-        const dailyForecasts = processDailyForecast(data.list);
-        displayDailyForecast(dailyForecasts);
-        
         const hourlyForecasts = processHourlyForecast(data.list);
         displayHourlyForecast(hourlyForecasts);
     } catch (error) {
         console.error('Error fetching forecast:', error);
     }
-}
-
-function processDailyForecast(forecastList) {
-    const dailyData = {};
-    
-    forecastList.forEach(item => {
-        const date = new Date(item.dt * 1000);
-        const dateKey = date.toLocaleDateString('en-AU');
-        
-        if (!dailyData[dateKey]) {
-            dailyData[dateKey] = { date: date, temps: [], weather: item.weather[0], items: [] };
-        }
-        
-        dailyData[dateKey].temps.push(item.main.temp);
-        dailyData[dateKey].items.push(item);
-    });
-    
-    return Object.values(dailyData).slice(0, 5).map(day => ({
-        date: day.date,
-        high: Math.round(Math.max(...day.temps)),
-        low: Math.round(Math.min(...day.temps)),
-        weather: day.items[Math.floor(day.items.length / 2)].weather[0]
-    }));
-}
-
-function displayDailyForecast(forecasts) {
-    const container = document.getElementById('dailyForecast');
-    container.innerHTML = '';
-    
-    forecasts.forEach((forecast, index) => {
-        const item = document.createElement('div');
-        item.className = 'forecast-item';
-        
-        const dayName = index === 0 ? 'Today' : forecast.date.toLocaleDateString('en-AU', { weekday: 'short' });
-        
-        item.innerHTML = `
-            <span class="forecast-day">${dayName}</span>
-            <img class="forecast-icon-small" src="${getWeatherIconUrl(forecast.weather.icon)}" alt="${forecast.weather.description}">
-            <span class="forecast-desc">${forecast.weather.description}</span>
-            <div class="forecast-temps">
-                <span class="forecast-high">${forecast.high}°</span>
-                <span class="forecast-low">${forecast.low}°</span>
-            </div>
-        `;
-        
-        container.appendChild(item);
-    });
 }
 
 function processHourlyForecast(forecastList) {

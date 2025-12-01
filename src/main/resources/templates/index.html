@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Smart Mirror Slideshow</title>
+    <title>Sangs Slideshow</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -18,126 +18,178 @@
 
     <!-- Magic Mirror Overlay -->
     <div class="mirror-overlay" id="mirrorOverlay">
-
-        <!-- Clock - Top Center -->
-        <div class="clock-widget">
-            <div class="clock-time" id="clockTime">12:00</div>
-            <div class="clock-date" id="clockDate">Monday, January 1, 2024</div>
-        </div>
-
-        <!-- Weather - Top Left -->
-        <div class="weather-widget">
-            <div class="weather-location" id="weatherLocation">Essendon</div>
-            <div class="weather-main">
-                <img class="weather-icon" id="weatherIcon" src="" alt="Weather">
-                <div class="weather-temp" id="weatherTemp">--°</div>
-            </div>
-            <div class="weather-desc" id="weatherDesc">Loading...</div>
-            <div class="weather-details">
-                <div class="weather-detail">
-                    <span>💧</span>
-                    <span id="weatherHumidity">--%</span>
+        
+        <!-- Top Bar -->
+        <div class="mirror-top">
+            <!-- Weather - Top Left -->
+            <div class="weather-widget">
+                <div class="weather-location" id="weatherLocation">Essendon</div>
+                <div class="weather-main">
+                    <img class="weather-icon" id="weatherIcon" src="" alt="Weather">
+                    <div class="weather-temp" id="weatherTemp">--°</div>
                 </div>
-                <div class="weather-detail">
-                    <span>💨</span>
-                    <span id="weatherWind">-- km/h</span>
-                </div>
-                <div class="weather-detail">
-                    <span>🌡️</span>
-                    <span id="weatherFeels">--°</span>
+                <div class="weather-desc" id="weatherDesc">Loading...</div>
+                <div class="weather-details">
+                    <div class="weather-detail">
+                        <span>💧</span>
+                        <span id="weatherHumidity">--%</span>
+                    </div>
+                    <div class="weather-detail">
+                        <span>💨</span>
+                        <span id="weatherWind">-- km/h</span>
+                    </div>
+                    <div class="weather-detail">
+                        <span>🌡️</span>
+                        <span id="weatherFeels">--°</span>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Daily Forecast - Bottom Left -->
-        <div class="forecast-widget">
-            <div class="forecast-title">5-Day Forecast</div>
-            <div id="dailyForecast">
-                <!-- Populated by JavaScript -->
+            <!-- Clock - Top Right -->
+            <div class="clock-widget">
+                <div class="clock-time" id="clockTime">12:00</div>
+                <div class="clock-date" id="clockDate">Monday, January 1, 2024</div>
             </div>
         </div>
 
-        <!-- Hourly Forecast - Bottom Right -->
-        <div class="hourly-widget">
-            <div class="forecast-title">Hourly Forecast</div>
-            <div id="hourlyForecast">
-                <!-- Populated by JavaScript -->
+        <!-- Bottom Bar -->
+        <div class="mirror-bottom">
+            <!-- Hourly Forecast - Bottom Left -->
+            <div class="hourly-widget">
+                <div class="forecast-title">Hourly Forecast</div>
+                <div id="hourlyForecast">
+                    <!-- Populated by JavaScript -->
+                </div>
             </div>
-        </div>
 
-        <!-- Compliment - Bottom Center -->
-        <div class="compliment-widget">
-            <div class="compliment-text" id="compliment">Have a great day!</div>
+            <!-- Compliment - Bottom Right -->
+            <div class="compliment-widget">
+                <div class="compliment-text" id="compliment">Have a great day!</div>
+            </div>
         </div>
     </div>
 
     <!-- Controls Panel -->
     <div id="controls">
+        <div class="controls-header">
+            <h1>Sangs Slideshow</h1>
+            <p class="controls-subtitle">Configure your slideshow experience</p>
+        </div>
+
         <!-- Tab Navigation -->
         <div class="tab-nav">
-            <button class="tab-button active" data-tab="photos">📷 Photo Settings</button>
-            <button class="tab-button" data-tab="music">🎵 Music Settings</button>
+            <button class="tab-button active" data-tab="photos">
+                <span class="tab-icon">📷</span>
+                <span class="tab-label">Photos</span>
+            </button>
+            <button class="tab-button" data-tab="music">
+                <span class="tab-icon">🎵</span>
+                <span class="tab-label">Music</span>
+            </button>
         </div>
 
         <!-- Photos Tab -->
         <div class="tab-content active" id="photos-tab">
-            <label>Select Folders (drag to reorder, at least one required):</label>
-            <div class="folder-controls">
-                <button id="selectAllFolders">Select All</button>
-                <button id="selectNoFolders">Deselect All</button>
-            </div>
-            <div id="folderList">
-                <p style="color: #aaa;">Loading folders...</p>
-            </div>
-            <div class="error-message" id="folderError">⚠️ Please select at least one folder</div>
-
-            <label for="startFolderSelect">Starting folder (optional):</label>
-            <select id="startFolderSelect">
-                <option value="">None (use folder order above)</option>
-            </select>
-            
-            <div class="checkbox-container">
-                <input type="checkbox" id="shuffleAllCheckbox">
-                <label for="shuffleAllCheckbox">Shuffle ALL images together (ignore folders)</label>
+            <div class="settings-section">
+                <h3 class="section-title">Folder Selection</h3>
+                <p class="section-description">Choose which folders to include in your slideshow. Drag to reorder.</p>
+                
+                <div class="folder-controls">
+                    <button class="control-btn secondary" id="selectAllFolders">Select All</button>
+                    <button class="control-btn secondary" id="selectNoFolders">Deselect All</button>
+                </div>
+                
+                <div id="folderList" class="item-list">
+                    <p style="color: #aaa;">Loading folders...</p>
+                </div>
+                
+                <div class="error-message" id="folderError">
+                    ⚠️ Please select at least one folder
+                </div>
             </div>
 
-            <div class="checkbox-container">
-                <input type="checkbox" id="randomizeCheckbox" checked>
-                <label for="randomizeCheckbox">Randomise images within folders</label>
-            </div>
+            <div class="settings-section">
+                <h3 class="section-title">Playback Options</h3>
+                
+                <div class="form-group">
+                    <label for="startFolderSelect">Starting folder (optional)</label>
+                    <select id="startFolderSelect" class="form-select">
+                        <option value="">None (use folder order above)</option>
+                    </select>
+                </div>
+                
+                <div class="checkbox-group">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="shuffleAllCheckbox">
+                        <label for="shuffleAllCheckbox">
+                            <strong>Shuffle all images together</strong>
+                            <span class="checkbox-help">Ignore folder organization and mix all photos</span>
+                        </label>
+                    </div>
 
-            <label for="speedSelect">Image display duration:</label>
-            <select id="speedSelect">
-                <option value="500">Very Very Quick (0.5 second)</option>
-                <option value="1000">Very Quick (1 second)</option>
-                <option value="2000">Fast (2 seconds)</option>
-                <option value="3000">Medium (3 seconds)</option>
-                <option value="5000" selected>Normal (5 seconds)</option>
-                <option value="7000">Slow (7 seconds)</option>
-                <option value="10000">Very Slow (10 seconds)</option>
-            </select>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="randomizeCheckbox" checked>
+                        <label for="randomizeCheckbox">
+                            <strong>Randomize within folders</strong>
+                            <span class="checkbox-help">Shuffle photos within each folder</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="speedSelect">Image display duration</label>
+                    <select id="speedSelect" class="form-select">
+                        <option value="500">Very Very Quick (0.5 second)</option>
+                        <option value="1000">Very Quick (1 second)</option>
+                        <option value="2000">Fast (2 seconds)</option>
+                        <option value="3000">Medium (3 seconds)</option>
+                        <option value="5000" selected>Normal (5 seconds)</option>
+                        <option value="7000">Slow (7 seconds)</option>
+                        <option value="10000">Very Slow (10 seconds)</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
         <!-- Music Tab -->
         <div class="tab-content" id="music-tab">
-            <label>Select Music (drag to reorder):</label>
-            <div class="music-controls">
-                <button id="selectAllMusic">Select All</button>
-                <button id="selectNoMusic">No Music</button>
-            </div>
-            <div class="checkbox-container">
-                <input type="checkbox" id="randomizeMusicCheckbox">
-                <label for="randomizeMusicCheckbox">Randomize music order</label>
-            </div>
-            <div id="musicList">
-                <p style="color: #aaa;">Loading music...</p>
+            <div class="settings-section">
+                <h3 class="section-title">Music Selection</h3>
+                <p class="section-description">Choose background music for your slideshow. Drag to reorder tracks.</p>
+                
+                <div class="music-controls">
+                    <button class="control-btn secondary" id="selectAllMusic">Select All</button>
+                    <button class="control-btn secondary" id="selectNoMusic">No Music</button>
+                </div>
+                
+                <div class="checkbox-container" style="margin-bottom: 15px;">
+                    <input type="checkbox" id="randomizeMusicCheckbox">
+                    <label for="randomizeMusicCheckbox">
+                        <strong>Randomize playback order</strong>
+                        <span class="checkbox-help">Shuffle the music playlist</span>
+                    </label>
+                </div>
+                
+                <div id="musicList" class="item-list">
+                    <p style="color: #aaa;">Loading music...</p>
+                </div>
             </div>
         </div>
         
-        <button id="startButton">Start Slideshow</button>
-        
-        <div style="color: #aaa; font-size: 14px; text-align: center; margin-top: 10px;">
-            <p>Controls: Space/P = Pause/Play | ← → = Previous/Next | M = Toggle Mirror</p>
+        <div class="controls-footer">
+            <button id="startButton" class="start-button">
+                <span class="button-icon">▶</span>
+                <span class="button-text">Start Slideshow</span>
+            </button>
+            
+            <div class="keyboard-shortcuts">
+                <div class="shortcuts-title">Keyboard Shortcuts</div>
+                <div class="shortcuts-list">
+                    <span class="shortcut"><kbd>Space</kbd> or <kbd>P</kbd> Pause/Play</span>
+                    <span class="shortcut"><kbd>←</kbd> <kbd>→</kbd> Previous/Next</span>
+                    <span class="shortcut"><kbd>M</kbd> Toggle Mirror</span>
+                </div>
+            </div>
         </div>
     </div>
 
