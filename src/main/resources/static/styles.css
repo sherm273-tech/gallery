@@ -1,0 +1,561 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    overflow: hidden;
+    font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    color: #fff;
+    cursor: default;
+}
+
+body.slideshow-active {
+    cursor: none;
+    background: #000;
+}
+
+/* ===== SLIDESHOW BACKGROUND ===== */
+#slideshow {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: contain; /* scales image without cropping */
+    z-index: 0;
+    filter: brightness(0.7);
+}
+
+/* ===== MAGIC MIRROR OVERLAY ===== */
+.mirror-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 5;
+    pointer-events: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto 1fr auto;
+    padding: 2vw;
+    gap: 1.5vw;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+}
+
+.mirror-overlay.hidden {
+    opacity: 0;
+}
+
+.mirror-overlay > * {
+    pointer-events: none;
+}
+
+/* Clock Widget - Top Center */
+.clock-widget {
+    grid-column: 2;
+    grid-row: 1;
+    text-align: center;
+    text-shadow: 0 0 1vw rgba(0,0,0,1), 0 0 2vw rgba(0,0,0,0.8), 0.05vw 0.05vw 0.2vw rgba(0,0,0,1);
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(1vw);
+    padding: 1vw 2vw;
+    border-radius: 1vw;
+}
+
+.clock-time {
+    font-size: 6vw;
+    font-weight: 400;
+    letter-spacing: -0.1vw;
+    line-height: 1;
+    color: #ffffff;
+}
+
+.clock-date {
+    font-size: 1.5vw;
+    font-weight: 300;
+    opacity: 1;
+    margin-top: 0.2vw;
+    color: #ffffff;
+}
+
+/* Weather Widget - Top Left */
+.weather-widget {
+    grid-column: 1;
+    grid-row: 1;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(1.5vw);
+    padding: 2vw;
+    border-radius: 1vw;
+    max-width: 20vw;
+    box-shadow: 0 0.5vw 2vw rgba(0,0,0,0.4);
+}
+
+.weather-location {
+    font-size: 1.5vw;
+    margin-bottom: 0.8vw;
+    opacity: 0.95;
+    font-weight: 400;
+}
+
+.weather-main {
+    display: flex;
+    align-items: center;
+    gap: 1.5vw;
+    margin-bottom: 0.8vw;
+}
+
+.weather-icon {
+    width: 5vw;
+    height: 5vw;
+    filter: brightness(0) invert(1) drop-shadow(0 0 0.5vw rgba(255,255,255,0.3));
+}
+
+.weather-temp {
+    font-size: 4vw;
+    font-weight: 300;
+    line-height: 1;
+}
+
+.weather-desc {
+    font-size: 1.5vw;
+    text-transform: capitalize;
+    margin-bottom: 0.8vw;
+    opacity: 0.9;
+}
+
+.weather-details {
+    display: flex;
+    gap: 1vw;
+    font-size: 1vw;
+    opacity: 0.85;
+}
+
+.weather-detail {
+    display: flex;
+    align-items: center;
+    gap: 0.3vw;
+}
+
+/* Daily Forecast Widget - Bottom Left */
+.forecast-widget {
+    grid-column: 1;
+    grid-row: 3;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(1.5vw);
+    padding: 2vw;
+    border-radius: 1vw;
+    max-width: 25vw;
+    box-shadow: 0 0.5vw 2vw rgba(0,0,0,0.4);
+}
+
+.forecast-title {
+    font-size: 1.5vw;
+    margin-bottom: 0.8vw;
+    opacity: 0.95;
+    font-weight: 400;
+}
+
+.forecast-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5vw 0;
+    border-bottom: 0.1vw solid rgba(255,255,255,0.15);
+}
+
+.forecast-item:last-child {
+    border-bottom: none;
+}
+
+.forecast-day {
+    font-size: 1.2vw;
+    min-width: 4vw;
+    font-weight: 400;
+}
+
+.forecast-icon-small {
+    width: 2.5vw;
+    height: 2.5vw;
+    filter: brightness(0) invert(1);
+}
+
+.forecast-desc {
+    font-size: 1vw;
+    opacity: 0.8;
+    text-transform: capitalize;
+    flex: 1;
+    padding: 0 0.5vw;
+}
+
+.forecast-temps {
+    display: flex;
+    gap: 0.8vw;
+    font-size: 1.2vw;
+}
+
+.forecast-high {
+    font-weight: 400;
+}
+
+.forecast-low {
+    opacity: 0.6;
+}
+
+/* Hourly Forecast Widget - Bottom Right */
+.hourly-widget {
+    grid-column: 3;
+    grid-row: 3;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(1.5vw);
+    padding: 2vw;
+    border-radius: 1vw;
+    max-width: 22vw;
+    max-height: 50vh;
+    box-shadow: 0 0.5vw 2vw rgba(0,0,0,0.4);
+    justify-self: end;
+}
+
+#hourlyForecast {
+    max-height: 40vh;
+    overflow-y: auto;
+}
+
+#hourlyForecast::-webkit-scrollbar {
+    width: 0.5vw;
+}
+
+#hourlyForecast::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 0.3vw;
+}
+
+#hourlyForecast::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 0.3vw;
+}
+
+.hourly-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.3vw 0;
+    border-bottom: 0.1vw solid rgba(255,255,255,0.1);
+}
+
+.hourly-item:last-child {
+    border-bottom: none;
+}
+
+.hourly-time {
+    font-size: 1vw;
+    min-width: 4vw;
+}
+
+.hourly-temp {
+    font-size: 1.2vw;
+    font-weight: 400;
+}
+
+/* Compliment Widget - Bottom Center */
+.compliment-widget {
+    grid-column: 2;
+    grid-row: 3;
+    text-align: center;
+    text-shadow: 0.2vw 0.2vw 0.5vw rgba(0,0,0,0.9);
+}
+
+.compliment-text {
+    font-size: 2.5vw;
+    font-weight: 300;
+    font-style: italic;
+    opacity: 0.9;
+}
+
+/* ===== LOADING OVERLAY ===== */
+#loadingOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    flex-direction: column;
+    gap: 2vw;
+}
+
+#loadingOverlay.active {
+    display: flex;
+}
+
+.spinner {
+    border: 0.8vw solid #333;
+    border-top: 0.8vw solid #4CAF50;
+    border-radius: 50%;
+    width: 8vw;
+    height: 8vw;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#loadingText {
+    color: #fff;
+    font-size: 1.5vw;
+}
+
+/* ===== CONTROLS PANEL ===== */
+#controls {
+    position: fixed;
+    z-index: 100;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.95);
+    padding: 2vw;
+    border-radius: 1vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    min-width: 40vw;
+    max-width: 90vw;
+    box-shadow: 0 1.5vw 4vw rgba(0,0,0,0.8);
+    cursor: default;
+}
+
+#controls.hidden {
+    display: none;
+}
+
+/* Tab Navigation */
+.tab-nav {
+    display: flex;
+    gap: 0;
+    margin-bottom: 2vw;
+    width: 100%;
+    border-bottom: 0.2vw solid #333;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 1vw 2vw;
+    font-size: 1.5vw;
+    background: rgba(255, 255, 255, 0.05);
+    color: #aaa;
+    border: none;
+    cursor: pointer;
+    border-bottom: 0.3vw solid transparent;
+    transition: all 0.3s;
+    font-weight: 500;
+    font-family: Arial, sans-serif;
+}
+
+.tab-button:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.tab-button.active {
+    color: #4CAF50;
+    border-bottom-color: #4CAF50;
+    background: rgba(76, 175, 80, 0.1);
+}
+
+.tab-content {
+    display: none;
+    width: 100%;
+    gap: 1vw;
+    flex-direction: column;
+    align-items: center;
+}
+
+.tab-content.active {
+    display: flex;
+}
+
+#startFolderSelect, #speedSelect {
+    padding: 0.8vw 1.5vw;
+    font-size: 1.2vw;
+    border: none;
+    border-radius: 0.5vw;
+    background: #ffffffdd;
+    color: #000;
+    cursor: pointer;
+    min-width: 25vw;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5vw;
+    width: 100%;
+    justify-content: center;
+}
+
+#randomizeCheckbox, #shuffleAllCheckbox, #randomizeMusicCheckbox {
+    width: 1.5vw;
+    height: 1.5vw;
+    cursor: pointer;
+}
+
+#startButton {
+    padding: 1.5vw 4vw;
+    font-size: 2vw;
+    cursor: pointer;
+    border: none;
+    border-radius: 0.5vw;
+    background: #4CAF50;
+    color: #fff;
+    font-weight: bold;
+    margin-top: 1vw;
+    width: 100%;
+    transition: background 0.3s;
+}
+
+#startButton:hover {
+    background: #45a049;
+}
+
+#startButton:disabled {
+    background: #666;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+label {
+    color: #fff;
+    font-size: 1.2vw;
+    font-family: Arial, sans-serif;
+}
+
+#musicList, #folderList {
+    max-height: 40vh;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.8vw;
+    border-radius: 0.5vw;
+    width: 100%;
+}
+
+.music-item, .folder-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5vw;
+    padding: 0.5vw;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+    margin-bottom: 0.3vw;
+    border-radius: 0.3vw;
+    cursor: move;
+    transition: background 0.2s;
+}
+
+.music-item:hover, .folder-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.music-item.dragging, .folder-item.dragging {
+    opacity: 0.5;
+    background: rgba(76, 175, 80, 0.3);
+}
+
+.music-item.drag-over, .folder-item.drag-over {
+    border-top: 0.3vw solid #4CAF50;
+}
+
+.drag-handle {
+    cursor: move;
+    font-size: 1vw;
+    color: #aaa;
+}
+
+.music-item input[type="checkbox"],
+.folder-item input[type="checkbox"] {
+    width: 1.5vw;
+    height: 1.5vw;
+    cursor: pointer;
+}
+
+.music-item label,
+.folder-item label {
+    font-size: 1vw;
+    cursor: pointer;
+    flex: 1;
+}
+
+#selectAllMusic, #selectNoMusic,
+#selectAllFolders, #selectNoFolders {
+    padding: 0.5vw 1.5vw;
+    font-size: 1vw;
+    cursor: pointer;
+    border: none;
+    border-radius: 0.3vw;
+    background: #2196F3;
+    color: #fff;
+    margin: 0.3vw;
+}
+
+#selectNoMusic, #selectNoFolders {
+    background: #f44336;
+}
+
+.music-controls, .folder-controls {
+    display: flex;
+    gap: 0.5vw;
+    margin-top: 0.3vw;
+    flex-wrap: wrap;
+}
+
+.error-message {
+    color: #ff6b6b;
+    font-size: 1vw;
+    padding: 0.5vw;
+    background: rgba(255, 107, 107, 0.1);
+    border-radius: 0.3vw;
+    border: 0.1vw solid #ff6b6b;
+    display: none;
+    width: 100%;
+    text-align: center;
+}
+
+.error-message.show {
+    display: block;
+}
+
+/* Fullscreen styles */
+body:-webkit-full-screen,
+body:-moz-full-screen,
+body:-ms-fullscreen,
+body:fullscreen {
+    width: 100%;
+    height: 100%;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-1vw);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.weather-widget, .forecast-widget, .hourly-widget {
+    animation: fadeIn 0.8s ease-out;
+}
