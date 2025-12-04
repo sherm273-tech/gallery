@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.HandlerMapping;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -32,6 +33,11 @@ public class ImageController {
     @Value("${music.folder}")
     private String musicFolder;
 
+    private static final String SESSION_IMAGE_QUEUE = "imageQueue";
+    private static final String SESSION_SHOWN_IMAGES = "shownImages";
+    private static final String SESSION_REQUEST_PARAMS = "requestParams";
+    private static final String SESSION_ALL_IMAGES = "allImages";
+
     // Request DTO for image list
     public static class ImageListRequest {
         private String startFolder;
@@ -50,6 +56,22 @@ public class ImageController {
         
         public List<String> getSelectedFolders() { return selectedFolders; }
         public void setSelectedFolders(List<String> selectedFolders) { this.selectedFolders = selectedFolders; }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            ImageListRequest that = (ImageListRequest) o;
+            return randomize == that.randomize &&
+                   shuffleAll == that.shuffleAll &&
+                   Objects.equals(startFolder, that.startFolder) &&
+                   Objects.equals(selectedFolders, that.selectedFolders);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(startFolder, randomize, shuffleAll, selectedFolders);
+        }
     }
 
     @GetMapping("/")
@@ -110,7 +132,120 @@ public class ImageController {
 
     @PostMapping("/api/images/list")
     @ResponseBody
-    public List<String> getImageList(@RequestBody ImageListRequest request) throws IOException {
+    public List<String> getImageList(@RequestBody ImageListRequest request, HttpSession session) throws IOException {
+        // Check if parameters have changed - if so, reset session
+        ImageListRequest previousRequest = (ImageListRequest) session.getAttribute(SESSION_REQUEST_PARAMS);
+        if (previousRequest == null || !previousRequest.equals(request)) {
+            session.removeAttribute(SESSION_IMAGE_QUEUE);
+            session.removeAttribute(SESSION_SHOWN_IMAGES);
+            session.removeAttribute(SESSION_ALL_IMAGES);
+            session.setAttribute(SESSION_REQUEST_PARAMS, request);
+        }
+
+        // Get or initialize the image queue
+        @SuppressWarnings("unchecked")
+        List<String> imageQueue = (List<String>) session.getAttribute(SESSION_IMAGE_QUEUE);
+        
+        @SuppressWarnings("unchecked")
+        Set<String> shownImages = (Set<String>) session.getAttribute(SESSION_SHOWN_IMAGES);
+        
+        @SuppressWarnings("unchecked")
+        List<String> allImages = (List<String>) session.getAttribute(SESSION_ALL_IMAGES);
+        
+        if (imageQueue == null || imageQueue.isEmpty()) {
+            // Generate new queue
+            imageQueue = generateImageList(request);
+            allImages = new ArrayList<>(imageQueue);
+            shownImages = new HashSet<>();
+            
+            session.setAttribute(SESSION_IMAGE_QUEUE, new ArrayList<>(imageQueue));
+            session.setAttribute(SESSION_ALL_IMAGES, allImages);
+            session.setAttribute(SESSION_SHOWN_IMAGES, shownImages);
+        }
+
+        return new ArrayList<>(imageQueue);
+    }
+
+    @PostMapping("/api/images/next")
+    @ResponseBody
+    public Map<String, Object> getNextImage(@RequestBody ImageListRequest request, HttpSession session) throws IOException {
+        @SuppressWarnings("unchecked")
+        List<String> imageQueue = (List<String>) session.getAttribute(SESSION_IMAGE_QUEUE);
+        
+        @SuppressWarnings("unchecked")
+        Set<String> shownImages = (Set<String>) session.getAttribute(SESSION_SHOWN_IMAGES);
+        
+        @SuppressWarnings("unchecked")
+        List<String> allImages = (List<String>) session.getAttribute(SESSION_ALL_IMAGES);
+
+        Map<String, Object> response = new HashMap<>();
+
+        // If queue is empty but we have shown images, it means cycle is complete
+        if ((imageQueue == null || imageQueue.isEmpty()) && shownImages != null && !shownImages.isEmpty()) {
+            // Regenerate queue with remaining images (those not shown)
+            if (allImages == null) {
+                allImages = generateImageList(request);
+                session.setAttribute(SESSION_ALL_IMAGES, allImages);
+            }
+            
+            // Create new queue from images not yet shown
+            imageQueue = new ArrayList<>();
+            for (String img : allImages) {
+                if (!shownImages.contains(img)) {
+                    imageQueue.add(img);
+                }
+            }
+            
+            // If all images have been shown, reset and start new cycle
+            if (imageQueue.isEmpty()) {
+                shownImages.clear();
+                imageQueue = new ArrayList<>(allImages);
+                response.put("cycleComplete", true);
+            }
+            
+            session.setAttribute(SESSION_IMAGE_QUEUE, imageQueue);
+            session.setAttribute(SESSION_SHOWN_IMAGES, shownImages);
+        }
+
+        if (imageQueue == null || imageQueue.isEmpty()) {
+            response.put("image", null);
+            response.put("hasMore", false);
+            response.put("cycleComplete", true);
+            return response;
+        }
+
+        // Get next image from queue
+        String nextImage = imageQueue.remove(0);
+        shownImages.add(nextImage);
+
+        // Update session
+        session.setAttribute(SESSION_IMAGE_QUEUE, imageQueue);
+        session.setAttribute(SESSION_SHOWN_IMAGES, shownImages);
+
+        response.put("image", nextImage);
+        response.put("hasMore", !imageQueue.isEmpty());
+        response.put("remaining", imageQueue.size());
+        response.put("totalShown", shownImages.size());
+        response.put("totalImages", allImages != null ? allImages.size() : 0);
+        response.put("cycleComplete", false);
+
+        return response;
+    }
+
+    @PostMapping("/api/images/reset")
+    @ResponseBody
+    public Map<String, String> resetImageSession(HttpSession session) {
+        session.removeAttribute(SESSION_IMAGE_QUEUE);
+        session.removeAttribute(SESSION_SHOWN_IMAGES);
+        session.removeAttribute(SESSION_REQUEST_PARAMS);
+        session.removeAttribute(SESSION_ALL_IMAGES);
+        
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "reset");
+        return response;
+    }
+
+    private List<String> generateImageList(ImageListRequest request) throws IOException {
         String startFolder = request.getStartFolder();
         boolean randomize = request.isRandomize();
         boolean shuffleAll = request.isShuffleAll();

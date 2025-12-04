@@ -19,12 +19,10 @@ const loadingText = document.getElementById("loadingText");
 const folderError = document.getElementById("folderError");
 const mirrorOverlay = document.getElementById("mirrorOverlay");
 
-let images = [];
 let musicFiles = [];
 let folderFiles = [];
 let selectedMusic = [];
 let currentMusicIndex = 0;
-let index = 0;
 let delay = 5000;
 let intervalId;
 let wakeLock = null;
@@ -35,6 +33,11 @@ let draggedElement = null;
 let isPaused = false;
 let slideshowStarted = false;
 let mirrorVisible = true;
+
+// New session-based tracking variables
+let currentRequestParams = null;
+let imageHistory = [];
+let totalImages = 0;
 
 // ===== MAGIC MIRROR FUNCTIONS =====
 
@@ -511,82 +514,118 @@ document.addEventListener('keydown', (e) => {
 });
 
 function previousImage() {
-    index = (index - 1 + images.length) % images.length;
-    showImage(index);
+    if (imageHistory.length > 1) {
+        // Remove current image
+        imageHistory.pop();
+        // Show previous image
+        const prevImage = imageHistory[imageHistory.length - 1];
+        showImageByPath(prevImage);
+    }
 }
 
-async function loadImages() {
-    console.log('Loading images...');
-    const startFolder = startFolderSelect.value;
-    const randomize = randomizeCheckbox.checked;
-    const shuffleAll = shuffleAllCheckbox.checked;
-    const selectedFolders = getSelectedFolders();
+async function initializeSlideshow() {
+    console.log('Initializing slideshow with session tracking...');
     
-    const requestBody = {
-        startFolder: startFolder || null,
-        randomize: randomize,
-        shuffleAll: shuffleAll,
-        selectedFolders: shuffleAll ? [] : selectedFolders
+    currentRequestParams = {
+        startFolder: startFolderSelect.value || null,
+        randomize: randomizeCheckbox.checked,
+        shuffleAll: shuffleAllCheckbox.checked,
+        selectedFolders: shuffleAllCheckbox.checked ? [] : getSelectedFolders()
     };
     
-    console.log('Request body:', requestBody);
+    console.log('Request params:', currentRequestParams);
     
+    // Initialize the session
     const response = await fetch('/api/images/list', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(currentRequestParams)
     });
     
-    images = await response.json();
-    console.log('Images loaded:', images.length);
+    const initialImages = await response.json();
+    totalImages = initialImages.length;
+    console.log(`Total images in pool: ${totalImages}`);
     
-    preloadImages(0, Math.min(PRELOAD_COUNT, images.length));
-}
-
-function preloadImages(startIndex, count) {
-    for (let i = 0; i < count; i++) {
-        const imageIndex = (startIndex + i) % images.length;
-        const url = "/images/" + images[imageIndex];
-        
-        if (imageCache.has(url)) continue;
-        
-        const img = new Image();
-        img.onload = () => console.log('Preloaded:', images[imageIndex]);
-        img.onerror = () => console.error('Failed to preload:', images[imageIndex]);
-        img.src = url;
-        imageCache.set(url, img);
-    }
-    
-    if (imageCache.size > PRELOAD_COUNT * 2) {
-        const keysToDelete = [];
-        let deleteCount = 0;
-        for (const key of imageCache.keys()) {
-            if (deleteCount++ < imageCache.size - PRELOAD_COUNT * 2) {
-                keysToDelete.push(key);
-            } else {
-                break;
-            }
-        }
-        keysToDelete.forEach(key => imageCache.delete(key));
+    // Preload first batch
+    for (let i = 0; i < Math.min(PRELOAD_COUNT, initialImages.length); i++) {
+        preloadImage(initialImages[i]);
     }
 }
 
-function showImage(i) {
-    const url = "/images/" + images[i];
+function preloadImage(imagePath) {
+    const url = "/images/" + imagePath;
+    
+    if (imageCache.has(url)) return;
+    
+    const img = new Image();
+    img.onload = () => console.log('Preloaded:', imagePath);
+    img.onerror = () => console.error('Failed to preload:', imagePath);
+    img.src = url;
+    imageCache.set(url, img);
+}
+
+function showImageByPath(imagePath) {
+    const url = "/images/" + imagePath;
     
     if (imageCache.has(url)) {
         imgEl.src = imageCache.get(url).src;
     } else {
         imgEl.src = url;
+        preloadImage(imagePath);
     }
-    
-    const nextBatchStart = (i + 1) % images.length;
-    preloadImages(nextBatchStart, PRELOAD_COUNT);
 }
 
-function nextImage() {
-    index = (index + 1) % images.length;
-    showImage(index);
+async function nextImage() {
+    try {
+        // Request next image from server
+        const response = await fetch('/api/images/next', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(currentRequestParams)
+        });
+        
+        const data = await response.json();
+        
+        if (data.cycleComplete) {
+            console.log('=== CYCLE COMPLETE - All images shown, starting new cycle ===');
+            imageHistory = [];
+        }
+        
+        if (data.image) {
+            imageHistory.push(data.image);
+            showImageByPath(data.image);
+            
+            console.log(`Showing: ${data.image}`);
+            console.log(`Progress: ${data.totalShown}/${data.totalImages} images shown`);
+            console.log(`Remaining in queue: ${data.remaining}`);
+            
+            // Preload next images
+            if (data.hasMore) {
+                // Request a few more images to preload
+                for (let i = 0; i < Math.min(PRELOAD_COUNT, data.remaining); i++) {
+                    // We'll preload as we get them from the server
+                }
+            }
+        } else {
+            console.log('No more images available');
+        }
+        
+        // Clean up old cache entries
+        if (imageCache.size > PRELOAD_COUNT * 3) {
+            const keysToDelete = [];
+            let count = 0;
+            for (const key of imageCache.keys()) {
+                if (count++ < imageCache.size - PRELOAD_COUNT * 2) {
+                    keysToDelete.push(key);
+                } else {
+                    break;
+                }
+            }
+            keysToDelete.forEach(key => imageCache.delete(key));
+        }
+    } catch (err) {
+        console.error('Error fetching next image:', err);
+    }
 }
 
 async function requestFullscreen() {
@@ -638,6 +677,7 @@ document.addEventListener('visibilitychange', async () => {
 document.addEventListener('fullscreenchange', () => {
     if (!document.fullscreenElement) {
         console.log('Exited fullscreen');
+        document.body.style.cursor = "default";
     }
 });
 
@@ -651,6 +691,7 @@ startBtn.addEventListener("click", async () => {
     controls.classList.add("hidden");
     loadingOverlay.classList.add("active");
     document.body.classList.add("slideshow-active");
+    document.body.style.cursor = "none";
     
     await requestFullscreen();
     await requestWakeLock();
@@ -658,20 +699,22 @@ startBtn.addEventListener("click", async () => {
     keepAwakeInterval = setInterval(simulateActivity, 30000);
     
     playMusic();
-    await loadImages();
+    await initializeSlideshow();
     
+    // Wait for preloading
     let preloadedCount = 0;
     const checkInterval = setInterval(() => {
         preloadedCount = imageCache.size;
-        loadingText.textContent = `Preloading images... (${preloadedCount}/${Math.min(PRELOAD_COUNT, images.length)})`;
+        loadingText.textContent = `Preloading images... (${preloadedCount}/${Math.min(PRELOAD_COUNT, totalImages)})`;
         
-        if (preloadedCount >= Math.min(PRELOAD_COUNT, images.length) || preloadedCount >= images.length) {
+        if (preloadedCount >= Math.min(PRELOAD_COUNT, totalImages) || preloadedCount >= totalImages) {
             clearInterval(checkInterval);
             loadingOverlay.classList.remove("active");
             
-            if (images.length > 0) {
+            if (totalImages > 0) {
                 slideshowStarted = true;
-                showImage(0);
+                imageHistory = [];
+                nextImage(); // Show first image
                 intervalId = setInterval(nextImage, delay);
             }
         }
@@ -681,6 +724,7 @@ startBtn.addEventListener("click", async () => {
 window.addEventListener('beforeunload', () => {
     if (wakeLock !== null) wakeLock.release();
     if (keepAwakeInterval) clearInterval(keepAwakeInterval);
+    document.body.style.cursor = "default";
 });
 
 // ===== INITIALIZATION =====
