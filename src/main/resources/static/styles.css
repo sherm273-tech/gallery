@@ -271,20 +271,20 @@ body.slideshow-active #slideshow {
 
 .controls-header {
     background: linear-gradient(135deg, #4a9eff 0%, #357abd 100%);
-    padding: 40px 30px;
+    padding: 25px 30px;
     text-align: center;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .controls-header h1 {
-    font-size: 42px;
+    font-size: 36px;
     font-weight: 600;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     letter-spacing: -0.5px;
 }
 
 .controls-subtitle {
-    font-size: 18px;
+    font-size: 16px;
     opacity: 0.95;
     font-weight: 300;
 }
@@ -367,6 +367,32 @@ body.slideshow-active #slideshow {
     color: #b0b0b0;
     margin-bottom: 25px;
     line-height: 1.5;
+}
+
+/* ===== SEARCH CONTAINER ===== */
+.search-container {
+    margin-bottom: 15px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 18px;
+    background: #1e1e2e;
+    border: 2px solid #3a3a4e;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 15px;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #4a9eff;
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1);
+}
+
+.search-input::placeholder {
+    color: #6a6a7e;
 }
 
 /* ===== FORM ELEMENTS ===== */
@@ -540,6 +566,11 @@ body.slideshow-active #slideshow {
     background: #3a3a5e;
 }
 
+.folder-item.hidden,
+.music-item.hidden {
+    display: none;
+}
+
 .drag-handle {
     font-size: 18px;
     color: #6a6a7e;
@@ -673,12 +704,16 @@ kbd {
 
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 768px) {
+    .controls-header {
+        padding: 20px 25px;
+    }
+    
     .controls-header h1 {
-        font-size: 32px;
+        font-size: 28px;
     }
     
     .controls-subtitle {
-        font-size: 16px;
+        font-size: 14px;
     }
     
     .tab-button {

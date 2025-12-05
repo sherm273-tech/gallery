@@ -18,6 +18,8 @@ const loadingOverlay = document.getElementById("loadingOverlay");
 const loadingText = document.getElementById("loadingText");
 const folderError = document.getElementById("folderError");
 const mirrorOverlay = document.getElementById("mirrorOverlay");
+const folderSearchInput = document.getElementById('folderSearch');
+const musicSearchInput = document.getElementById('musicSearch');
 
 let musicFiles = [];
 let folderFiles = [];
@@ -218,6 +220,25 @@ async function loadFolders() {
     }
 }
 
+// Folder search functionality
+if (folderSearchInput) {
+    folderSearchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const folderItems = folderList.querySelectorAll('.folder-item');
+        
+        folderItems.forEach(item => {
+            const label = item.querySelector('label');
+            const folderName = label ? label.textContent.toLowerCase() : '';
+            
+            if (folderName.includes(searchTerm)) {
+                item.classList.remove('hidden');
+            } else {
+                item.classList.add('hidden');
+            }
+        });
+    });
+}
+
 function createFolderItem(folder, idx) {
     const div = document.createElement("div");
     div.className = "folder-item";
@@ -259,7 +280,7 @@ function getSelectedFolders() {
     
     items.forEach(item => {
         const checkbox = item.querySelector('input[type="checkbox"]');
-        if (checkbox && checkbox.checked) {
+        if (checkbox && checkbox.checked && !item.classList.contains('hidden')) {
             selected.push(checkbox.value);
         }
     });
@@ -268,7 +289,7 @@ function getSelectedFolders() {
 }
 
 selectAllFoldersBtn.addEventListener('click', () => {
-    const checkboxes = folderList.querySelectorAll('input[type="checkbox"]');
+    const checkboxes = folderList.querySelectorAll('.folder-item:not(.hidden) input[type="checkbox"]');
     checkboxes.forEach(cb => cb.checked = true);
     validateFolderSelection();
 });
@@ -298,6 +319,25 @@ async function loadMusicFiles() {
         console.error("Error loading music:", err);
         musicList.innerHTML = '<p style="color: #aaa;">Error loading music files</p>';
     }
+}
+
+// Music search functionality
+if (musicSearchInput) {
+    musicSearchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const musicItems = musicList.querySelectorAll('.music-item');
+        
+        musicItems.forEach(item => {
+            const label = item.querySelector('label');
+            const musicName = label ? label.textContent.toLowerCase() : '';
+            
+            if (musicName.includes(searchTerm)) {
+                item.classList.remove('hidden');
+            } else {
+                item.classList.add('hidden');
+            }
+        });
+    });
 }
 
 function createMusicItem(file, idx) {
@@ -406,7 +446,7 @@ function handleDragEnd(e) {
 }
 
 selectAllMusicBtn.addEventListener('click', () => {
-    const checkboxes = musicList.querySelectorAll('input[type="checkbox"]');
+    const checkboxes = musicList.querySelectorAll('.music-item:not(.hidden) input[type="checkbox"]');
     checkboxes.forEach(cb => cb.checked = true);
 });
 
@@ -421,7 +461,7 @@ function getSelectedMusic() {
     
     items.forEach(item => {
         const checkbox = item.querySelector('input[type="checkbox"]');
-        if (checkbox && checkbox.checked) {
+        if (checkbox && checkbox.checked && !item.classList.contains('hidden')) {
             selected.push(checkbox.value);
         }
     });
