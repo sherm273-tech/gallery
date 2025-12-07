@@ -64,12 +64,15 @@ public class WeatherController {
             RestTemplate restTemplate = new RestTemplate();
 
             LocalDate today = LocalDate.now();
-            LocalDate endDate = today.plusDays(4); // 5-day forecast
+            LocalDate endDate = today.plusDays(4); // 5-day forecast (Open-Meteo free tier limit)
 
             String url = String.format(
                     "%s?latitude=%s&longitude=%s&hourly=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=Australia/Melbourne&start_date=%s&end_date=%s",
                     WEATHER_URL, LATITUDE, LONGITUDE, today, endDate
             );
+
+            System.out.println("Fetching weather from: " + url);
+            System.out.println("Date range: " + today + " to " + endDate);
 
             Map<String, Object> response = restTemplate.getForObject(url, Map.class);
             Map<String, Object> hourly = (Map<String, Object>) response.get("hourly");
@@ -79,6 +82,13 @@ public class WeatherController {
             List<Number> humidity = (List<Number>) hourly.get("relative_humidity_2m");
             List<Number> weatherCodes = (List<Number>) hourly.get("weather_code");
             List<Number> windSpeeds = (List<Number>) hourly.get("wind_speed_10m");
+
+            System.out.println("Received " + times.size() + " hourly forecast entries");
+            
+            // Debug: print first 5 timestamps
+            for (int i = 0; i < Math.min(5, times.size()); i++) {
+                System.out.println("Time[" + i + "]: " + times.get(i));
+            }
 
             List<Map<String, Object>> forecastList = new ArrayList<>();
 
@@ -140,8 +150,17 @@ public class WeatherController {
     // Parse ISO 8601 timestamp to Unix timestamp
     private long parseTimestamp(String isoTime) {
         try {
-            return java.time.Instant.parse(isoTime).getEpochSecond();
+            // Open-Meteo returns format like "2025-12-11T20:00" without seconds/timezone
+            // Need to append seconds and timezone for proper parsing
+            String fullFormat = isoTime;
+            if (!isoTime.contains("Z") && isoTime.length() == 16) {
+                // Add seconds and Z timezone indicator
+                fullFormat = isoTime + ":00Z";
+            }
+            long timestamp = java.time.Instant.parse(fullFormat).getEpochSecond();
+            return timestamp;
         } catch (Exception e) {
+            System.err.println("Failed to parse timestamp: " + isoTime + " - Error: " + e.getMessage());
             return System.currentTimeMillis() / 1000;
         }
     }

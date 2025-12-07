@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Sangs Slideshow</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sang's and Sherm's Station</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -54,30 +56,116 @@
 
         <!-- Bottom Bar -->
         <div class="mirror-bottom">
-            <!-- Hourly Forecast - Bottom Left -->
+            <!-- Hourly Forecast - Bottom -->
             <div class="hourly-widget">
                 <div class="forecast-title">Hourly Forecast</div>
                 <div id="hourlyForecast">
                     <!-- Populated by JavaScript -->
                 </div>
             </div>
-
-            <!-- Compliment - Bottom Right -->
-            <div class="compliment-widget">
-                <div class="compliment-text" id="compliment">Have a great day!</div>
+        </div>
+        
+        <!-- Weekly Forecast Bar -->
+        <div class="mirror-weekly">
+            <div class="weekly-widget">
+                <div class="forecast-title">5-Day Forecast</div>
+                <div id="weeklyForecast">
+                    <!-- Populated by JavaScript -->
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Music Player Overlay -->
+    <div class="music-player-overlay" id="musicPlayerOverlay">
+        <div class="music-player-container">
+            <div class="music-player-header">
+                <h2>🎵 Music Player</h2>
+                <button class="close-player-btn" id="closePlayerBtn">✕</button>
+            </div>
+            
+            <div class="music-player-content">
+                <div class="now-playing">
+                    <div class="track-info">
+                        <div class="track-title" id="trackTitle">No track selected</div>
+                        <div class="track-progress-container">
+                            <span class="track-time" id="currentTime">0:00</span>
+                            <div class="track-progress-bar" id="progressBar">
+                                <div class="track-progress-fill" id="progressFill"></div>
+                            </div>
+                            <span class="track-time" id="duration">0:00</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="player-controls">
+                    <button class="player-btn" id="prevBtn" title="Previous">⏮</button>
+                    <button class="player-btn player-btn-large" id="playPauseBtn" title="Play/Pause">▶</button>
+                    <button class="player-btn" id="nextBtn" title="Next">⏭</button>
+                </div>
+                
+                <div class="volume-control">
+                    <span>🔊</span>
+                    <input type="range" id="volumeSlider" min="0" max="100" value="100" class="volume-slider">
+                    <span id="volumeValue">100%</span>
+                </div>
+                
+                <div class="playlist-info">
+                    <span id="playlistPosition">Track 0 of 0</span>
+                </div>
+            </div>
+            
+            <button class="edit-playlist-btn" id="editPlaylistBtn">Edit Playlist</button>
+        </div>
+    </div>
+
+    <!-- Initial Menu -->
+    <div id="initialMenu" class="initial-menu">
+        <div class="menu-container">
+            <div class="menu-header">
+                <h1>📻 Sang's and Sherm's Station</h1>
+                <p class="menu-subtitle">Choose your experience</p>
+            </div>
+            
+            <div class="menu-buttons">
+                <button class="menu-option-btn" id="photoSlideshowBtn">
+                    <span class="menu-icon">📷</span>
+                    <span class="menu-title">Photo Slideshow</span>
+                    <span class="menu-desc">Display photos with optional background music</span>
+                </button>
+                
+                <button class="menu-option-btn" id="musicOnlyBtn">
+                    <span class="menu-icon">🎵</span>
+                    <span class="menu-title">Music Player</span>
+                    <span class="menu-desc">Listen to music with playback controls</span>
+                </button>
+                
+                <button class="menu-option-btn" id="weatherDisplayBtn">
+                    <span class="menu-icon">🌤️</span>
+                    <span class="menu-title">Weather Display</span>
+                    <span class="menu-desc">Magic mirror with weather, clock & forecast</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weather Display Overlay -->
+    <div class="weather-display-overlay" id="weatherDisplayOverlay">
+        <button class="close-weather-btn" id="closeWeatherBtn">✕ Exit</button>
+    </div>
+
     <!-- Controls Panel -->
-    <div id="controls">
+    <div id="controls" class="hidden">
         <div class="controls-header">
-            <h1>Sangs Slideshow</h1>
-            <p class="controls-subtitle">Configure your slideshow experience</p>
+            <button class="back-btn" id="backToMenuBtn">← Back to Menu</button>
+            <div class="header-content">
+                <h1 id="controlsTitle">Photo Slideshow Setup</h1>
+                <p class="controls-subtitle">Configure your experience</p>
+            </div>
         </div>
 
         <!-- Tab Navigation -->
-        <div class="tab-nav">
+        <div class="tab-nav" id="tabNav">
             <button class="tab-button active" data-tab="photos">
                 <span class="tab-icon">📷</span>
                 <span class="tab-label">Photos</span>
@@ -159,7 +247,7 @@
         <div class="tab-content" id="music-tab">
             <div class="settings-section">
                 <h3 class="section-title">Music Selection</h3>
-                <p class="section-description">Choose background music for your slideshow. Drag to reorder tracks.</p>
+                <p class="section-description">Choose background music. Drag to reorder tracks.</p>
                 
                 <div class="music-controls">
                     <button class="control-btn secondary" id="selectAllMusic">Select All</button>
@@ -187,7 +275,7 @@
         <div class="controls-footer">
             <button id="startButton" class="start-button">
                 <span class="button-icon">▶</span>
-                <span class="button-text">Start Slideshow</span>
+                <span class="button-text" id="startButtonText">Start Slideshow</span>
             </button>
             
             <div class="keyboard-shortcuts">
@@ -195,7 +283,6 @@
                 <div class="shortcuts-list">
                     <span class="shortcut"><kbd>Space</kbd> or <kbd>P</kbd> Pause/Play</span>
                     <span class="shortcut"><kbd>←</kbd> <kbd>→</kbd> Previous/Next</span>
-                    <span class="shortcut"><kbd>M</kbd> Toggle Mirror</span>
                 </div>
             </div>
         </div>

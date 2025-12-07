@@ -1,12 +1,14 @@
-// ===== SLIDESHOW VARIABLES =====
+// ===== GLOBAL VARIABLES =====
 const imgEl = document.getElementById("slideshow");
 const startBtn = document.getElementById("startButton");
+const startButtonText = document.getElementById("startButtonText");
 const startFolderSelect = document.getElementById("startFolderSelect");
 const randomizeCheckbox = document.getElementById("randomizeCheckbox");
 const shuffleAllCheckbox = document.getElementById("shuffleAllCheckbox");
 const randomizeMusicCheckbox = document.getElementById("randomizeMusicCheckbox");
 const speedSelect = document.getElementById("speedSelect");
 const controls = document.getElementById("controls");
+const controlsTitle = document.getElementById("controlsTitle");
 const musicList = document.getElementById("musicList");
 const folderList = document.getElementById("folderList");
 const selectAllMusicBtn = document.getElementById("selectAllMusic");
@@ -20,6 +22,35 @@ const folderError = document.getElementById("folderError");
 const mirrorOverlay = document.getElementById("mirrorOverlay");
 const folderSearchInput = document.getElementById('folderSearch');
 const musicSearchInput = document.getElementById('musicSearch');
+const tabNav = document.getElementById('tabNav');
+const photosTab = document.getElementById('photos-tab');
+
+// Initial Menu
+const initialMenu = document.getElementById('initialMenu');
+const photoSlideshowBtn = document.getElementById('photoSlideshowBtn');
+const musicOnlyBtn = document.getElementById('musicOnlyBtn');
+const weatherDisplayBtn = document.getElementById('weatherDisplayBtn');
+const backToMenuBtn = document.getElementById('backToMenuBtn');
+
+// Music Player
+const musicPlayerOverlay = document.getElementById('musicPlayerOverlay');
+const closePlayerBtn = document.getElementById('closePlayerBtn');
+const playPauseBtn = document.getElementById('playPauseBtn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const volumeSlider = document.getElementById('volumeSlider');
+const volumeValue = document.getElementById('volumeValue');
+const trackTitle = document.getElementById('trackTitle');
+const currentTime = document.getElementById('currentTime');
+const duration = document.getElementById('duration');
+const progressBar = document.getElementById('progressBar');
+const progressFill = document.getElementById('progressFill');
+const playlistPosition = document.getElementById('playlistPosition');
+const editPlaylistBtn = document.getElementById('editPlaylistBtn');
+
+// Weather Display
+const weatherDisplayOverlay = document.getElementById('weatherDisplayOverlay');
+const closeWeatherBtn = document.getElementById('closeWeatherBtn');
 
 let musicFiles = [];
 let folderFiles = [];
@@ -30,19 +61,68 @@ let intervalId;
 let wakeLock = null;
 let keepAwakeInterval;
 let imageCache = new Map();
-const PRELOAD_COUNT = 5;
+const PRELOAD_COUNT = 20; // Increased from 5 to 20 for faster loading
+const MAX_CACHE_SIZE = 50; // Maximum images to keep in cache
+const MIN_CACHE_SIZE = 15; // Minimum cache size before aggressive preloading
 let draggedElement = null;
 let isPaused = false;
 let slideshowStarted = false;
-let mirrorVisible = true;
+let currentMode = null; // 'slideshow', 'music', or 'weather'
+let isPlaying = false;
 
-// New session-based tracking variables
+// Session-based tracking
 let currentRequestParams = null;
 let imageHistory = [];
 let totalImages = 0;
 
-// ===== MAGIC MIRROR FUNCTIONS =====
+// ===== INITIAL MENU HANDLERS =====
+photoSlideshowBtn.addEventListener('click', () => {
+    currentMode = 'slideshow';
+    initialMenu.classList.add('hidden');
+    controls.classList.remove('hidden');
+    controlsTitle.textContent = 'Photo Slideshow Setup';
+    startButtonText.textContent = 'Start Slideshow';
+    tabNav.style.display = 'flex';
+    photosTab.classList.add('active');
+});
 
+musicOnlyBtn.addEventListener('click', () => {
+    currentMode = 'music';
+    initialMenu.classList.add('hidden');
+    controls.classList.remove('hidden');
+    controlsTitle.textContent = 'Music Player Setup';
+    startButtonText.textContent = 'Start Music Player';
+    tabNav.style.display = 'none';
+    photosTab.classList.remove('active');
+    document.getElementById('music-tab').classList.add('active');
+});
+
+weatherDisplayBtn.addEventListener('click', async () => {
+    currentMode = 'weather';
+    initialMenu.classList.add('hidden');
+    weatherDisplayOverlay.classList.add('active');
+    mirrorOverlay.classList.remove('hidden');
+    
+    // Immediately update weather and background
+    updateCurrentWeather();
+    updateForecast();
+    
+    await requestWakeLock();
+});
+
+backToMenuBtn.addEventListener('click', () => {
+    controls.classList.add('hidden');
+    initialMenu.classList.remove('hidden');
+    currentMode = null;
+    // Reset tabs
+    tabNav.style.display = 'flex';
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    photosTab.classList.add('active');
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.querySelector('.tab-button[data-tab="photos"]').classList.add('active');
+});
+
+// ===== MAGIC MIRROR FUNCTIONS =====
 function updateClock() {
     const now = new Date();
     const hours = now.getHours().toString().padStart(2, '0');
@@ -54,19 +134,7 @@ function updateClock() {
     document.getElementById('clockDate').textContent = dateStr;
 }
 
-const compliments = {
-    morning: ["Good morning!", "Enjoy your day!", "Have a great day!", "You look great today!"],
-    afternoon: ["Good afternoon!", "Looking good!", "You're doing great!", "Enjoy your afternoon!"],
-    evening: ["Good evening!", "Have a lovely evening!", "You did great today!", "Time to relax!"]
-};
-
-function updateCompliment() {
-    const hour = new Date().getHours();
-    let timeOfDay = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
-    const complimentArray = compliments[timeOfDay];
-    const randomCompliment = complimentArray[Math.floor(Math.random() * complimentArray.length)];
-    document.getElementById('compliment').textContent = randomCompliment;
-}
+const compliments = [];
 
 function getWeatherIconUrl(iconCode) {
     return `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
@@ -86,9 +154,30 @@ async function updateCurrentWeather() {
         document.getElementById('weatherHumidity').textContent = `${data.main.humidity}%`;
         document.getElementById('weatherWind').textContent = `${Math.round(data.wind.speed * 3.6)} km/h`;
         document.getElementById('weatherFeels').textContent = `${Math.round(data.main.feels_like)}°`;
+        
+        // Update weather background
+        updateWeatherBackground(data.weather[0].main);
     } catch (error) {
         console.error('Error fetching current weather:', error);
     }
+}
+
+function updateWeatherBackground(weatherCondition) {
+    const overlay = document.getElementById('weatherDisplayOverlay');
+    
+    // Map weather conditions to gradient overlay tints (keeping background image)
+    const backgroundTints = {
+        'Clear': 'linear-gradient(135deg, rgba(79, 172, 254, 0.3) 0%, rgba(0, 242, 254, 0.3) 100%), url(\'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80\') center/cover no-repeat',
+        'Clouds': 'linear-gradient(135deg, rgba(102, 126, 234, 0.4) 0%, rgba(118, 75, 162, 0.4) 100%), url(\'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80\') center/cover no-repeat',
+        'Rain': 'linear-gradient(135deg, rgba(67, 67, 67, 0.6) 0%, rgba(0, 0, 0, 0.7) 100%), url(\'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80\') center/cover no-repeat',
+        'Drizzle': 'linear-gradient(135deg, rgba(83, 105, 118, 0.5) 0%, rgba(41, 46, 73, 0.6) 100%), url(\'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80\') center/cover no-repeat',
+        'Thunderstorm': 'linear-gradient(135deg, rgba(20, 30, 48, 0.7) 0%, rgba(36, 59, 85, 0.7) 100%), url(\'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80\') center/cover no-repeat',
+        'Snow': 'linear-gradient(135deg, rgba(224, 234, 252, 0.4) 0%, rgba(207, 222, 243, 0.4) 100%), url(\'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80\') center/cover no-repeat',
+        'Fog': 'linear-gradient(135deg, rgba(189, 195, 199, 0.5) 0%, rgba(44, 62, 80, 0.6) 100%), url(\'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80\') center/cover no-repeat'
+    };
+    
+    const background = backgroundTints[weatherCondition] || 'linear-gradient(135deg, rgba(10, 10, 10, 0.7) 0%, rgba(26, 26, 42, 0.85) 100%), url(\'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80\') center/cover no-repeat';
+    overlay.style.background = background;
 }
 
 async function updateForecast() {
@@ -98,8 +187,13 @@ async function updateForecast() {
         
         if (data.error) return;
         
+        console.log(`Forecast data received: ${data.list.length} hourly entries`);
+        
         const hourlyForecasts = processHourlyForecast(data.list);
         displayHourlyForecast(hourlyForecasts);
+        
+        const weeklyForecasts = processWeeklyForecast(data.list);
+        displayWeeklyForecast(weeklyForecasts);
     } catch (error) {
         console.error('Error fetching forecast:', error);
     }
@@ -111,6 +205,58 @@ function processHourlyForecast(forecastList) {
         temp: Math.round(item.main.temp),
         weather: item.weather[0]
     }));
+}
+
+function processWeeklyForecast(forecastList) {
+    console.log('=== Processing Weekly Forecast ===');
+    console.log('Total forecast items:', forecastList.length);
+    
+    // Group forecasts by day
+    const dailyData = {};
+    
+    forecastList.forEach((item, idx) => {
+        const date = new Date(item.dt * 1000);
+        const dayKey = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+        const hour = date.getHours();
+        
+        if (idx < 5) {
+            console.log(`Item ${idx}: ${date.toLocaleString('en-AU')} (${dayKey})`);
+        }
+        
+        if (!dailyData[dayKey]) {
+            dailyData[dayKey] = {
+                date: date,
+                temps: [],
+                weatherItems: [],
+                middayWeather: null
+            };
+        }
+        
+        dailyData[dayKey].temps.push(item.main.temp);
+        dailyData[dayKey].weatherItems.push(item.weather[0]);
+        
+        // Prefer weather around noon (12pm) for icon
+        if (hour >= 11 && hour <= 13 && !dailyData[dayKey].middayWeather) {
+            dailyData[dayKey].middayWeather = item.weather[0];
+        }
+    });
+    
+    console.log('Days found:', Object.keys(dailyData).length);
+    console.log('Day keys:', Object.keys(dailyData));
+    
+    // Convert to array and calculate min/max for each day
+    const weeklyForecasts = Object.values(dailyData).map(day => ({
+        date: day.date,
+        tempHigh: Math.round(Math.max(...day.temps)),
+        tempLow: Math.round(Math.min(...day.temps)),
+        weather: day.middayWeather || day.weatherItems[Math.floor(day.weatherItems.length / 2)] || day.weatherItems[0]
+    }));
+    
+    console.log(`Weekly forecast: ${weeklyForecasts.length} days processed`);
+    console.log('Weekly data:', weeklyForecasts);
+    
+    // Return up to 5 days
+    return weeklyForecasts.slice(0, 5);
 }
 
 function displayHourlyForecast(forecasts) {
@@ -138,13 +284,155 @@ function displayHourlyForecast(forecasts) {
     });
 }
 
-function toggleMirror() {
-    mirrorVisible = !mirrorVisible;
-    mirrorOverlay.classList.toggle('hidden');
+function displayWeeklyForecast(forecasts) {
+    const container = document.getElementById('weeklyForecast');
+    container.innerHTML = '';
+    
+    console.log(`Displaying ${forecasts.length} days in weekly forecast:`, forecasts);
+    
+    forecasts.forEach((forecast, index) => {
+        const item = document.createElement('div');
+        item.className = 'weekly-item';
+        
+        const dayStr = index === 0 ? 'Today' : forecast.date.toLocaleDateString('en-AU', { weekday: 'short' });
+        
+        console.log(`Day ${index}: ${dayStr} - High: ${forecast.tempHigh}° Low: ${forecast.tempLow}°`);
+        
+        item.innerHTML = `
+            <span class="weekly-day">${dayStr}</span>
+            <img class="weekly-icon" src="${getWeatherIconUrl(forecast.weather.icon)}" alt="${forecast.weather.description}">
+            <span class="weekly-desc">${forecast.weather.description}</span>
+            <div class="weekly-temps">
+                <span class="temp-high">${forecast.tempHigh}°</span>
+                <span class="temp-low">${forecast.tempLow}°</span>
+            </div>
+        `;
+        
+        container.appendChild(item);
+    });
 }
 
-// ===== SLIDESHOW FUNCTIONS =====
+// ===== WEATHER DISPLAY HANDLERS =====
+closeWeatherBtn.addEventListener('click', () => {
+    weatherDisplayOverlay.classList.remove('active');
+    mirrorOverlay.classList.add('hidden');
+    initialMenu.classList.remove('hidden');
+    
+    // Release wake lock
+    if (wakeLock !== null) {
+        wakeLock.release();
+        wakeLock = null;
+    }
+});
 
+// ===== MUSIC PLAYER FUNCTIONS =====
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function updatePlayerUI() {
+    if (selectedMusic.length === 0) return;
+    
+    const currentTrack = selectedMusic[currentMusicIndex];
+    trackTitle.textContent = currentTrack;
+    playlistPosition.textContent = `Track ${currentMusicIndex + 1} of ${selectedMusic.length}`;
+    
+    if (isPlaying) {
+        playPauseBtn.textContent = '⏸';
+    } else {
+        playPauseBtn.textContent = '▶';
+    }
+}
+
+audioPlayer.addEventListener('loadedmetadata', () => {
+    duration.textContent = formatTime(audioPlayer.duration);
+});
+
+audioPlayer.addEventListener('timeupdate', () => {
+    currentTime.textContent = formatTime(audioPlayer.currentTime);
+    const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+    progressFill.style.width = progress + '%';
+});
+
+audioPlayer.addEventListener('ended', () => {
+    if (currentMode === 'music') {
+        nextTrack();
+    } else {
+        // Slideshow mode
+        currentMusicIndex = (currentMusicIndex + 1) % selectedMusic.length;
+        playCurrentTrack();
+    }
+});
+
+progressBar.addEventListener('click', (e) => {
+    const rect = progressBar.getBoundingClientRect();
+    const percent = (e.clientX - rect.left) / rect.width;
+    audioPlayer.currentTime = percent * audioPlayer.duration;
+});
+
+volumeSlider.addEventListener('input', (e) => {
+    const volume = e.target.value / 100;
+    audioPlayer.volume = volume;
+    volumeValue.textContent = e.target.value + '%';
+});
+
+playPauseBtn.addEventListener('click', () => {
+    if (isPlaying) {
+        audioPlayer.pause();
+        isPlaying = false;
+    } else {
+        audioPlayer.play();
+        isPlaying = true;
+    }
+    updatePlayerUI();
+});
+
+prevBtn.addEventListener('click', () => {
+    prevTrack();
+});
+
+nextBtn.addEventListener('click', () => {
+    nextTrack();
+});
+
+function prevTrack() {
+    if (selectedMusic.length === 0) return;
+    currentMusicIndex = (currentMusicIndex - 1 + selectedMusic.length) % selectedMusic.length;
+    playCurrentTrack();
+    updatePlayerUI();
+}
+
+function nextTrack() {
+    if (selectedMusic.length === 0) return;
+    currentMusicIndex = (currentMusicIndex + 1) % selectedMusic.length;
+    playCurrentTrack();
+    updatePlayerUI();
+}
+
+closePlayerBtn.addEventListener('click', () => {
+    musicPlayerOverlay.classList.remove('active');
+    audioPlayer.pause();
+    isPlaying = false;
+    
+    // Return to menu
+    if (currentMode === 'music') {
+        initialMenu.classList.remove('hidden');
+    }
+    
+    if (slideshowStarted) {
+        // Just close the player, slideshow continues
+    }
+});
+
+editPlaylistBtn.addEventListener('click', () => {
+    musicPlayerOverlay.classList.remove('active');
+    controls.classList.remove('hidden');
+    document.querySelector('.tab-button[data-tab="music"]').click();
+});
+
+// ===== SLIDESHOW FUNCTIONS =====
 document.querySelectorAll('.tab-button').forEach(button => {
     button.addEventListener('click', () => {
         const targetTab = button.dataset.tab;
@@ -175,6 +463,11 @@ shuffleAllCheckbox.addEventListener('change', function() {
 });
 
 function validateFolderSelection() {
+    if (currentMode === 'music') {
+        startBtn.disabled = false;
+        return true;
+    }
+    
     if (shuffleAllCheckbox.checked) {
         startBtn.disabled = false;
         folderError.classList.remove('show');
@@ -220,7 +513,6 @@ async function loadFolders() {
     }
 }
 
-// Folder search functionality
 if (folderSearchInput) {
     folderSearchInput.addEventListener('input', (e) => {
         const searchTerm = e.target.value.toLowerCase();
@@ -321,7 +613,6 @@ async function loadMusicFiles() {
     }
 }
 
-// Music search functionality
 if (musicSearchInput) {
     musicSearchInput.addEventListener('input', (e) => {
         const searchTerm = e.target.value.toLowerCase();
@@ -377,7 +668,6 @@ function handleFolderDragStart(e) {
     draggedElement = this;
     this.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', this.innerHTML);
 }
 
 function handleFolderDrop(e) {
@@ -403,7 +693,6 @@ function handleMusicDragStart(e) {
     draggedElement = this;
     this.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', this.innerHTML);
 }
 
 function handleMusicDrop(e) {
@@ -488,11 +777,6 @@ function playMusic() {
     console.log('Playlist order:', selectedMusic);
     currentMusicIndex = 0;
     playCurrentTrack();
-    
-    audioPlayer.addEventListener('ended', () => {
-        currentMusicIndex = (currentMusicIndex + 1) % selectedMusic.length;
-        playCurrentTrack();
-    });
 }
 
 function playCurrentTrack() {
@@ -501,8 +785,42 @@ function playCurrentTrack() {
     const track = selectedMusic[currentMusicIndex];
     audioPlayer.src = '/music/' + track;
     audioPlayer.load();
-    audioPlayer.play().catch(err => console.error('Audio play error:', err));
+    audioPlayer.play().then(() => {
+        isPlaying = true;
+        updatePlayerUI();
+    }).catch(err => console.error('Audio play error:', err));
     console.log('Playing:', track);
+}
+
+function stopSlideshow() {
+    if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+    }
+    
+    if (!audioPlayer.paused) {
+        audioPlayer.pause();
+        audioPlayer.currentTime = 0;
+        isPlaying = false;
+    }
+    
+    isPaused = false;
+    slideshowStarted = false;
+    
+    // Release wake lock
+    if (wakeLock) {
+        wakeLock.release().then(() => {
+            wakeLock = null;
+            console.log('Wake Lock released');
+        });
+    }
+    
+    if (keepAwakeInterval) {
+        clearInterval(keepAwakeInterval);
+        keepAwakeInterval = null;
+    }
+    
+    console.log('Slideshow stopped');
 }
 
 function togglePause() {
@@ -514,13 +832,16 @@ function togglePause() {
         clearInterval(intervalId);
         if (!audioPlayer.paused) {
             audioPlayer.pause();
+            isPlaying = false;
             console.log('Music paused');
         }
         console.log('Slideshow paused');
     } else {
         intervalId = setInterval(nextImage, delay);
         if (selectedMusic.length > 0) {
-            audioPlayer.play().catch(err => console.error('Audio resume error:', err));
+            audioPlayer.play().then(() => {
+                isPlaying = true;
+            }).catch(err => console.error('Audio resume error:', err));
             console.log('Music resumed');
         }
         console.log('Slideshow resumed');
@@ -528,36 +849,83 @@ function togglePause() {
 }
 
 document.addEventListener('keydown', (e) => {
-    if (!slideshowStarted) return;
+    // Weather display scrolling with arrow keys
+    if (currentMode === 'weather') {
+        const weatherOverlay = document.getElementById('weatherDisplayOverlay');
+        const scrollAmount = 100; // pixels to scroll
+        
+        switch(e.key) {
+            case 'Escape':
+                e.preventDefault();
+                closeWeatherBtn.click();
+                break;
+            case 'ArrowDown':
+                e.preventDefault();
+                weatherOverlay.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                weatherOverlay.scrollBy({ top: -scrollAmount, behavior: 'smooth' });
+                break;
+            case 'PageDown':
+                e.preventDefault();
+                weatherOverlay.scrollBy({ top: window.innerHeight * 0.8, behavior: 'smooth' });
+                break;
+            case 'PageUp':
+                e.preventDefault();
+                weatherOverlay.scrollBy({ top: -window.innerHeight * 0.8, behavior: 'smooth' });
+                break;
+        }
+        return;
+    }
+    
+    if (!slideshowStarted && currentMode !== 'music') return;
     
     switch(e.key) {
+        case 'Escape':
+            e.preventDefault();
+            // Exit slideshow/music and return to setup screen
+            if (currentMode === 'slideshow') {
+                stopSlideshow();
+                controls.classList.remove('hidden');
+                document.body.classList.remove('slideshow-active');
+                slideshowStarted = false;
+            } else if (currentMode === 'music') {
+                closeMusicPlayer();
+            }
+            break;
         case ' ':
         case 'p':
         case 'P':
             e.preventDefault();
-            togglePause();
+            if (currentMode === 'music') {
+                playPauseBtn.click();
+            } else {
+                togglePause();
+            }
             break;
         case 'ArrowRight':
             e.preventDefault();
-            if (isPaused) nextImage();
+            if (currentMode === 'music') {
+                nextTrack();
+            } else if (isPaused) {
+                nextImage();
+            }
             break;
         case 'ArrowLeft':
             e.preventDefault();
-            if (isPaused) previousImage();
-            break;
-        case 'm':
-        case 'M':
-            e.preventDefault();
-            toggleMirror();
+            if (currentMode === 'music') {
+                prevTrack();
+            } else if (isPaused) {
+                previousImage();
+            }
             break;
     }
 });
 
 function previousImage() {
     if (imageHistory.length > 1) {
-        // Remove current image
         imageHistory.pop();
-        // Show previous image
         const prevImage = imageHistory[imageHistory.length - 1];
         showImageByPath(prevImage);
     }
@@ -575,7 +943,6 @@ async function initializeSlideshow() {
     
     console.log('Request params:', currentRequestParams);
     
-    // Initialize the session
     const response = await fetch('/api/images/list', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -586,7 +953,6 @@ async function initializeSlideshow() {
     totalImages = initialImages.length;
     console.log(`Total images in pool: ${totalImages}`);
     
-    // Preload first batch
     for (let i = 0; i < Math.min(PRELOAD_COUNT, initialImages.length); i++) {
         preloadImage(initialImages[i]);
     }
@@ -617,7 +983,6 @@ function showImageByPath(imagePath) {
 
 async function nextImage() {
     try {
-        // Request next image from server
         const response = await fetch('/api/images/next', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -627,7 +992,7 @@ async function nextImage() {
         const data = await response.json();
         
         if (data.cycleComplete) {
-            console.log('=== CYCLE COMPLETE - All images shown, starting new cycle ===');
+            console.log('=== CYCLE COMPLETE ===');
             imageHistory = [];
         }
         
@@ -636,35 +1001,54 @@ async function nextImage() {
             showImageByPath(data.image);
             
             console.log(`Showing: ${data.image}`);
-            console.log(`Progress: ${data.totalShown}/${data.totalImages} images shown`);
-            console.log(`Remaining in queue: ${data.remaining}`);
+            console.log(`Progress: ${data.totalShown}/${data.totalImages}`);
             
-            // Preload next images
-            if (data.hasMore) {
-                // Request a few more images to preload
-                for (let i = 0; i < Math.min(PRELOAD_COUNT, data.remaining); i++) {
-                    // We'll preload as we get them from the server
-                }
-            }
-        } else {
-            console.log('No more images available');
+            // Progressive preloading: load next images ahead
+            preloadNextImages(data.totalShown, data.totalImages);
         }
         
-        // Clean up old cache entries
-        if (imageCache.size > PRELOAD_COUNT * 3) {
+        // Clean up old images from cache to prevent memory bloat
+        if (imageCache.size > MAX_CACHE_SIZE) {
             const keysToDelete = [];
             let count = 0;
             for (const key of imageCache.keys()) {
-                if (count++ < imageCache.size - PRELOAD_COUNT * 2) {
+                if (count++ < imageCache.size - MIN_CACHE_SIZE) {
                     keysToDelete.push(key);
                 } else {
                     break;
                 }
             }
             keysToDelete.forEach(key => imageCache.delete(key));
+            console.log(`Cache cleanup: removed ${keysToDelete.length} images, keeping ${imageCache.size}`);
         }
     } catch (err) {
         console.error('Error fetching next image:', err);
+    }
+}
+
+// Preload the next N images ahead of current position
+async function preloadNextImages(currentIndex, totalImages) {
+    // Only preload if cache is getting low
+    if (imageCache.size >= MIN_CACHE_SIZE) return;
+    
+    try {
+        // Request next 10 images from backend
+        const response = await fetch('/api/images/peek', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ...currentRequestParams,
+                count: 10
+            })
+        });
+        
+        if (response.ok) {
+            const upcomingImages = await response.json();
+            upcomingImages.forEach(imagePath => preloadImage(imagePath));
+            console.log(`Preloaded ${upcomingImages.length} upcoming images`);
+        }
+    } catch (err) {
+        console.log('Background preload skipped:', err.message);
     }
 }
 
@@ -674,10 +1058,6 @@ async function requestFullscreen() {
             await document.documentElement.requestFullscreen();
         } else if (document.documentElement.webkitRequestFullscreen) {
             await document.documentElement.webkitRequestFullscreen();
-        } else if (document.documentElement.mozRequestFullScreen) {
-            await document.documentElement.mozRequestFullScreen();
-        } else if (document.documentElement.msRequestFullscreen) {
-            await document.documentElement.msRequestFullscreen();
         }
         console.log('Fullscreen active');
     } catch (err) {
@@ -690,7 +1070,6 @@ async function requestWakeLock() {
         if ('wakeLock' in navigator) {
             wakeLock = await navigator.wakeLock.request('screen');
             console.log('Wake Lock active');
-            wakeLock.addEventListener('release', () => console.log('Wake Lock released'));
         }
     } catch (err) {
         console.log('Wake Lock error:', err);
@@ -714,51 +1093,65 @@ document.addEventListener('visibilitychange', async () => {
     }
 });
 
-document.addEventListener('fullscreenchange', () => {
-    if (!document.fullscreenElement) {
-        console.log('Exited fullscreen');
-        document.body.style.cursor = "default";
-    }
-});
-
 startBtn.addEventListener("click", async () => {
-    if (!validateFolderSelection()) return;
-    
-    delay = parseInt(speedSelect.value);
-    mirrorOverlay.classList.add("hidden");
-
-    // Hide controls and activate slideshow
-    controls.classList.add("hidden");
-    loadingOverlay.classList.add("active");
-    document.body.classList.add("slideshow-active");
-    document.body.style.cursor = "none";
-    
-    await requestFullscreen();
-    await requestWakeLock();
-    
-    keepAwakeInterval = setInterval(simulateActivity, 30000);
-    
-    playMusic();
-    await initializeSlideshow();
-    
-    // Wait for preloading
-    let preloadedCount = 0;
-    const checkInterval = setInterval(() => {
-        preloadedCount = imageCache.size;
-        loadingText.textContent = `Preloading images... (${preloadedCount}/${Math.min(PRELOAD_COUNT, totalImages)})`;
+    if (currentMode === 'slideshow') {
+        if (!validateFolderSelection()) return;
         
-        if (preloadedCount >= Math.min(PRELOAD_COUNT, totalImages) || preloadedCount >= totalImages) {
-            clearInterval(checkInterval);
-            loadingOverlay.classList.remove("active");
+        delay = parseInt(speedSelect.value);
+        
+        // Slideshow: NO weather display by default
+        mirrorOverlay.classList.add("hidden");
+        
+        controls.classList.add("hidden");
+        loadingOverlay.classList.add("active");
+        document.body.classList.add("slideshow-active");
+        document.body.style.cursor = "none";
+        
+        await requestFullscreen();
+        await requestWakeLock();
+        
+        keepAwakeInterval = setInterval(simulateActivity, 30000);
+        
+        playMusic();
+        await initializeSlideshow();
+        
+        let preloadedCount = 0;
+        const checkInterval = setInterval(() => {
+            preloadedCount = imageCache.size;
+            loadingText.textContent = `Preloading images... (${preloadedCount}/${Math.min(PRELOAD_COUNT, totalImages)})`;
             
-            if (totalImages > 0) {
-                slideshowStarted = true;
-                imageHistory = [];
-                nextImage(); // Show first image
-                intervalId = setInterval(nextImage, delay);
+            if (preloadedCount >= Math.min(PRELOAD_COUNT, totalImages) || preloadedCount >= totalImages) {
+                clearInterval(checkInterval);
+                loadingOverlay.classList.remove("active");
+                
+                if (totalImages > 0) {
+                    slideshowStarted = true;
+                    imageHistory = [];
+                    nextImage();
+                    intervalId = setInterval(nextImage, delay);
+                }
             }
+        }, 100);
+        
+    } else if (currentMode === 'music') {
+        // Music Player mode: NO weather display
+        selectedMusic = getSelectedMusic();
+        
+        if (selectedMusic.length === 0) {
+            alert('Please select at least one music track');
+            return;
         }
-    }, 100);
+        
+        controls.classList.add("hidden");
+        mirrorOverlay.classList.add("hidden");
+        musicPlayerOverlay.classList.add("active");
+        
+        currentMusicIndex = 0;
+        playCurrentTrack();
+        updatePlayerUI();
+        
+        await requestWakeLock();
+    }
 });
 
 window.addEventListener('beforeunload', () => {
@@ -771,13 +1164,10 @@ window.addEventListener('beforeunload', () => {
 loadFolders();
 loadMusicFiles();
 
-// Start Magic Mirror updates
 updateClock();
-updateCompliment();
 updateCurrentWeather();
 updateForecast();
 
 setInterval(updateClock, 1000);
-setInterval(updateCompliment, 30000);
 setInterval(updateCurrentWeather, 600000);
 setInterval(updateForecast, 1800000);
