@@ -165,18 +165,18 @@ async function updateCurrentWeather() {
 function updateWeatherBackground(weatherCondition) {
     const overlay = document.getElementById('weatherDisplayOverlay');
     
-    // Map weather conditions to gradient overlay tints (keeping background image)
-    const backgroundTints = {
-        'Clear': 'linear-gradient(135deg, rgba(79, 172, 254, 0.3) 0%, rgba(0, 242, 254, 0.3) 100%), url(\'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80\') center/cover no-repeat',
-        'Clouds': 'linear-gradient(135deg, rgba(102, 126, 234, 0.4) 0%, rgba(118, 75, 162, 0.4) 100%), url(\'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80\') center/cover no-repeat',
-        'Rain': 'linear-gradient(135deg, rgba(67, 67, 67, 0.6) 0%, rgba(0, 0, 0, 0.7) 100%), url(\'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80\') center/cover no-repeat',
-        'Drizzle': 'linear-gradient(135deg, rgba(83, 105, 118, 0.5) 0%, rgba(41, 46, 73, 0.6) 100%), url(\'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80\') center/cover no-repeat',
-        'Thunderstorm': 'linear-gradient(135deg, rgba(20, 30, 48, 0.7) 0%, rgba(36, 59, 85, 0.7) 100%), url(\'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80\') center/cover no-repeat',
-        'Snow': 'linear-gradient(135deg, rgba(224, 234, 252, 0.4) 0%, rgba(207, 222, 243, 0.4) 100%), url(\'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80\') center/cover no-repeat',
-        'Fog': 'linear-gradient(135deg, rgba(189, 195, 199, 0.5) 0%, rgba(44, 62, 80, 0.6) 100%), url(\'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80\') center/cover no-repeat'
+    // Map weather conditions to appropriate background images
+    const weatherBackgrounds = {
+        'Clear': 'linear-gradient(135deg, rgba(79, 172, 254, 0.2) 0%, rgba(0, 242, 254, 0.2) 100%), url(\'https://images.unsplash.com/photo-1601297183305-6df142704ea2?w=1920&q=80\') center/cover no-repeat',
+        'Clouds': 'linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%), url(\'https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=1920&q=80\') center/cover no-repeat',
+        'Rain': 'linear-gradient(135deg, rgba(67, 67, 67, 0.5) 0%, rgba(0, 0, 0, 0.6) 100%), url(\'https://images.unsplash.com/photo-1534274988757-a28bf1a57c17?w=1920&q=80\') center/cover no-repeat',
+        'Drizzle': 'linear-gradient(135deg, rgba(83, 105, 118, 0.4) 0%, rgba(41, 46, 73, 0.5) 100%), url(\'https://images.unsplash.com/photo-1428592953211-077101b2021b?w=1920&q=80\') center/cover no-repeat',
+        'Thunderstorm': 'linear-gradient(135deg, rgba(20, 30, 48, 0.6) 0%, rgba(36, 59, 85, 0.6) 100%), url(\'https://images.unsplash.com/photo-1605727216801-e27ce1d0cc28?w=1920&q=80\') center/cover no-repeat',
+        'Snow': 'linear-gradient(135deg, rgba(224, 234, 252, 0.3) 0%, rgba(207, 222, 243, 0.3) 100%), url(\'https://images.unsplash.com/photo-1491002052546-bf38f186af56?w=1920&q=80\') center/cover no-repeat',
+        'Fog': 'linear-gradient(135deg, rgba(189, 195, 199, 0.4) 0%, rgba(44, 62, 80, 0.5) 100%), url(\'https://images.unsplash.com/photo-1487621167305-5d248087c724?w=1920&q=80\') center/cover no-repeat'
     };
     
-    const background = backgroundTints[weatherCondition] || 'linear-gradient(135deg, rgba(10, 10, 10, 0.7) 0%, rgba(26, 26, 42, 0.85) 100%), url(\'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80\') center/cover no-repeat';
+    const background = weatherBackgrounds[weatherCondition] || 'linear-gradient(135deg, rgba(10, 10, 10, 0.7) 0%, rgba(26, 26, 42, 0.85) 100%), url(\'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80\') center/cover no-repeat';
     overlay.style.background = background;
 }
 
