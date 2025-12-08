@@ -25,12 +25,13 @@ public class WeatherController {
         try {
             RestTemplate restTemplate = new RestTemplate();
             String url = String.format(
-                    "%s?latitude=%s&longitude=%s&current_weather=true&timezone=Australia/Melbourne",
+                    "%s?latitude=%s&longitude=%s&current_weather=true&daily=sunrise,sunset&timezone=Australia/Melbourne",
                     WEATHER_URL, LATITUDE, LONGITUDE
             );
 
             Map<String, Object> response = restTemplate.getForObject(url, Map.class);
             Map<String, Object> current = (Map<String, Object>) response.get("current_weather");
+            Map<String, Object> daily = (Map<String, Object>) response.get("daily");
 
             Map<String, Object> result = new HashMap<>();
             result.put("name", "Essendon");
@@ -49,6 +50,18 @@ public class WeatherController {
                     "icon", weatherInfo[2]
             )));
             result.put("wind", Map.of("speed", current.get("windspeed")));
+            
+            // Add sunrise and sunset
+            if (daily != null) {
+                List<String> sunriseList = (List<String>) daily.get("sunrise");
+                List<String> sunsetList = (List<String>) daily.get("sunset");
+                if (sunriseList != null && !sunriseList.isEmpty() && sunsetList != null && !sunsetList.isEmpty()) {
+                    result.put("sys", Map.of(
+                            "sunrise", parseTimestamp(sunriseList.get(0)),
+                            "sunset", parseTimestamp(sunsetList.get(0))
+                    ));
+                }
+            }
 
             return ResponseEntity.ok(result);
         } catch (Exception e) {
@@ -67,7 +80,7 @@ public class WeatherController {
             LocalDate endDate = today.plusDays(4); // 5-day forecast (Open-Meteo free tier limit)
 
             String url = String.format(
-                    "%s?latitude=%s&longitude=%s&hourly=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=Australia/Melbourne&start_date=%s&end_date=%s",
+                    "%s?latitude=%s&longitude=%s&hourly=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation_probability,precipitation&timezone=Australia/Melbourne&start_date=%s&end_date=%s",
                     WEATHER_URL, LATITUDE, LONGITUDE, today, endDate
             );
 
@@ -79,6 +92,8 @@ public class WeatherController {
             List<Number> humidity = (List<Number>) hourly.get("relative_humidity_2m");
             List<Number> weatherCodes = (List<Number>) hourly.get("weather_code");
             List<Number> windSpeeds = (List<Number>) hourly.get("wind_speed_10m");
+            List<Number> precipProb = (List<Number>) hourly.get("precipitation_probability");
+            List<Number> precipitation = (List<Number>) hourly.get("precipitation");
 
             List<Map<String, Object>> forecastList = new ArrayList<>();
 
@@ -99,6 +114,18 @@ public class WeatherController {
                         "icon", weatherInfo[2]
                 )));
                 forecast.put("wind", Map.of("speed", windSpeeds.get(i)));
+                
+                // Add precipitation data
+                Map<String, Object> rain = new HashMap<>();
+                if (precipitation != null && i < precipitation.size()) {
+                    rain.put("3h", precipitation.get(i));
+                }
+                forecast.put("rain", rain);
+                
+                // Add precipitation probability
+                if (precipProb != null && i < precipProb.size()) {
+                    forecast.put("pop", precipProb.get(i));
+                }
 
                 forecastList.add(forecast);
             }

@@ -75,6 +75,9 @@ let currentRequestParams = null;
 let imageHistory = [];
 let totalImages = 0;
 
+// Global variable to store the chart instance
+let precipitationChartInstance = null;
+
 // ===== INITIAL MENU HANDLERS =====
 photoSlideshowBtn.addEventListener('click', () => {
     currentMode = 'slideshow';
@@ -140,6 +143,13 @@ function getWeatherIconUrl(iconCode) {
     return `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
 }
 
+function formatSunTime(timestamp) {
+    const date = new Date(timestamp * 1000);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+}
+
 async function updateCurrentWeather() {
     try {
         const response = await fetch('/api/weather/current');
@@ -154,6 +164,12 @@ async function updateCurrentWeather() {
         document.getElementById('weatherHumidity').textContent = `${data.main.humidity}%`;
         document.getElementById('weatherWind').textContent = `${Math.round(data.wind.speed * 3.6)} km/h`;
         document.getElementById('weatherFeels').textContent = `${Math.round(data.main.feels_like)}°`;
+        
+        // Update sunrise and sunset
+        if (data.sys) {
+            document.getElementById('weatherSunrise').textContent = formatSunTime(data.sys.sunrise);
+            document.getElementById('weatherSunset').textContent = formatSunTime(data.sys.sunset);
+        }
         
         // Update weather background
         updateWeatherBackground(data.weather[0].main);
@@ -180,20 +196,210 @@ function updateWeatherBackground(weatherCondition) {
     overlay.style.background = background;
 }
 
+// Create precipitation chart
+
+function createPrecipitationChart(forecastData) {
+    const ctx = document.getElementById('precipitationChart');
+    
+    if (!ctx || !forecastData || forecastData.length === 0) {
+        return;
+    }
+    
+    const next24Hours = forecastData.slice(0, 24);
+    
+    const labels = next24Hours.map(item => {
+        const date = new Date(item.dt * 1000);
+        return date.toLocaleTimeString('en-AU', { hour: 'numeric', hour12: true });
+    });
+    
+    const precipProbability = next24Hours.map(item => {
+        if (item.pop !== undefined && item.pop !== null) {
+            return item.pop <= 1 ? item.pop * 100 : item.pop;
+        }
+        return 0;
+    });
+    
+    const precipitation = next24Hours.map(item => {
+        if (item.rain) {
+            if (typeof item.rain === 'number') return item.rain;
+            if (typeof item.rain === 'object') {
+                return item.rain['3h'] || item.rain['1h'] || 0;
+            }
+        }
+        return 0;
+    });
+    
+    const hasAnyData = precipitation.some(p => p > 0) || precipProbability.some(p => p > 0);
+    
+    if (window.precipitationChartInstance) {
+        window.precipitationChartInstance.destroy();
+    }
+    
+    window.precipitationChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Precipitation (mm)',
+                    data: precipitation,
+                    backgroundColor: 'rgba(74, 158, 255, 0.6)',
+                    borderColor: 'rgba(74, 158, 255, 1)',
+                    borderWidth: 2,
+                    borderRadius: 4,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Chance of Rain (%)',
+                    data: precipProbability,
+                    type: 'line',
+                    borderColor: 'rgba(255, 193, 7, 1)',
+                    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 4,
+                    pointBackgroundColor: 'rgba(255, 193, 7, 1)',
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: '#ffffff',
+                        font: { size: 12 },
+                        padding: 15,
+                        usePointStyle: true
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    borderColor: 'rgba(74, 158, 255, 0.5)',
+                    borderWidth: 1,
+                    padding: 12,
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) label += ': ';
+                            if (context.parsed.y !== null) {
+                                label += context.datasetIndex === 0 
+                                    ? context.parsed.y.toFixed(1) + ' mm'
+                                    : context.parsed.y.toFixed(0) + '%';
+                            }
+                            return label;
+                        },
+                        afterBody: function() {
+                            return !hasAnyData ? ['', '☀️ No rain expected!'] : [];
+                        }
+                    }
+                },
+                title: {
+                    display: !hasAnyData,
+                    text: '☀️ No Rain Expected - Clear Skies Ahead!',
+                    color: '#4a9eff',
+                    font: { size: 14, weight: 'bold' },
+                    padding: { top: 10, bottom: 5 }
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#ffffff',
+                        font: { size: 10 },
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Precipitation (mm)',
+                        color: '#4a9eff',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#ffffff',
+                        font: { size: 11 }
+                    },
+                    beginAtZero: true,
+                    max: hasAnyData ? undefined : 5
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Chance (%)',
+                        color: '#ffc107',
+                        font: { size: 12, weight: 'bold' }
+                    },
+                    min: 0,
+                    max: 100,
+                    grid: {
+                        drawOnChartArea: false,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#ffffff',
+                        font: { size: 11 },
+                        stepSize: 20
+                    }
+                }
+            }
+        }
+    });
+}
+
 async function updateForecast() {
     try {
         const response = await fetch('/api/weather/forecast');
         const data = await response.json();
-        
-        if (data.error) return;
-        
-        console.log(`Forecast data received: ${data.list.length} hourly entries`);
+                
+        if (data.error) {
+            console.error('Forecast error:', data.error);
+            return;
+        }
         
         const hourlyForecasts = processHourlyForecast(data.list);
         displayHourlyForecast(hourlyForecasts);
         
         const weeklyForecasts = processWeeklyForecast(data.list);
         displayWeeklyForecast(weeklyForecasts);
+        
+        // Create precipitation chart with diagnostic
+        const chartElement = document.getElementById('precipitationChart');
+        
+        if (!chartElement) {
+            console.error('ERROR: precipitationChart canvas not found in HTML!');
+            return;
+        }
+        
+        createPrecipitationChart(data.list);
+        
     } catch (error) {
         console.error('Error fetching forecast:', error);
     }
@@ -207,10 +413,7 @@ function processHourlyForecast(forecastList) {
     }));
 }
 
-function processWeeklyForecast(forecastList) {
-    console.log('=== Processing Weekly Forecast ===');
-    console.log('Total forecast items:', forecastList.length);
-    
+function processWeeklyForecast(forecastList) {    
     // Group forecasts by day
     const dailyData = {};
     
@@ -218,10 +421,6 @@ function processWeeklyForecast(forecastList) {
         const date = new Date(item.dt * 1000);
         const dayKey = date.toISOString().split('T')[0]; // YYYY-MM-DD format
         const hour = date.getHours();
-        
-        if (idx < 5) {
-            console.log(`Item ${idx}: ${date.toLocaleString('en-AU')} (${dayKey})`);
-        }
         
         if (!dailyData[dayKey]) {
             dailyData[dayKey] = {
@@ -241,9 +440,6 @@ function processWeeklyForecast(forecastList) {
         }
     });
     
-    console.log('Days found:', Object.keys(dailyData).length);
-    console.log('Day keys:', Object.keys(dailyData));
-    
     // Convert to array and calculate min/max for each day
     const weeklyForecasts = Object.values(dailyData).map(day => ({
         date: day.date,
@@ -251,9 +447,6 @@ function processWeeklyForecast(forecastList) {
         tempLow: Math.round(Math.min(...day.temps)),
         weather: day.middayWeather || day.weatherItems[Math.floor(day.weatherItems.length / 2)] || day.weatherItems[0]
     }));
-    
-    console.log(`Weekly forecast: ${weeklyForecasts.length} days processed`);
-    console.log('Weekly data:', weeklyForecasts);
     
     // Return up to 5 days
     return weeklyForecasts.slice(0, 5);
@@ -288,16 +481,12 @@ function displayWeeklyForecast(forecasts) {
     const container = document.getElementById('weeklyForecast');
     container.innerHTML = '';
     
-    console.log(`Displaying ${forecasts.length} days in weekly forecast:`, forecasts);
-    
     forecasts.forEach((forecast, index) => {
         const item = document.createElement('div');
         item.className = 'weekly-item';
         
         const dayStr = index === 0 ? 'Today' : forecast.date.toLocaleDateString('en-AU', { weekday: 'short' });
-        
-        console.log(`Day ${index}: ${dayStr} - High: ${forecast.tempHigh}° Low: ${forecast.tempLow}°`);
-        
+          
         item.innerHTML = `
             <span class="weekly-day">${dayStr}</span>
             <img class="weekly-icon" src="${getWeatherIconUrl(forecast.weather.icon)}" alt="${forecast.weather.description}">
@@ -760,7 +949,6 @@ function getSelectedMusic() {
             const j = Math.floor(Math.random() * (i + 1));
             [selected[i], selected[j]] = [selected[j], selected[i]];
         }
-        console.log('Music randomized');
     }
     
     return selected;
@@ -789,7 +977,6 @@ function playCurrentTrack() {
         isPlaying = true;
         updatePlayerUI();
     }).catch(err => console.error('Audio play error:', err));
-    console.log('Playing:', track);
 }
 
 function stopSlideshow() {
@@ -819,8 +1006,6 @@ function stopSlideshow() {
         clearInterval(keepAwakeInterval);
         keepAwakeInterval = null;
     }
-    
-    console.log('Slideshow stopped');
 }
 
 function togglePause() {
@@ -833,18 +1018,14 @@ function togglePause() {
         if (!audioPlayer.paused) {
             audioPlayer.pause();
             isPlaying = false;
-            console.log('Music paused');
         }
-        console.log('Slideshow paused');
     } else {
         intervalId = setInterval(nextImage, delay);
         if (selectedMusic.length > 0) {
             audioPlayer.play().then(() => {
                 isPlaying = true;
             }).catch(err => console.error('Audio resume error:', err));
-            console.log('Music resumed');
         }
-        console.log('Slideshow resumed');
     }
 }
 
@@ -953,6 +1134,7 @@ async function initializeSlideshow() {
     totalImages = initialImages.length;
     console.log(`Total images in pool: ${totalImages}`);
     
+    // Preload first batch
     for (let i = 0; i < Math.min(PRELOAD_COUNT, initialImages.length); i++) {
         preloadImage(initialImages[i]);
     }
@@ -981,6 +1163,59 @@ function showImageByPath(imagePath) {
     }
 }
 
+function showImageByPathAsync(imagePath) {
+    return new Promise((resolve, reject) => {
+        const url = "/images/" + imagePath;
+        
+        // Hide the image element while loading
+        imgEl.classList.remove('loaded');
+        
+        if (imageCache.has(url)) {
+            // Image is cached, use it immediately
+            const cachedImg = imageCache.get(url);
+            imgEl.src = cachedImg.src;
+            
+            // Show immediately since it's cached
+            setTimeout(() => {
+                imgEl.classList.add('loaded');
+            }, 50);
+            
+            resolve();
+        } else {
+            // Image not cached, load it first
+            const img = new Image();
+            
+            img.onload = () => {
+                // Wait for image to be fully loaded before setting src
+                imgEl.src = img.src;
+                imageCache.set(url, img);
+                
+                // Show the image with fade-in effect
+                setTimeout(() => {
+                    imgEl.classList.add('loaded');
+                }, 50);
+                
+                console.log('Image loaded successfully:', imagePath);
+                resolve();
+            };
+            
+            img.onerror = () => {
+                console.error('Failed to load image:', imagePath);
+                console.error('Full URL:', url);
+                
+                // Try to continue anyway
+                imgEl.src = url;
+                imgEl.classList.add('loaded');
+                
+                reject(new Error('Failed to load image: ' + imagePath));
+            };
+            
+            // Start loading
+            img.src = url;
+        }
+    });
+}
+
 async function nextImage() {
     try {
         const response = await fetch('/api/images/next', {
@@ -998,7 +1233,9 @@ async function nextImage() {
         
         if (data.image) {
             imageHistory.push(data.image);
-            showImageByPath(data.image);
+            
+            // IMPORTANT: Wait for image to load before displaying
+            await showImageByPathAsync(data.image);
             
             console.log(`Showing: ${data.image}`);
             console.log(`Progress: ${data.totalShown}/${data.totalImages}`);
@@ -1127,8 +1364,12 @@ startBtn.addEventListener("click", async () => {
                 if (totalImages > 0) {
                     slideshowStarted = true;
                     imageHistory = [];
-                    nextImage();
-                    intervalId = setInterval(nextImage, delay);
+                    
+                    // IMPORTANT: Wait for first image to load before starting interval
+                    nextImage().then(() => {
+                        // Start interval AFTER first image is displayed
+                        intervalId = setInterval(nextImage, delay);
+                    });
                 }
             }
         }, 100);

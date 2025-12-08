@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sang's and Sherm's Station</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -49,6 +50,22 @@
                             <span id="weatherFeels">--°</span>
                         </div>
                     </div>
+                    <div class="sun-times">
+                        <div class="sun-time">
+                            <span class="sun-icon">🌅</span>
+                            <div class="sun-info">
+                                <span class="sun-label">Sunrise</span>
+                                <span class="sun-value" id="weatherSunrise">--:--</span>
+                            </div>
+                        </div>
+                        <div class="sun-time">
+                            <span class="sun-icon">🌇</span>
+                            <div class="sun-info">
+                                <span class="sun-label">Sunset</span>
+                                <span class="sun-value" id="weatherSunset">--:--</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Clock Widget -->
@@ -58,7 +75,15 @@
                 </div>
             </div>
 
-            <!-- Middle Row: Hourly Forecast -->
+            <!-- Middle Row: Precipitation Chart -->
+            <div class="mirror-middle">
+                <div class="precipitation-widget">
+                    <div class="forecast-title">24-Hour Precipitation</div>
+                    <canvas id="precipitationChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Hourly Forecast Row -->
             <div class="mirror-middle">
                 <div class="hourly-widget">
                     <div class="forecast-title">Hourly Forecast</div>
