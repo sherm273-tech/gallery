@@ -26,11 +26,25 @@
         <!-- Magic Mirror Overlay -->
         <div class="mirror-overlay" id="mirrorOverlay">
             
-            <!-- Top Row: Weather and Clock -->
+            <!-- Weather Alerts (if any) -->
+            <div class="weather-alerts" id="weatherAlerts" style="display: none;">
+                <!-- Populated by JavaScript -->
+            </div>
+            
+            <!-- Top Row: Clock (centered), then Weather and Quote below -->
             <div class="mirror-top">
-                <!-- Weather Widget -->
+                <!-- Clock Widget (spans full width at top) -->
+                <div class="clock-widget">
+                    <div class="clock-time" id="clockTime">12:00</div>
+                    <div class="clock-date" id="clockDate">Monday, January 1, 2024</div>
+                </div>
+
+                <!-- Weather Widget (left column) -->
                 <div class="weather-widget">
-                    <div class="weather-location" id="weatherLocation">Essendon</div>
+                    <div class="weather-location-group">
+                        <div class="weather-location" id="weatherLocation">Essendon</div>
+                        <div class="weather-feels-inline" id="weatherFeelsInline">Feels like --°</div>
+                    </div>
                     <div class="weather-main">
                         <img class="weather-icon" id="weatherIcon" src="" alt="Weather">
                         <div class="weather-temp" id="weatherTemp">--°</div>
@@ -42,12 +56,12 @@
                             <span id="weatherHumidity">--%</span>
                         </div>
                         <div class="weather-detail">
-                            <span>💨</span>
+                            <span id="windIcon">💨</span>
                             <span id="weatherWind">-- km/h</span>
                         </div>
                         <div class="weather-detail">
-                            <span>🌡️</span>
-                            <span id="weatherFeels">--°</span>
+                            <span>☀️</span>
+                            <span id="weatherUV">UV --</span>
                         </div>
                     </div>
                     <div class="sun-times">
@@ -68,17 +82,39 @@
                     </div>
                 </div>
 
-                <!-- Clock Widget -->
-                <div class="clock-widget">
-                    <div class="clock-time" id="clockTime">12:00</div>
-                    <div class="clock-date" id="clockDate">Monday, January 1, 2024</div>
+                <!-- Weather Summary Widget (right column) -->
+                <div class="summary-widget">
+                    <div class="summary-header">Today's Weather</div>
+                    <div class="summary-temps">
+                        <div class="summary-temp-item">
+                            <span class="summary-label">High</span>
+                            <span class="summary-value temp-high" id="summaryHigh">--°</span>
+                        </div>
+                        <div class="summary-temp-item">
+                            <span class="summary-label">Low</span>
+                            <span class="summary-value temp-low" id="summaryLow">--°</span>
+                        </div>
+                    </div>
+                    <div class="summary-details">
+                        <div class="summary-detail" id="summaryUV">
+                            <span class="summary-icon">☀️</span>
+                            <span class="summary-text">UV Peak: --</span>
+                        </div>
+                        <div class="summary-detail" id="summaryRain">
+                            <span class="summary-icon">🌧️</span>
+                            <span class="summary-text">Rain: --%</span>
+                        </div>
+                    </div>
+                    <div class="summary-recommendations" id="summaryRecommendations">
+                        <div class="summary-recommendation">Loading...</div>
+                    </div>
                 </div>
             </div>
 
             <!-- Middle Row: Precipitation Chart -->
             <div class="mirror-middle">
                 <div class="precipitation-widget">
-                    <div class="forecast-title">24-Hour Precipitation</div>
+                    <div class="forecast-title">24-Hour Weather Forecast</div>
                     <canvas id="precipitationChart"></canvas>
                 </div>
             </div>

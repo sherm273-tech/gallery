@@ -61,13 +61,13 @@ let intervalId;
 let wakeLock = null;
 let keepAwakeInterval;
 let imageCache = new Map();
-const PRELOAD_COUNT = 20; // Increased from 5 to 20 for faster loading
-const MAX_CACHE_SIZE = 50; // Maximum images to keep in cache
-const MIN_CACHE_SIZE = 15; // Minimum cache size before aggressive preloading
+const PRELOAD_COUNT = 20;
+const MAX_CACHE_SIZE = 50;
+const MIN_CACHE_SIZE = 15;
 let draggedElement = null;
 let isPaused = false;
 let slideshowStarted = false;
-let currentMode = null; // 'slideshow', 'music', or 'weather'
+let currentMode = null;
 let isPlaying = false;
 
 // Session-based tracking
@@ -109,6 +109,7 @@ weatherDisplayBtn.addEventListener('click', async () => {
     // Immediately update weather and background
     updateCurrentWeather();
     updateForecast();
+    updateWeatherSummary();
     
     await requestWakeLock();
 });
@@ -137,10 +138,54 @@ function updateClock() {
     document.getElementById('clockDate').textContent = dateStr;
 }
 
-const compliments = [];
-
 function getWeatherIconUrl(iconCode) {
     return `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+}
+
+function displayWeatherAlerts(alerts) {
+    const alertsContainer = document.getElementById('weatherAlerts');
+    
+    if (!alerts || alerts.length === 0) {
+        alertsContainer.style.display = 'none';
+        return;
+    }
+    
+    alertsContainer.style.display = 'block';
+    alertsContainer.innerHTML = '';
+    
+    alerts.forEach(alert => {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `weather-alert alert-${alert.severity}`;
+        
+        const icon = getAlertIcon(alert.type);
+        
+        alertDiv.innerHTML = `
+            <span class="alert-icon">${icon}</span>
+            <div class="alert-content">
+                <div class="alert-type">${alert.type} ${capitalizeFirst(alert.severity)}</div>
+                <div class="alert-message">${alert.message}</div>
+            </div>
+        `;
+        
+        alertsContainer.appendChild(alertDiv);
+    });
+}
+
+function getAlertIcon(type) {
+    const icons = {
+        'UV': '☀️',
+        'Wind': '💨',
+        'Heat': '🌡️',
+        'Cold': '❄️',
+        'Thunderstorm': '⚡',
+        'Rain': '🌧️',
+        'Snow': '🌨️'
+    };
+    return icons[type] || '⚠️';
+}
+
+function capitalizeFirst(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 function formatSunTime(timestamp) {
@@ -162,13 +207,37 @@ async function updateCurrentWeather() {
         document.getElementById('weatherDesc').textContent = data.weather[0].description;
         document.getElementById('weatherIcon').src = getWeatherIconUrl(data.weather[0].icon);
         document.getElementById('weatherHumidity').textContent = `${data.main.humidity}%`;
-        document.getElementById('weatherWind').textContent = `${Math.round(data.wind.speed * 3.6)} km/h`;
-        document.getElementById('weatherFeels').textContent = `${Math.round(data.main.feels_like)}°`;
+        
+        // Update Feels Like inline
+        updateFeelsLikeInline(data.main.temp, data.main.feels_like);
+        
+        // Update Wind with direction
+        const windSpeed = Math.round(data.wind.speed * 3.6);
+        const windDeg = data.wind.deg || 0;
+        const windDir = getWindDirection(windDeg);
+        const windArrow = getWindArrow(windDeg);
+        
+        document.getElementById('windIcon').textContent = windArrow;
+        document.getElementById('weatherWind').textContent = `${windDir} ${windSpeed} km/h`;
+        
+        // Update UV Index
+        if (data.uv_index !== undefined) {
+            const uvInfo = getUVInfo(data.uv_index);
+            const uvElement = document.getElementById('weatherUV');
+            uvElement.textContent = `UV ${Math.round(data.uv_index * 10) / 10}`;
+            uvElement.style.color = uvInfo.color;
+            uvElement.title = `${uvInfo.level} - ${uvInfo.description}`;
+        }
         
         // Update sunrise and sunset
         if (data.sys) {
             document.getElementById('weatherSunrise').textContent = formatSunTime(data.sys.sunrise);
             document.getElementById('weatherSunset').textContent = formatSunTime(data.sys.sunset);
+        }
+        
+        // Display weather alerts
+        if (data.alerts) {
+            displayWeatherAlerts(data.alerts);
         }
         
         // Update weather background
@@ -178,10 +247,22 @@ async function updateCurrentWeather() {
     }
 }
 
+// Update Feels Like inline display
+function updateFeelsLikeInline(currentTemp, feelsLike) {
+    const feelsLikeElement = document.getElementById('weatherFeelsInline');
+    const diff = Math.abs(currentTemp - feelsLike);
+    
+    if (diff > 2) {
+        feelsLikeElement.textContent = `Feels like ${Math.round(feelsLike)}°`;
+        feelsLikeElement.style.display = 'inline';
+    } else {
+        feelsLikeElement.style.display = 'none';
+    }
+}
+
 function updateWeatherBackground(weatherCondition) {
     const overlay = document.getElementById('weatherDisplayOverlay');
     
-    // Map weather conditions to appropriate background images
     const weatherBackgrounds = {
         'Clear': 'linear-gradient(135deg, rgba(79, 172, 254, 0.2) 0%, rgba(0, 242, 254, 0.2) 100%), url(\'https://images.unsplash.com/photo-1601297183305-6df142704ea2?w=1920&q=80\') center/cover no-repeat',
         'Clouds': 'linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%), url(\'https://images.unsplash.com/photo-1534088568595-a066f410bcda?w=1920&q=80\') center/cover no-repeat',
@@ -197,7 +278,6 @@ function updateWeatherBackground(weatherCondition) {
 }
 
 // Create precipitation chart
-
 function createPrecipitationChart(forecastData) {
     const ctx = document.getElementById('precipitationChart');
     
@@ -205,10 +285,26 @@ function createPrecipitationChart(forecastData) {
         return;
     }
     
-    const next24Hours = forecastData.slice(0, 24);
+    const now = new Date();
     
-    const labels = next24Hours.map(item => {
+    const futureForecasts = forecastData.filter(item => {
+        const forecastTime = new Date(item.dt * 1000);
+        return forecastTime >= now;
+    });
+    
+    const next24Hours = futureForecasts.slice(0, 24);
+    
+    if (next24Hours.length === 0) {
+        console.warn('No future forecast data available');
+        return;
+    }
+    
+    const labels = next24Hours.map((item, index) => {
         const date = new Date(item.dt * 1000);
+        const timeDiff = Math.abs(date - now);
+        if (index === 0 && timeDiff < 30 * 60 * 1000) {
+            return 'Now';
+        }
         return date.toLocaleTimeString('en-AU', { hour: 'numeric', hour12: true });
     });
     
@@ -229,7 +325,13 @@ function createPrecipitationChart(forecastData) {
         return 0;
     });
     
-    const hasAnyData = precipitation.some(p => p > 0) || precipProbability.some(p => p > 0);
+    const temperatures = next24Hours.map(item => {
+        return item.main ? item.main.temp : 0;
+    });
+    
+    const uvIndex = next24Hours.map(item => {
+        return item.uv_index || 0;
+    });
     
     if (window.precipitationChartInstance) {
         window.precipitationChartInstance.destroy();
@@ -247,20 +349,51 @@ function createPrecipitationChart(forecastData) {
                     borderColor: 'rgba(74, 158, 255, 1)',
                     borderWidth: 2,
                     borderRadius: 4,
-                    yAxisID: 'y'
+                    yAxisID: 'yPrecip',
+                    order: 3
                 },
                 {
-                    label: 'Chance of Rain (%)',
+                    label: 'Rain Chance (%)',
                     data: precipProbability,
                     type: 'line',
                     borderColor: 'rgba(255, 193, 7, 1)',
                     backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: false,
+                    pointRadius: 3,
+                    pointBackgroundColor: 'rgba(255, 193, 7, 1)',
+                    yAxisID: 'yPercent',
+                    order: 2
+                },
+                {
+                    label: 'Temperature (°C)',
+                    data: temperatures,
+                    type: 'line',
+                    borderColor: 'rgba(255, 99, 71, 1)',
+                    backgroundColor: 'rgba(255, 99, 71, 0.1)',
                     borderWidth: 3,
                     tension: 0.4,
-                    fill: true,
+                    fill: false,
                     pointRadius: 4,
-                    pointBackgroundColor: 'rgba(255, 193, 7, 1)',
-                    yAxisID: 'y1'
+                    pointBackgroundColor: 'rgba(255, 99, 71, 1)',
+                    yAxisID: 'yTemp',
+                    order: 1
+                },
+                {
+                    label: 'UV Index',
+                    data: uvIndex,
+                    type: 'line',
+                    borderColor: 'rgba(138, 43, 226, 1)',
+                    backgroundColor: 'rgba(138, 43, 226, 0.1)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    tension: 0.4,
+                    fill: false,
+                    pointRadius: 3,
+                    pointBackgroundColor: 'rgba(138, 43, 226, 1)',
+                    yAxisID: 'yUV',
+                    order: 4
                 }
             ]
         },
@@ -277,9 +410,10 @@ function createPrecipitationChart(forecastData) {
                     position: 'top',
                     labels: {
                         color: '#ffffff',
-                        font: { size: 12 },
-                        padding: 15,
-                        usePointStyle: true
+                        font: { size: 11 },
+                        padding: 10,
+                        usePointStyle: true,
+                        boxWidth: 8
                     }
                 },
                 tooltip: {
@@ -294,23 +428,19 @@ function createPrecipitationChart(forecastData) {
                             let label = context.dataset.label || '';
                             if (label) label += ': ';
                             if (context.parsed.y !== null) {
-                                label += context.datasetIndex === 0 
-                                    ? context.parsed.y.toFixed(1) + ' mm'
-                                    : context.parsed.y.toFixed(0) + '%';
+                                if (label.includes('Precipitation')) {
+                                    label += context.parsed.y.toFixed(1) + ' mm';
+                                } else if (label.includes('Chance') || label.includes('%')) {
+                                    label += context.parsed.y.toFixed(0) + '%';
+                                } else if (label.includes('Temperature')) {
+                                    label += context.parsed.y.toFixed(1) + '°C';
+                                } else if (label.includes('UV')) {
+                                    label += context.parsed.y.toFixed(1);
+                                }
                             }
                             return label;
-                        },
-                        afterBody: function() {
-                            return !hasAnyData ? ['', '☀️ No rain expected!'] : [];
                         }
                     }
-                },
-                title: {
-                    display: !hasAnyData,
-                    text: '☀️ No Rain Expected - Clear Skies Ahead!',
-                    color: '#4a9eff',
-                    font: { size: 14, weight: 'bold' },
-                    padding: { top: 10, bottom: 5 }
                 }
             },
             scales: {
@@ -321,20 +451,20 @@ function createPrecipitationChart(forecastData) {
                     },
                     ticks: {
                         color: '#ffffff',
-                        font: { size: 10 },
+                        font: { size: 9 },
                         maxRotation: 45,
                         minRotation: 45
                     }
                 },
-                y: {
+                yPrecip: {
                     type: 'linear',
                     display: true,
                     position: 'left',
                     title: {
                         display: true,
-                        text: 'Precipitation (mm)',
+                        text: 'Precip (mm)',
                         color: '#4a9eff',
-                        font: { size: 12, weight: 'bold' }
+                        font: { size: 10, weight: 'bold' }
                     },
                     grid: {
                         color: 'rgba(255, 255, 255, 0.1)',
@@ -342,31 +472,46 @@ function createPrecipitationChart(forecastData) {
                     },
                     ticks: {
                         color: '#ffffff',
-                        font: { size: 11 }
+                        font: { size: 10 }
                     },
-                    beginAtZero: true,
-                    max: hasAnyData ? undefined : 5
+                    beginAtZero: true
                 },
-                y1: {
+                yTemp: {
                     type: 'linear',
                     display: true,
                     position: 'right',
                     title: {
                         display: true,
-                        text: 'Chance (%)',
-                        color: '#ffc107',
-                        font: { size: 12, weight: 'bold' }
+                        text: 'Temp (°C)',
+                        color: '#ff6347',
+                        font: { size: 10, weight: 'bold' }
                     },
-                    min: 0,
-                    max: 100,
                     grid: {
-                        drawOnChartArea: false,
-                        drawBorder: false
+                        drawOnChartArea: false
                     },
                     ticks: {
                         color: '#ffffff',
-                        font: { size: 11 },
-                        stepSize: 20
+                        font: { size: 10 }
+                    }
+                },
+                yPercent: {
+                    type: 'linear',
+                    display: false,
+                    position: 'right',
+                    min: 0,
+                    max: 100,
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                },
+                yUV: {
+                    type: 'linear',
+                    display: false,
+                    position: 'right',
+                    min: 0,
+                    max: 12,
+                    grid: {
+                        drawOnChartArea: false
                     }
                 }
             }
@@ -378,24 +523,44 @@ async function updateForecast() {
     try {
         const response = await fetch('/api/weather/forecast');
         const data = await response.json();
-                
-        if (data.error) {
-            console.error('Forecast error:', data.error);
-            return;
-        }
+        
+        if (data.error) return;
         
         const hourlyForecasts = processHourlyForecast(data.list);
         displayHourlyForecast(hourlyForecasts);
         
-        const weeklyForecasts = processWeeklyForecast(data.list);
-        displayWeeklyForecast(weeklyForecasts);
-        
-        // Create precipitation chart with diagnostic
-        const chartElement = document.getElementById('precipitationChart');
-        
-        if (!chartElement) {
-            console.error('ERROR: precipitationChart canvas not found in HTML!');
-            return;
+        if (data.daily && data.daily.length > 0) {
+            const container = document.getElementById('weeklyForecast');
+            container.innerHTML = '';
+            
+            data.daily.slice(0, 5).forEach((day, index) => {
+                const item = document.createElement('div');
+                item.className = 'weekly-item';
+                
+                const date = new Date(day.dt * 1000);
+                const dayStr = index === 0 ? 'Today' : date.toLocaleDateString('en-AU', { weekday: 'short' });
+                
+                item.innerHTML = `
+                    <span class="weekly-day">${dayStr}</span>
+                    <img class="weekly-icon" src="${getWeatherIconUrl(day.weather[0].icon)}" alt="${day.weather[0].description}">
+                    <span class="weekly-desc">${day.weather[0].description}</span>
+                    <div class="weekly-temps">
+                        <div class="temp-high-group">
+                            <span class="temp-label">High</span>
+                            <span class="temp-high">${Math.round(day.temp.max)}°</span>
+                        </div>
+                        <div class="temp-low-group">
+                            <span class="temp-label">Low</span>
+                            <span class="temp-low">${Math.round(day.temp.min)}°</span>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(item);
+            });
+        } else {
+            const weeklyForecasts = processWeeklyForecast(data.list);
+            displayWeeklyForecast(weeklyForecasts);
         }
         
         createPrecipitationChart(data.list);
@@ -405,21 +570,259 @@ async function updateForecast() {
     }
 }
 
+// ===== WEATHER SUMMARY WIDGET =====
+async function updateWeatherSummary() {
+    try {
+        const response = await fetch('/api/weather/forecast');
+        const data = await response.json();
+        
+        if (data.error || !data.daily || data.daily.length === 0) {
+            return;
+        }
+        
+        const today = data.daily[0];
+        const hourlyData = data.list || [];
+        
+        // Update High/Low temps
+        const highTemp = Math.round(today.temp.max);
+        const lowTemp = Math.round(today.temp.min);
+        document.getElementById('summaryHigh').textContent = `${highTemp}°`;
+        document.getElementById('summaryLow').textContent = `${lowTemp}°`;
+        
+        // Find UV peak and time
+        const uvPeakData = findUVPeak(hourlyData);
+        const uvElement = document.getElementById('summaryUV');
+        if (uvPeakData.peak > 0) {
+            uvElement.innerHTML = `
+                <span class="summary-icon">☀️</span>
+                <span class="summary-text">UV Peak: ${uvPeakData.peak.toFixed(1)} at ${uvPeakData.time}</span>
+            `;
+        } else {
+            uvElement.innerHTML = `
+                <span class="summary-icon">🌙</span>
+                <span class="summary-text">No UV (nighttime)</span>
+            `;
+        }
+        
+        // Find rain probability and time
+        const rainData = findMaxRain(hourlyData);
+        const rainElement = document.getElementById('summaryRain');
+        if (rainData.probability > 20) {
+            rainElement.innerHTML = `
+                <span class="summary-icon">🌧️</span>
+                <span class="summary-text">Rain: ${rainData.probability}% at ${rainData.time}</span>
+            `;
+        } else {
+            rainElement.innerHTML = `
+                <span class="summary-icon">☀️</span>
+                <span class="summary-text">No rain expected</span>
+            `;
+        }
+        
+        // Generate smart recommendations
+        const recommendations = generateRecommendations(highTemp, lowTemp, uvPeakData, rainData);
+        displayRecommendations(recommendations);
+        
+    } catch (error) {
+        console.error('Error updating weather summary:', error);
+    }
+}
+
+// Find UV peak time
+function findUVPeak(hourlyData) {
+    const now = new Date();
+    const futureHours = hourlyData.filter(item => {
+        const time = new Date(item.dt * 1000);
+        return time >= now && time.getHours() >= 6 && time.getHours() <= 18;
+    }).slice(0, 12);
+    
+    if (futureHours.length === 0) {
+        return { peak: 0, time: '--' };
+    }
+    
+    let maxUV = 0;
+    let maxTime = '';
+    
+    futureHours.forEach(item => {
+        const uv = item.uv_index || 0;
+        if (uv > maxUV) {
+            maxUV = uv;
+            const time = new Date(item.dt * 1000);
+            maxTime = time.toLocaleTimeString('en-AU', { hour: 'numeric', hour12: true });
+        }
+    });
+    
+    return { peak: maxUV, time: maxTime };
+}
+
+// Find maximum rain probability
+function findMaxRain(hourlyData) {
+    const now = new Date();
+    const futureHours = hourlyData.filter(item => {
+        const time = new Date(item.dt * 1000);
+        return time >= now;
+    }).slice(0, 12);
+    
+    if (futureHours.length === 0) {
+        return { probability: 0, time: '--' };
+    }
+    
+    let maxRain = 0;
+    let maxTime = '';
+    
+    futureHours.forEach(item => {
+        let rain = item.pop || 0;
+        if (rain <= 1) rain = rain * 100;
+        
+        if (rain > maxRain) {
+            maxRain = rain;
+            const time = new Date(item.dt * 1000);
+            maxTime = time.toLocaleTimeString('en-AU', { hour: 'numeric', hour12: true });
+        }
+    });
+    
+    return { probability: Math.round(maxRain), time: maxTime };
+}
+
+// Generate smart recommendations based on weather data
+function generateRecommendations(highTemp, lowTemp, uvData, rainData) {
+    const recommendations = [];
+    const tempDiff = highTemp - lowTemp;
+    
+    // Temperature recommendations
+    if (tempDiff > 12) {
+        recommendations.push({
+            icon: '🧥',
+            text: `Cool morning (${lowTemp}°), warm afternoon (${highTemp}°) - Layer up!`
+        });
+    } else if (highTemp >= 30) {
+        recommendations.push({
+            icon: '🥵',
+            text: 'Very hot day - Stay hydrated and avoid midday sun'
+        });
+    } else if (highTemp <= 15) {
+        recommendations.push({
+            icon: '🧥',
+            text: 'Cold day - Dress warmly'
+        });
+    } else if (highTemp >= 20 && highTemp <= 25) {
+        recommendations.push({
+            icon: '😊',
+            text: 'Perfect temperature for outdoor activities'
+        });
+    }
+    
+    // UV recommendations
+    if (uvData.peak >= 8) {
+        recommendations.push({
+            icon: '☀️',
+            text: `Very High UV at ${uvData.time} - Wear sunscreen & hat`
+        });
+    } else if (uvData.peak >= 6) {
+        recommendations.push({
+            icon: '🕶️',
+            text: `High UV at ${uvData.time} - Sun protection recommended`
+        });
+    } else if (uvData.peak >= 3) {
+        recommendations.push({
+            icon: '☀️',
+            text: 'Moderate UV - Light sun protection advised'
+        });
+    }
+    
+    // Rain recommendations
+    if (rainData.probability >= 70) {
+        recommendations.push({
+            icon: '☂️',
+            text: `${rainData.probability}% rain at ${rainData.time} - Bring umbrella`
+        });
+    } else if (rainData.probability >= 40) {
+        recommendations.push({
+            icon: '🌂',
+            text: `${rainData.probability}% rain at ${rainData.time} - May need umbrella`
+        });
+    } else if (rainData.probability < 20) {
+        recommendations.push({
+            icon: '☀️',
+            text: 'No rain expected - Great day to be outside!'
+        });
+    }
+    
+    // Time-based recommendations
+    const hour = new Date().getHours();
+    if (hour < 9 && tempDiff > 10) {
+        recommendations.push({
+            icon: '🌅',
+            text: 'Chilly morning - Warm up gradually'
+        });
+    } else if (hour >= 18 && lowTemp < 15) {
+        recommendations.push({
+            icon: '🌙',
+            text: 'Cold evening ahead - Bring a jacket'
+        });
+    }
+    
+    // Default if no specific recommendations
+    if (recommendations.length === 0) {
+        recommendations.push({
+            icon: '🌤️',
+            text: 'Pleasant weather expected today'
+        });
+    }
+    
+    return recommendations.slice(0, 3);
+}
+
+// Display recommendations in the widget
+function displayRecommendations(recommendations) {
+    const container = document.getElementById('summaryRecommendations');
+    container.innerHTML = '';
+    
+    recommendations.forEach(rec => {
+        const div = document.createElement('div');
+        div.className = 'summary-recommendation';
+        div.innerHTML = `${rec.icon} ${rec.text}`;
+        container.appendChild(div);
+    });
+}
+
+// Helper function to convert wind direction degrees to compass direction
+function getWindDirection(degrees) {
+    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 
+                       'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    const index = Math.round(degrees / 22.5) % 16;
+    return directions[index];
+}
+
+// Helper function to get wind direction arrow
+function getWindArrow(degrees) {
+    const arrows = ['↓', '↙', '←', '↖', '↑', '↗', '→', '↘'];
+    const index = Math.round(((degrees + 180) % 360) / 45) % 8;
+    return arrows[index];
+}
+
 function processHourlyForecast(forecastList) {
-    return forecastList.slice(0, 8).map(item => ({
+    const now = new Date();
+    
+    const futureForecasts = forecastList.filter(item => {
+        const forecastTime = new Date(item.dt * 1000);
+        return forecastTime >= now;
+    });
+    
+    return futureForecasts.slice(0, 8).map(item => ({
         time: new Date(item.dt * 1000),
         temp: Math.round(item.main.temp),
-        weather: item.weather[0]
+        weather: item.weather[0],
+        uv_index: item.uv_index !== undefined ? item.uv_index : 0
     }));
 }
 
 function processWeeklyForecast(forecastList) {    
-    // Group forecasts by day
     const dailyData = {};
     
-    forecastList.forEach((item, idx) => {
+    forecastList.forEach((item) => {
         const date = new Date(item.dt * 1000);
-        const dayKey = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+        const dayKey = date.toISOString().split('T')[0];
         const hour = date.getHours();
         
         if (!dailyData[dayKey]) {
@@ -434,13 +837,11 @@ function processWeeklyForecast(forecastList) {
         dailyData[dayKey].temps.push(item.main.temp);
         dailyData[dayKey].weatherItems.push(item.weather[0]);
         
-        // Prefer weather around noon (12pm) for icon
         if (hour >= 11 && hour <= 13 && !dailyData[dayKey].middayWeather) {
             dailyData[dayKey].middayWeather = item.weather[0];
         }
     });
     
-    // Convert to array and calculate min/max for each day
     const weeklyForecasts = Object.values(dailyData).map(day => ({
         date: day.date,
         tempHigh: Math.round(Math.max(...day.temps)),
@@ -448,7 +849,6 @@ function processWeeklyForecast(forecastList) {
         weather: day.middayWeather || day.weatherItems[Math.floor(day.weatherItems.length / 2)] || day.weatherItems[0]
     }));
     
-    // Return up to 5 days
     return weeklyForecasts.slice(0, 5);
 }
 
@@ -456,21 +856,37 @@ function displayHourlyForecast(forecasts) {
     const container = document.getElementById('hourlyForecast');
     container.innerHTML = '';
     
-    forecasts.forEach((forecast, index) => {
+    const now = new Date();
+    
+    if (forecasts.length === 0) {
+        container.innerHTML = '<p style="color: red;">No forecast data available</p>';
+        return;
+    }
+    
+    forecasts.forEach((forecast) => {
         const item = document.createElement('div');
         item.className = 'hourly-item';
         
-        const timeStr = index === 0 ? 'Now' : forecast.time.toLocaleTimeString('en-AU', { 
+        const timeDiff = Math.abs(forecast.time - now);
+        const isNow = timeDiff < 30 * 60 * 1000;
+        
+        const timeStr = isNow ? 'Now' : forecast.time.toLocaleTimeString('en-AU', { 
             hour: 'numeric', 
             minute: '2-digit',
             hour12: true 
         });
+        
+        const uvValue = forecast.uv_index || 0;
+        const uvInfo = getUVInfo(uvValue);
         
         item.innerHTML = `
             <span class="hourly-time">${timeStr}</span>
             <img class="forecast-icon-small" src="${getWeatherIconUrl(forecast.weather.icon)}" alt="${forecast.weather.description}">
             <span class="forecast-desc">${forecast.weather.description}</span>
             <span class="hourly-temp">${forecast.temp}°</span>
+            <span class="hourly-uv" style="color: ${uvInfo.color};" title="${uvInfo.level} - ${uvInfo.description}">
+                ☀️ ${Math.round(uvValue * 10) / 10}
+            </span>
         `;
         
         container.appendChild(item);
@@ -486,14 +902,20 @@ function displayWeeklyForecast(forecasts) {
         item.className = 'weekly-item';
         
         const dayStr = index === 0 ? 'Today' : forecast.date.toLocaleDateString('en-AU', { weekday: 'short' });
-          
+        
         item.innerHTML = `
             <span class="weekly-day">${dayStr}</span>
             <img class="weekly-icon" src="${getWeatherIconUrl(forecast.weather.icon)}" alt="${forecast.weather.description}">
             <span class="weekly-desc">${forecast.weather.description}</span>
             <div class="weekly-temps">
-                <span class="temp-high">${forecast.tempHigh}°</span>
-                <span class="temp-low">${forecast.tempLow}°</span>
+                <div class="temp-high-group">
+                    <span class="temp-label">High</span>
+                    <span class="temp-high">${forecast.tempHigh}°</span>
+                </div>
+                <div class="temp-low-group">
+                    <span class="temp-label">Low</span>
+                    <span class="temp-low">${forecast.tempLow}°</span>
+                </div>
             </div>
         `;
         
@@ -507,7 +929,6 @@ closeWeatherBtn.addEventListener('click', () => {
     mirrorOverlay.classList.add('hidden');
     initialMenu.classList.remove('hidden');
     
-    // Release wake lock
     if (wakeLock !== null) {
         wakeLock.release();
         wakeLock = null;
@@ -549,7 +970,6 @@ audioPlayer.addEventListener('ended', () => {
     if (currentMode === 'music') {
         nextTrack();
     } else {
-        // Slideshow mode
         currentMusicIndex = (currentMusicIndex + 1) % selectedMusic.length;
         playCurrentTrack();
     }
@@ -605,13 +1025,8 @@ closePlayerBtn.addEventListener('click', () => {
     audioPlayer.pause();
     isPlaying = false;
     
-    // Return to menu
     if (currentMode === 'music') {
         initialMenu.classList.remove('hidden');
-    }
-    
-    if (slideshowStarted) {
-        // Just close the player, slideshow continues
     }
 });
 
@@ -958,11 +1373,9 @@ function playMusic() {
     selectedMusic = getSelectedMusic();
     
     if (selectedMusic.length === 0) {
-        console.log('No music selected');
         return;
     }
     
-    console.log('Playlist order:', selectedMusic);
     currentMusicIndex = 0;
     playCurrentTrack();
 }
@@ -994,11 +1407,9 @@ function stopSlideshow() {
     isPaused = false;
     slideshowStarted = false;
     
-    // Release wake lock
     if (wakeLock) {
         wakeLock.release().then(() => {
             wakeLock = null;
-            console.log('Wake Lock released');
         });
     }
     
@@ -1030,10 +1441,9 @@ function togglePause() {
 }
 
 document.addEventListener('keydown', (e) => {
-    // Weather display scrolling with arrow keys
     if (currentMode === 'weather') {
         const weatherOverlay = document.getElementById('weatherDisplayOverlay');
-        const scrollAmount = 100; // pixels to scroll
+        const scrollAmount = 100;
         
         switch(e.key) {
             case 'Escape':
@@ -1065,7 +1475,6 @@ document.addEventListener('keydown', (e) => {
     switch(e.key) {
         case 'Escape':
             e.preventDefault();
-            // Exit slideshow/music and return to setup screen
             if (currentMode === 'slideshow') {
                 stopSlideshow();
                 controls.classList.remove('hidden');
@@ -1113,16 +1522,12 @@ function previousImage() {
 }
 
 async function initializeSlideshow() {
-    console.log('Initializing slideshow with session tracking...');
-    
     currentRequestParams = {
         startFolder: startFolderSelect.value || null,
         randomize: randomizeCheckbox.checked,
         shuffleAll: shuffleAllCheckbox.checked,
         selectedFolders: shuffleAllCheckbox.checked ? [] : getSelectedFolders()
     };
-    
-    console.log('Request params:', currentRequestParams);
     
     const response = await fetch('/api/images/list', {
         method: 'POST',
@@ -1132,9 +1537,7 @@ async function initializeSlideshow() {
     
     const initialImages = await response.json();
     totalImages = initialImages.length;
-    console.log(`Total images in pool: ${totalImages}`);
     
-    // Preload first batch
     for (let i = 0; i < Math.min(PRELOAD_COUNT, initialImages.length); i++) {
         preloadImage(initialImages[i]);
     }
@@ -1163,54 +1566,57 @@ function showImageByPath(imagePath) {
     }
 }
 
+function getUVInfo(uvIndex) {
+    const uv = Math.round(uvIndex * 10) / 10;
+    
+    if (uv < 3) {
+        return { level: 'Low', color: '#4CAF50', description: 'No protection needed' };
+    } else if (uv < 6) {
+        return { level: 'Moderate', color: '#FFC107', description: 'Wear sunscreen' };
+    } else if (uv < 8) {
+        return { level: 'High', color: '#FF9800', description: 'Protection required' };
+    } else if (uv < 11) {
+        return { level: 'Very High', color: '#F44336', description: 'Extra protection' };
+    } else {
+        return { level: 'Extreme', color: '#9C27B0', description: 'Avoid sun exposure' };
+    }
+}
+
 function showImageByPathAsync(imagePath) {
     return new Promise((resolve, reject) => {
         const url = "/images/" + imagePath;
         
-        // Hide the image element while loading
         imgEl.classList.remove('loaded');
         
         if (imageCache.has(url)) {
-            // Image is cached, use it immediately
             const cachedImg = imageCache.get(url);
             imgEl.src = cachedImg.src;
             
-            // Show immediately since it's cached
             setTimeout(() => {
                 imgEl.classList.add('loaded');
             }, 50);
             
             resolve();
         } else {
-            // Image not cached, load it first
             const img = new Image();
             
             img.onload = () => {
-                // Wait for image to be fully loaded before setting src
                 imgEl.src = img.src;
                 imageCache.set(url, img);
                 
-                // Show the image with fade-in effect
                 setTimeout(() => {
                     imgEl.classList.add('loaded');
                 }, 50);
                 
-                console.log('Image loaded successfully:', imagePath);
                 resolve();
             };
             
             img.onerror = () => {
-                console.error('Failed to load image:', imagePath);
-                console.error('Full URL:', url);
-                
-                // Try to continue anyway
                 imgEl.src = url;
                 imgEl.classList.add('loaded');
-                
                 reject(new Error('Failed to load image: ' + imagePath));
             };
             
-            // Start loading
             img.src = url;
         }
     });
@@ -1227,24 +1633,15 @@ async function nextImage() {
         const data = await response.json();
         
         if (data.cycleComplete) {
-            console.log('=== CYCLE COMPLETE ===');
             imageHistory = [];
         }
         
         if (data.image) {
             imageHistory.push(data.image);
-            
-            // IMPORTANT: Wait for image to load before displaying
             await showImageByPathAsync(data.image);
-            
-            console.log(`Showing: ${data.image}`);
-            console.log(`Progress: ${data.totalShown}/${data.totalImages}`);
-            
-            // Progressive preloading: load next images ahead
             preloadNextImages(data.totalShown, data.totalImages);
         }
         
-        // Clean up old images from cache to prevent memory bloat
         if (imageCache.size > MAX_CACHE_SIZE) {
             const keysToDelete = [];
             let count = 0;
@@ -1256,20 +1653,16 @@ async function nextImage() {
                 }
             }
             keysToDelete.forEach(key => imageCache.delete(key));
-            console.log(`Cache cleanup: removed ${keysToDelete.length} images, keeping ${imageCache.size}`);
         }
     } catch (err) {
         console.error('Error fetching next image:', err);
     }
 }
 
-// Preload the next N images ahead of current position
 async function preloadNextImages(currentIndex, totalImages) {
-    // Only preload if cache is getting low
     if (imageCache.size >= MIN_CACHE_SIZE) return;
     
     try {
-        // Request next 10 images from backend
         const response = await fetch('/api/images/peek', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1282,7 +1675,6 @@ async function preloadNextImages(currentIndex, totalImages) {
         if (response.ok) {
             const upcomingImages = await response.json();
             upcomingImages.forEach(imagePath => preloadImage(imagePath));
-            console.log(`Preloaded ${upcomingImages.length} upcoming images`);
         }
     } catch (err) {
         console.log('Background preload skipped:', err.message);
@@ -1296,7 +1688,6 @@ async function requestFullscreen() {
         } else if (document.documentElement.webkitRequestFullscreen) {
             await document.documentElement.webkitRequestFullscreen();
         }
-        console.log('Fullscreen active');
     } catch (err) {
         console.log('Fullscreen error:', err);
     }
@@ -1306,7 +1697,6 @@ async function requestWakeLock() {
     try {
         if ('wakeLock' in navigator) {
             wakeLock = await navigator.wakeLock.request('screen');
-            console.log('Wake Lock active');
         }
     } catch (err) {
         console.log('Wake Lock error:', err);
@@ -1336,9 +1726,7 @@ startBtn.addEventListener("click", async () => {
         
         delay = parseInt(speedSelect.value);
         
-        // Slideshow: NO weather display by default
         mirrorOverlay.classList.add("hidden");
-        
         controls.classList.add("hidden");
         loadingOverlay.classList.add("active");
         document.body.classList.add("slideshow-active");
@@ -1365,9 +1753,7 @@ startBtn.addEventListener("click", async () => {
                     slideshowStarted = true;
                     imageHistory = [];
                     
-                    // IMPORTANT: Wait for first image to load before starting interval
                     nextImage().then(() => {
-                        // Start interval AFTER first image is displayed
                         intervalId = setInterval(nextImage, delay);
                     });
                 }
@@ -1375,7 +1761,6 @@ startBtn.addEventListener("click", async () => {
         }, 100);
         
     } else if (currentMode === 'music') {
-        // Music Player mode: NO weather display
         selectedMusic = getSelectedMusic();
         
         if (selectedMusic.length === 0) {
