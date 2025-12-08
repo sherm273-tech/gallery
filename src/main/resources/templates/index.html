@@ -18,59 +18,63 @@
         <div id="loadingText">Preloading images...</div>
     </div>
 
-    <!-- Magic Mirror Overlay -->
-    <div class="mirror-overlay" id="mirrorOverlay">
+    <!-- Weather Display Overlay -->
+    <div class="weather-display-overlay" id="weatherDisplayOverlay">
+        <button class="close-weather-btn" id="closeWeatherBtn">✕ Exit</button>
         
-        <!-- Top Bar -->
-        <div class="mirror-top">
-            <!-- Weather - Top Left -->
-            <div class="weather-widget">
-                <div class="weather-location" id="weatherLocation">Essendon</div>
-                <div class="weather-main">
-                    <img class="weather-icon" id="weatherIcon" src="" alt="Weather">
-                    <div class="weather-temp" id="weatherTemp">--°</div>
+        <!-- Magic Mirror Overlay -->
+        <div class="mirror-overlay" id="mirrorOverlay">
+            
+            <!-- Top Row: Weather and Clock -->
+            <div class="mirror-top">
+                <!-- Weather Widget -->
+                <div class="weather-widget">
+                    <div class="weather-location" id="weatherLocation">Essendon</div>
+                    <div class="weather-main">
+                        <img class="weather-icon" id="weatherIcon" src="" alt="Weather">
+                        <div class="weather-temp" id="weatherTemp">--°</div>
+                    </div>
+                    <div class="weather-desc" id="weatherDesc">Loading...</div>
+                    <div class="weather-details">
+                        <div class="weather-detail">
+                            <span>💧</span>
+                            <span id="weatherHumidity">--%</span>
+                        </div>
+                        <div class="weather-detail">
+                            <span>💨</span>
+                            <span id="weatherWind">-- km/h</span>
+                        </div>
+                        <div class="weather-detail">
+                            <span>🌡️</span>
+                            <span id="weatherFeels">--°</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="weather-desc" id="weatherDesc">Loading...</div>
-                <div class="weather-details">
-                    <div class="weather-detail">
-                        <span>💧</span>
-                        <span id="weatherHumidity">--%</span>
-                    </div>
-                    <div class="weather-detail">
-                        <span>💨</span>
-                        <span id="weatherWind">-- km/h</span>
-                    </div>
-                    <div class="weather-detail">
-                        <span>🌡️</span>
-                        <span id="weatherFeels">--°</span>
-                    </div>
+
+                <!-- Clock Widget -->
+                <div class="clock-widget">
+                    <div class="clock-time" id="clockTime">12:00</div>
+                    <div class="clock-date" id="clockDate">Monday, January 1, 2024</div>
                 </div>
             </div>
 
-            <!-- Clock - Top Right -->
-            <div class="clock-widget">
-                <div class="clock-time" id="clockTime">12:00</div>
-                <div class="clock-date" id="clockDate">Monday, January 1, 2024</div>
-            </div>
-        </div>
-
-        <!-- Bottom Bar -->
-        <div class="mirror-bottom">
-            <!-- Hourly Forecast - Bottom -->
-            <div class="hourly-widget">
-                <div class="forecast-title">Hourly Forecast</div>
-                <div id="hourlyForecast">
-                    <!-- Populated by JavaScript -->
+            <!-- Middle Row: Hourly Forecast -->
+            <div class="mirror-middle">
+                <div class="hourly-widget">
+                    <div class="forecast-title">Hourly Forecast</div>
+                    <div id="hourlyForecast">
+                        <!-- Populated by JavaScript -->
+                    </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Weekly Forecast Bar -->
-        <div class="mirror-weekly">
-            <div class="weekly-widget">
-                <div class="forecast-title">5-Day Forecast</div>
-                <div id="weeklyForecast">
-                    <!-- Populated by JavaScript -->
+            
+            <!-- Bottom Row: Weekly Forecast -->
+            <div class="mirror-bottom">
+                <div class="weekly-widget">
+                    <div class="forecast-title">5-Day Forecast</div>
+                    <div id="weeklyForecast">
+                        <!-- Populated by JavaScript -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -147,11 +151,6 @@
                 </button>
             </div>
         </div>
-    </div>
-
-    <!-- Weather Display Overlay -->
-    <div class="weather-display-overlay" id="weatherDisplayOverlay">
-        <button class="close-weather-btn" id="closeWeatherBtn">✕ Exit</button>
     </div>
 
     <!-- Controls Panel -->

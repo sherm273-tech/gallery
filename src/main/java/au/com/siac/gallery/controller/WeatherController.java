@@ -71,9 +71,6 @@ public class WeatherController {
                     WEATHER_URL, LATITUDE, LONGITUDE, today, endDate
             );
 
-            System.out.println("Fetching weather from: " + url);
-            System.out.println("Date range: " + today + " to " + endDate);
-
             Map<String, Object> response = restTemplate.getForObject(url, Map.class);
             Map<String, Object> hourly = (Map<String, Object>) response.get("hourly");
 
@@ -82,13 +79,6 @@ public class WeatherController {
             List<Number> humidity = (List<Number>) hourly.get("relative_humidity_2m");
             List<Number> weatherCodes = (List<Number>) hourly.get("weather_code");
             List<Number> windSpeeds = (List<Number>) hourly.get("wind_speed_10m");
-
-            System.out.println("Received " + times.size() + " hourly forecast entries");
-            
-            // Debug: print first 5 timestamps
-            for (int i = 0; i < Math.min(5, times.size()); i++) {
-                System.out.println("Time[" + i + "]: " + times.get(i));
-            }
 
             List<Map<String, Object>> forecastList = new ArrayList<>();
 

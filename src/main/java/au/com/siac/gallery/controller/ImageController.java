@@ -94,7 +94,6 @@ public class ImageController {
                     .sorted()
                     .collect(Collectors.toList());
             
-            System.out.println("Total folders with direct images: " + folders.size());
             return folders;
         }
     }
