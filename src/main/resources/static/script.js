@@ -1440,7 +1440,21 @@ function togglePause() {
     }
 }
 
+
 document.addEventListener('keydown', (e) => {
+    // Check if user is typing in an input field - if so, don't interfere
+    const activeElement = document.activeElement;
+    const isTyping = activeElement && (
+        activeElement.tagName === 'INPUT' || 
+        activeElement.tagName === 'TEXTAREA' || 
+        activeElement.isContentEditable
+    );
+    
+    // Allow typing in input fields without triggering shortcuts (except Escape)
+    if (isTyping && e.key !== 'Escape') {
+        return;
+    }
+    
     if (currentMode === 'weather') {
         const weatherOverlay = document.getElementById('weatherDisplayOverlay');
         const scrollAmount = 100;
