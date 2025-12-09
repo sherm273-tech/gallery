@@ -682,8 +682,8 @@ body.slideshow-active #slideshow {
 
 .weather-location-group {
     display: flex;
-    align-items: baseline;
-    gap: 15px;
+    flex-direction: column;
+    gap: 8px;
     margin-bottom: 15px;
 }
 
@@ -694,8 +694,9 @@ body.slideshow-active #slideshow {
 
 .weather-feels-inline {
     font-size: 18px;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.85);
     font-style: italic;
+    display: block;
 }
 
 .weather-main {

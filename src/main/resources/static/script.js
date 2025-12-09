@@ -247,17 +247,26 @@ async function updateCurrentWeather() {
     }
 }
 
-// Update Feels Like inline display
 function updateFeelsLikeInline(currentTemp, feelsLike) {
     const feelsLikeElement = document.getElementById('weatherFeelsInline');
     const diff = Math.abs(currentTemp - feelsLike);
     
+    // Always show feels like temperature
     if (diff > 2) {
-        feelsLikeElement.textContent = `Feels like ${Math.round(feelsLike)}°`;
-        feelsLikeElement.style.display = 'inline';
+        // Significant difference - highlight it
+        if (feelsLike > currentTemp) {
+            feelsLikeElement.textContent = `Feels ${Math.round(feelsLike)}° (warmer)`;
+        } else {
+            feelsLikeElement.textContent = `Feels ${Math.round(feelsLike)}° (cooler)`;
+        }
+        feelsLikeElement.style.color = 'rgba(255, 255, 255, 0.95)';
     } else {
-        feelsLikeElement.style.display = 'none';
+        // Small difference - still show but less emphasis
+        feelsLikeElement.textContent = `Feels like ${Math.round(feelsLike)}°`;
+        feelsLikeElement.style.color = 'rgba(255, 255, 255, 0.75)';
     }
+    
+    feelsLikeElement.style.display = 'block';
 }
 
 function updateWeatherBackground(weatherCondition) {
