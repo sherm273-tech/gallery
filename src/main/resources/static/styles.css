@@ -546,39 +546,39 @@ body.slideshow-active #slideshow {
 .clock-widget {
     text-align: center;
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
-    background: rgba(0, 0, 0, 0.4);
-    padding: 25px 30px;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 30px 35px;
     border-radius: 15px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .clock-time {
-    font-size: 84px;
+    font-size: 96px;
     font-weight: 300;
     line-height: 1;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     letter-spacing: -2px;
 }
 
 .clock-date {
-    font-size: 26px;
+    font-size: 30px;
     font-weight: 400;
-    opacity: 0.9;
+    opacity: 0.95;
 }
 
 /* ===== WEATHER SUMMARY WIDGET ===== */
 .summary-widget {
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
-    background: rgba(0, 0, 0, 0.4);
-    padding: 25px 30px;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 30px 35px;
     border-radius: 15px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .summary-header {
-    font-size: 18px;
+    font-size: 22px;
     font-weight: 600;
     margin-bottom: 20px;
     color: #4a9eff;
@@ -604,15 +604,15 @@ body.slideshow-active #slideshow {
 }
 
 .summary-label {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 500;
 }
 
 .summary-value {
-    font-size: 32px;
+    font-size: 38px;
     font-weight: 700;
 }
 
@@ -637,18 +637,18 @@ body.slideshow-active #slideshow {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 15px;
-    padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.05);
+    font-size: 17px;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 8px;
 }
 
 .summary-icon {
-    font-size: 20px;
+    font-size: 24px;
 }
 
 .summary-text {
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.95);
 }
 
 .summary-recommendations {
@@ -661,11 +661,11 @@ body.slideshow-active #slideshow {
     display: flex;
     align-items: flex-start;
     gap: 10px;
-    font-size: 14px;
+    font-size: 16px;
     line-height: 1.5;
-    color: rgba(255, 255, 255, 0.85);
-    padding: 8px 12px;
-    background: rgba(74, 158, 255, 0.1);
+    color: rgba(255, 255, 255, 0.95);
+    padding: 10px 14px;
+    background: rgba(74, 158, 255, 0.2);
     border-radius: 8px;
     border-left: 3px solid #4a9eff;
 }
@@ -673,11 +673,11 @@ body.slideshow-active #slideshow {
 /* ===== WEATHER WIDGET ===== */
 .weather-widget {
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
-    background: rgba(0, 0, 0, 0.4);
-    padding: 25px 30px;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 30px 35px;
     border-radius: 15px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .weather-location-group {
@@ -688,13 +688,13 @@ body.slideshow-active #slideshow {
 }
 
 .weather-location {
-    font-size: 28px;
+    font-size: 32px;
     font-weight: 500;
 }
 
 .weather-feels-inline {
-    font-size: 16px;
-    color: rgba(255, 255, 255, 0.7);
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.8);
     font-style: italic;
 }
 
@@ -705,8 +705,8 @@ body.slideshow-active #slideshow {
 }
 
 .weather-icon {
-    width: 80px;
-    height: 80px;
+    width: 90px;
+    height: 90px;
     margin-right: 10px;
     filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
     transition: transform 0.3s ease;
@@ -717,16 +717,16 @@ body.slideshow-active #slideshow {
 }
 
 .weather-temp {
-    font-size: 64px;
+    font-size: 72px;
     font-weight: 300;
     line-height: 1;
 }
 
 .weather-desc {
-    font-size: 22px;
+    font-size: 26px;
     text-transform: capitalize;
     margin-bottom: 15px;
-    opacity: 0.9;
+    opacity: 0.95;
 }
 
 .weather-details {
@@ -739,14 +739,14 @@ body.slideshow-active #slideshow {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 18px;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 8px 14px;
+    font-size: 20px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 10px 16px;
     border-radius: 8px;
 }
 
 .weather-detail span:first-child {
-    font-size: 20px;
+    font-size: 24px;
 }
 
 #weatherUV {
@@ -767,14 +767,14 @@ body.slideshow-active #slideshow {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 12px 18px;
     border-radius: 10px;
     flex: 1;
 }
 
 .sun-icon {
-    font-size: 24px;
+    font-size: 28px;
 }
 
 .sun-info {
@@ -784,14 +784,14 @@ body.slideshow-active #slideshow {
 }
 
 .sun-label {
-    font-size: 12px;
-    opacity: 0.7;
+    font-size: 13px;
+    opacity: 0.8;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .sun-value {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 600;
 }
 
@@ -839,17 +839,17 @@ body.slideshow-active #slideshow {
 
 /* Alert severity colors */
 .alert-warning {
-    background: rgba(255, 152, 0, 0.2);
+    background: rgba(255, 152, 0, 0.85);
     border-left-color: #ff9800;
 }
 
 .alert-high {
-    background: rgba(244, 67, 54, 0.2);
+    background: rgba(244, 67, 54, 0.85);
     border-left-color: #f44336;
 }
 
 .alert-advisory {
-    background: rgba(33, 150, 243, 0.2);
+    background: rgba(33, 150, 243, 0.85);
     border-left-color: #2196f3;
 }
 
@@ -863,7 +863,7 @@ body.slideshow-active #slideshow {
 }
 
 .alert-type {
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 600;
     color: #ffffff;
     margin-bottom: 4px;
@@ -872,19 +872,19 @@ body.slideshow-active #slideshow {
 }
 
 .alert-message {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.9);
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.95);
     line-height: 1.4;
 }
 
 /* ===== PRECIPITATION CHART WIDGET ===== */
 .precipitation-widget {
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
-    background: rgba(0, 0, 0, 0.4);
-    padding: 25px 30px;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 30px 35px;
     border-radius: 15px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 #precipitationChart {
@@ -896,15 +896,15 @@ body.slideshow-active #slideshow {
 /* ===== HOURLY FORECAST WIDGET ===== */
 .hourly-widget {
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
-    background: rgba(0, 0, 0, 0.4);
-    padding: 25px 30px;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 30px 35px;
     border-radius: 15px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .forecast-title {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 600;
     margin-bottom: 20px;
     opacity: 0.95;
@@ -923,60 +923,60 @@ body.slideshow-active #slideshow {
     flex-direction: column;
     align-items: center;
     gap: 10px;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 15px 10px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 18px 12px;
     border-radius: 12px;
     backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     transition: all 0.3s ease;
 }
 
 .hourly-item:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.2);
     transform: translateY(-2px);
 }
 
 .hourly-time {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
     white-space: nowrap;
     color: #4a9eff;
 }
 
 .forecast-icon-small {
-    width: 48px;
-    height: 48px;
+    width: 52px;
+    height: 52px;
     filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
     transition: transform 0.3s ease;
 }
 
 .forecast-desc {
-    font-size: 12px;
+    font-size: 13px;
     text-align: center;
     text-transform: capitalize;
-    opacity: 0.85;
+    opacity: 0.9;
     line-height: 1.3;
 }
 
 .hourly-temp {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
 }
 
 .hourly-uv {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     margin-top: 4px;
-    padding: 3px 8px;
+    padding: 4px 10px;
     border-radius: 4px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15);
     display: inline-block;
     cursor: help;
     transition: all 0.3s ease;
 }
 
 .hourly-uv:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.25);
     transform: scale(1.05);
 }
 
@@ -990,11 +990,11 @@ body.slideshow-active #slideshow {
 /* ===== WEEKLY FORECAST WIDGET ===== */
 .weekly-widget {
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
-    background: rgba(0, 0, 0, 0.4);
-    padding: 25px 30px;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 30px 35px;
     border-radius: 15px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 #weeklyForecast {
@@ -1008,29 +1008,29 @@ body.slideshow-active #slideshow {
     flex-direction: column;
     align-items: center;
     gap: 12px;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 20px 15px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 22px 18px;
     border-radius: 12px;
     backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     transition: all 0.3s ease;
 }
 
 .weekly-item:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.2);
     transform: translateY(-2px);
 }
 
 .weekly-day {
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
     white-space: nowrap;
     color: #4a9eff;
 }
 
 .weekly-icon {
-    width: 56px;
-    height: 56px;
+    width: 60px;
+    height: 60px;
     filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
     transition: transform 0.3s ease;
 }
@@ -1040,17 +1040,17 @@ body.slideshow-active #slideshow {
 }
 
 .weekly-desc {
-    font-size: 13px;
+    font-size: 14px;
     text-align: center;
     text-transform: capitalize;
-    opacity: 0.85;
+    opacity: 0.9;
     line-height: 1.3;
 }
 
 .weekly-temps {
     display: flex;
     gap: 10px;
-    font-size: 16px;
+    font-size: 18px;
 }
 
 .temp-high {
@@ -1059,7 +1059,7 @@ body.slideshow-active #slideshow {
 }
 
 .temp-low {
-    opacity: 0.7;
+    opacity: 0.8;
     color: #66ccff;
 }
 
@@ -1376,21 +1376,22 @@ body.slideshow-active #slideshow {
 }
 
 .item-list::-webkit-scrollbar {
-    width: 10px;
+    width: 12px;
 }
 
 .item-list::-webkit-scrollbar-track {
     background: #252535;
-    border-radius: 5px;
+    border-radius: 6px;
 }
 
 .item-list::-webkit-scrollbar-thumb {
-    background: #4a4a5e;
-    border-radius: 5px;
+    background: rgba(74, 158, 255, 0.7);
+    border-radius: 6px;
+    border: 2px solid #252535;
 }
 
 .item-list::-webkit-scrollbar-thumb:hover {
-    background: #5a5a6e;
+    background: rgba(74, 158, 255, 0.9);
 }
 
 .folder-item,
