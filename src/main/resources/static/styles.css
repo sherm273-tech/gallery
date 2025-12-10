@@ -546,11 +546,11 @@ body.slideshow-active #slideshow {
 .clock-widget {
     text-align: center;
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(20, 35, 60, 0.85);
     padding: 30px 35px;
     border-radius: 15px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(74, 158, 255, 0.3);
 }
 
 .clock-time {
@@ -570,11 +570,11 @@ body.slideshow-active #slideshow {
 /* ===== WEATHER SUMMARY WIDGET ===== */
 .summary-widget {
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(20, 35, 60, 0.85);
     padding: 30px 35px;
     border-radius: 15px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(74, 158, 255, 0.3);
 }
 
 .summary-header {
@@ -673,11 +673,11 @@ body.slideshow-active #slideshow {
 /* ===== WEATHER WIDGET ===== */
 .weather-widget {
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(20, 35, 60, 0.85);
     padding: 30px 35px;
     border-radius: 15px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(74, 158, 255, 0.3);
 }
 
 .weather-location-group {
@@ -881,11 +881,11 @@ body.slideshow-active #slideshow {
 /* ===== PRECIPITATION CHART WIDGET ===== */
 .precipitation-widget {
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(20, 35, 60, 0.85);
     padding: 30px 35px;
     border-radius: 15px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(74, 158, 255, 0.3);
 }
 
 #precipitationChart {
@@ -897,11 +897,11 @@ body.slideshow-active #slideshow {
 /* ===== HOURLY FORECAST WIDGET ===== */
 .hourly-widget {
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(20, 35, 60, 0.85);
     padding: 30px 35px;
     border-radius: 15px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(74, 158, 255, 0.3);
 }
 
 .forecast-title {
@@ -991,11 +991,11 @@ body.slideshow-active #slideshow {
 /* ===== WEEKLY FORECAST WIDGET ===== */
 .weekly-widget {
     text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(20, 35, 60, 0.85);
     padding: 30px 35px;
     border-radius: 15px;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(74, 158, 255, 0.3);
 }
 
 #weeklyForecast {
