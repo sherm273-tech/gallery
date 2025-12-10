@@ -1,0 +1,292 @@
+/* ===== COMPREHENSIVE LOCATION DROPDOWN ===== */
+
+/* Enhanced dropdown - full feature set */
+.location-dropdown-enhanced {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 10px;
+    background: rgba(20, 35, 60, 0.98);
+    border: 2px solid rgba(74, 158, 255, 0.4);
+    border-radius: 15px;
+    min-width: 400px;
+    max-width: 500px;
+    max-height: 600px;
+    display: none;
+    flex-direction: column;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.location-dropdown-enhanced.active {
+    display: flex;
+    animation: slideDown 0.3s ease;
+}
+
+/* Search section at top */
+.location-dropdown-search {
+    padding: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.location-dropdown-search-input {
+    width: 100%;
+    padding: 12px 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(74, 158, 255, 0.3);
+    border-radius: 10px;
+    color: #ffffff;
+    font-size: 15px;
+    transition: all 0.3s ease;
+}
+
+.location-dropdown-search-input:focus {
+    outline: none;
+    border-color: #4a9eff;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.location-dropdown-search-input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Location list section */
+.location-dropdown-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+/* Individual location card with weather preview */
+.location-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.location-card:hover {
+    background: rgba(74, 158, 255, 0.15);
+    border-color: rgba(74, 158, 255, 0.4);
+    transform: translateX(5px);
+}
+
+.location-card.active {
+    background: rgba(74, 158, 255, 0.2);
+    border-color: #4a9eff;
+}
+
+.location-card-icon {
+    font-size: 32px;
+    min-width: 40px;
+    text-align: center;
+}
+
+.location-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.location-card-name {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.location-card-default-badge {
+    background: rgba(74, 158, 255, 0.3);
+    color: #4a9eff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.location-card-weather {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.location-card-temp {
+    font-size: 24px;
+    font-weight: 600;
+    color: #4a9eff;
+}
+
+.location-card-desc {
+    opacity: 0.7;
+}
+
+.location-card-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.location-card-delete {
+    background: rgba(244, 67, 54, 0.2);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    color: #f44336;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.location-card-delete:hover {
+    background: rgba(244, 67, 54, 0.3);
+    transform: scale(1.05);
+}
+
+/* Search results */
+.location-search-results-inline {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.location-search-result-inline {
+    background: rgba(74, 158, 255, 0.1);
+    border: 2px solid rgba(74, 158, 255, 0.3);
+    border-radius: 10px;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.location-search-result-inline:hover {
+    background: rgba(74, 158, 255, 0.2);
+    border-color: #4a9eff;
+}
+
+.location-search-result-name {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.location-search-result-details {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Empty states */
+.location-dropdown-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.location-dropdown-empty-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+    opacity: 0.3;
+}
+
+.location-dropdown-empty-text {
+    font-size: 14px;
+}
+
+/* Loading state */
+.location-card-loading {
+    opacity: 0.5;
+}
+
+.location-card-loading .location-card-weather::after {
+    content: "Loading...";
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+/* Scrollbar styling */
+.location-dropdown-list::-webkit-scrollbar,
+.location-search-results-inline::-webkit-scrollbar {
+    width: 8px;
+}
+
+.location-dropdown-list::-webkit-scrollbar-track,
+.location-search-results-inline::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.location-dropdown-list::-webkit-scrollbar-thumb,
+.location-search-results-inline::-webkit-scrollbar-thumb {
+    background: rgba(74, 158, 255, 0.5);
+    border-radius: 10px;
+}
+
+.location-dropdown-list::-webkit-scrollbar-thumb:hover,
+.location-search-results-inline::-webkit-scrollbar-thumb:hover {
+    background: rgba(74, 158, 255, 0.7);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .location-dropdown-enhanced {
+        min-width: 320px;
+        max-width: calc(100vw - 30px);
+        left: 15px;
+        right: 15px;
+        max-height: 70vh;
+    }
+    
+    .location-card {
+        padding: 12px;
+        gap: 10px;
+    }
+    
+    .location-card-icon {
+        font-size: 28px;
+        min-width: 35px;
+    }
+    
+    .location-card-name {
+        font-size: 15px;
+    }
+    
+    .location-card-temp {
+        font-size: 20px;
+    }
+    
+    .location-card-weather {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .location-dropdown-enhanced {
+        min-width: 280px;
+        max-height: 60vh;
+    }
+    
+    .location-card {
+        padding: 10px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .location-card-info {
+        width: 100%;
+    }
+    
+    .location-card-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+}

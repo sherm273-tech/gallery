@@ -1449,7 +1449,6 @@ function togglePause() {
     }
 }
 
-
 document.addEventListener('keydown', (e) => {
     // Check if user is typing in an input field - if so, don't interfere
     const activeElement = document.activeElement;

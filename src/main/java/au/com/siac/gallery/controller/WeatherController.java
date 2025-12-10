@@ -1,8 +1,12 @@
 package au.com.siac.gallery.controller;
 
+import au.com.siac.gallery.entity.WeatherLocation;
+import au.com.siac.gallery.service.WeatherLocationService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
 
@@ -15,20 +19,85 @@ public class WeatherController {
     // Open-Meteo API - NO API KEY REQUIRED!
     private static final String WEATHER_URL = "https://api.open-meteo.com/v1/forecast";
 
-    // Essendon coordinates
-    private static final double LATITUDE = -37.7564;
-    private static final double LONGITUDE = 144.9066;
+    @Autowired
+    private WeatherLocationService locationService;
 
+    // ===== BACKWARDS COMPATIBLE ENDPOINTS (use default location) =====
+    
     @GetMapping("/api/weather/current")
     @ResponseBody
     public ResponseEntity<?> getCurrentWeather() {
+        // Use default location for backwards compatibility
+        Optional<WeatherLocation> defaultLocation = locationService.getDefaultLocation();
+        if (defaultLocation.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("error", "No default location set"));
+        }
+        
+        double latitude = defaultLocation.get().getLatitude();
+        double longitude = defaultLocation.get().getLongitude();
+        String locationName = defaultLocation.get().getLocationName();
+        
+        return fetchCurrentWeather(latitude, longitude, locationName);
+    }
+
+    @GetMapping("/api/weather/forecast")
+    @ResponseBody
+    public ResponseEntity<?> getForecast() {
+        // Use default location for backwards compatibility
+        Optional<WeatherLocation> defaultLocation = locationService.getDefaultLocation();
+        if (defaultLocation.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("error", "No default location set"));
+        }
+        
+        double latitude = defaultLocation.get().getLatitude();
+        double longitude = defaultLocation.get().getLongitude();
+        String locationName = defaultLocation.get().getLocationName();
+        
+        return fetchForecast(latitude, longitude, locationName);
+    }
+
+    // ===== NEW LOCATION-SPECIFIC ENDPOINTS =====
+    
+    @GetMapping("/api/weather/{locationId}/current")
+    @ResponseBody
+    public ResponseEntity<?> getCurrentWeatherById(@PathVariable Long locationId) {
+        Optional<WeatherLocation> location = locationService.getLocationById(locationId);
+        if (location.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("error", "Location not found"));
+        }
+        
+        double latitude = location.get().getLatitude();
+        double longitude = location.get().getLongitude();
+        String locationName = location.get().getLocationName();
+        
+        return fetchCurrentWeather(latitude, longitude, locationName);
+    }
+
+    @GetMapping("/api/weather/{locationId}/forecast")
+    @ResponseBody
+    public ResponseEntity<?> getForecastById(@PathVariable Long locationId) {
+        Optional<WeatherLocation> location = locationService.getLocationById(locationId);
+        if (location.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("error", "Location not found"));
+        }
+        
+        double latitude = location.get().getLatitude();
+        double longitude = location.get().getLongitude();
+        String locationName = location.get().getLocationName();
+        
+        return fetchForecast(latitude, longitude, locationName);
+    }
+
+    // ===== PRIVATE HELPER METHODS (your existing code) =====
+    
+    private ResponseEntity<?> fetchCurrentWeather(double latitude, double longitude, String locationName) {
         try {
             RestTemplate restTemplate = new RestTemplate();
             
             // Fetch current weather
             String url = String.format(
                     "%s?latitude=%s&longitude=%s&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,uv_index&daily=sunrise,sunset&timezone=Australia/Melbourne",
-                    WEATHER_URL, LATITUDE, LONGITUDE
+                    WEATHER_URL, latitude, longitude
             );
 
             Map<String, Object> response = restTemplate.getForObject(url, Map.class);
@@ -36,7 +105,7 @@ public class WeatherController {
             Map<String, Object> daily = (Map<String, Object>) response.get("daily");
 
             Map<String, Object> result = new HashMap<>();
-            result.put("name", "Essendon");
+            result.put("name", locationName);
             
             Number temp = (Number) current.get("temperature_2m");
             Number humidity = (Number) current.get("relative_humidity_2m");
@@ -136,9 +205,7 @@ public class WeatherController {
         }
     }
 
-    @GetMapping("/api/weather/forecast")
-    @ResponseBody
-    public ResponseEntity<?> getForecast() {
+    private ResponseEntity<?> fetchForecast(double latitude, double longitude, String locationName) {
         try {
             RestTemplate restTemplate = new RestTemplate();
 
@@ -149,7 +216,7 @@ public class WeatherController {
 
             String url = String.format(
                     "%s?latitude=%s&longitude=%s&hourly=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation_probability,precipitation,uv_index&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=Australia/Melbourne&start_date=%s&end_date=%s",
-                    WEATHER_URL, LATITUDE, LONGITUDE, today, endDate
+                    WEATHER_URL, latitude, longitude, today, endDate
             );
 
             Map<String, Object> response = restTemplate.getForObject(url, Map.class);
@@ -239,7 +306,7 @@ public class WeatherController {
             Map<String, Object> result = new HashMap<>();
             result.put("list", forecastList);
             result.put("daily", dailyList);
-            result.put("city", Map.of("name", "Essendon"));
+            result.put("city", Map.of("name", locationName));
 
             return ResponseEntity.ok(result);
 

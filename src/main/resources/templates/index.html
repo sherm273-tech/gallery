@@ -4,7 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sang's and Sherm's Station</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="location-ui.css">
+    <link rel="stylesheet" href="location-dropdown-enhanced.css">
+    <link rel="stylesheet" href="location-weather-widget.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -22,7 +26,7 @@
     <!-- Weather Display Overlay -->
     <div class="weather-display-overlay" id="weatherDisplayOverlay">
         <button class="close-weather-btn" id="closeWeatherBtn">✕ Exit</button>
-        
+            
         <!-- Magic Mirror Overlay -->
         <div class="mirror-overlay" id="mirrorOverlay">
             
@@ -42,7 +46,16 @@
                 <!-- Weather Widget (left column) -->
                 <div class="weather-widget">
                     <div class="weather-location-group">
-                        <div class="weather-location" id="weatherLocation">Essendon</div>
+                        <!-- Clickable Location Selector with Dropdown -->
+                        <div class="weather-location-clickable" id="weatherLocationClickable">
+                            <span class="weather-location-icon">📍</span>
+                            <span class="weather-location-text" id="weatherLocation">Loading...</span>
+                            <span class="weather-location-arrow">▼</span>
+                        </div>
+                        
+                        <!-- Enhanced Dropdown (appears below location when clicked) -->
+                        <div class="location-dropdown location-dropdown-enhanced" id="locationDropdown"></div>
+                        
                         <div class="weather-feels-inline" id="weatherFeelsInline">Feels like --°</div>
                     </div>
                     <div class="weather-main">
@@ -349,6 +362,9 @@
     </div>
 
     <script src="script.js"></script>
-
+    <script src="heartbeat.js"></script>
+    <script src="location-manager.js"></script>
+    <script src="updateWeatherForLocation.js"></script> 
+    
 </body>
 </html>

@@ -1,11 +1,41 @@
-HELP.md
-.gradle
+# ===== SPRING BOOT + GRADLE .gitignore =====
+
+### Java ###
+*.class
+*.log
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+
+### Gradle ###
+.gradle/
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+gradle-app.setting
+.gradletasknamecache
 
-### STS ###
+### Spring Boot ###
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### IDE - IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### IDE - Eclipse ###
 .apt_generated
 .classpath
 .factorypath
@@ -17,21 +47,98 @@ bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
+### IDE - VS Code ###
+.vscode/
+*.code-workspace
 
-### NetBeans ###
+### IDE - NetBeans ###
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
 
-### VS Code ###
-.vscode/
+### macOS ###
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+### Windows ###
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+### Linux ###
+*~
+.directory
+.Trash-*
+
+### Logs ###
+*.log
+logs/
+log/
+
+### H2 Database ###
+*.db
+*.mv.db
+*.trace.db
+data/
+!data/.gitkeep
+
+### Temporary files ###
+*.tmp
+*.temp
+*.swp
+*.swo
+*~.nib
+.cache/
+
+### Application Properties (with sensitive data) ###
+# Uncomment if you want to ignore application.properties with secrets
+# application.properties
+# application-*.properties
+# But DO track the template:
+# !application.properties.template
+
+### Secrets ###
+secrets/
+*.key
+*.pem
+*.p12
+*.jks
+.env
+.env.local
+
+### Node (if you have frontend build) ###
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+### Build outputs ###
+dist/
+build/
+target/
+
+### Testing ###
+.coverage
+coverage/
+*.gcda
+*.gcno
+
+### Backup files ###
+*.bak
+*.backup
+*.old
+
+### Other ###
+.attach_pid*
+replay_pid*gradle/
+gradlew
+gradlew.bat

@@ -1,0 +1,118 @@
+/* ===== CLICKABLE WEATHER LOCATION WITH DROPDOWN ===== */
+
+/* Make the weather location clickable */
+.weather-location-clickable {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    user-select: none;
+}
+
+.weather-location-clickable:hover {
+    background: rgba(74, 158, 255, 0.15);
+    border-color: rgba(74, 158, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+.weather-location-clickable:active {
+    transform: translateY(0);
+}
+
+.weather-location-icon {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.weather-location-text {
+    font-size: 24px;
+    font-weight: 300;
+    color: #ffffff;
+    line-height: 1;
+}
+
+.weather-location-arrow {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+    transition: transform 0.3s ease;
+}
+
+/* Rotate arrow when dropdown is open */
+.weather-location-clickable.active .weather-location-arrow {
+    transform: rotate(180deg);
+}
+
+/* Position dropdown below the clickable location */
+.weather-location-group {
+    position: relative;
+}
+
+.weather-location-group .location-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    z-index: 1000;
+    min-width: 400px;
+}
+
+/* Adjust dropdown positioning for mobile */
+@media (max-width: 768px) {
+    .weather-location-clickable {
+        padding: 6px 10px;
+        gap: 6px;
+    }
+    
+    .weather-location-icon {
+        font-size: 16px;
+    }
+    
+    .weather-location-text {
+        font-size: 20px;
+    }
+    
+    .weather-location-arrow {
+        font-size: 12px;
+    }
+    
+    .weather-location-group .location-dropdown {
+        left: 0;
+        right: 0;
+        min-width: auto;
+        max-width: calc(100vw - 30px);
+    }
+}
+
+@media (max-width: 480px) {
+    .weather-location-clickable {
+        padding: 5px 8px;
+        gap: 5px;
+    }
+    
+    .weather-location-icon {
+        font-size: 14px;
+    }
+    
+    .weather-location-text {
+        font-size: 18px;
+    }
+    
+    .weather-location-group .location-dropdown {
+        min-width: 280px;
+    }
+}
+
+/* Ensure dropdown appears above other weather widgets */
+.weather-widget {
+    position: relative;
+    z-index: 100;
+}
+
+.weather-widget .location-dropdown.active {
+    z-index: 1001;
+}
