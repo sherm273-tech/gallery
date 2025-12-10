@@ -211,21 +211,54 @@ function updateSummaryWidget(data) {
         document.getElementById('summaryLow').textContent = low + '°';
     }
     
-    // Find max UV and max rain probability from hourly data
+    // Find max UV and max rain probability from FUTURE hourly data
     if (data.list) {
         let maxUV = 0;
         let maxRain = 0;
         
-        data.list.slice(0, 8).forEach(hour => {
-            if (hour.uv_index && hour.uv_index > maxUV) maxUV = hour.uv_index;
-            if (hour.pop && hour.pop > maxRain) maxRain = hour.pop;
+        // Get current time to filter future hours
+        const now = Date.now();
+        
+        // Filter to only future hours
+        const futureHours = data.list.filter(hour => {
+            const hourTime = hour.dt * 1000;
+            return hourTime > now;
         });
         
-        document.getElementById('summaryUV').querySelector('.summary-text').textContent = `UV Peak: ${Math.round(maxUV)}`;
-        document.getElementById('summaryRain').querySelector('.summary-text').textContent = `Rain: ${Math.round(maxRain * 100)}%`;
+        // Look at next 24 HOURS ONLY (not days away) for UV and rain
+        // This gives relevant "today/tonight" recommendations
+        const next24Hours = futureHours.slice(0, 24);
         
-        // Update recommendations
-        updateRecommendations(maxUV, maxRain);
+        next24Hours.forEach((hour, index) => {
+            // Debug first hour
+            if (index === 0) {
+                console.log('📊 First future hour for summary:', {
+                    dt: hour.dt,
+                    time: new Date(hour.dt * 1000).toLocaleString('en-AU', {timeZone: 'Australia/Melbourne'}),
+                    temp: hour.main?.temp,
+                    pop: hour.pop,
+                    uv_index: hour.uv_index,
+                    rain: hour.rain
+                });
+            }
+            
+            if (hour.uv_index && hour.uv_index > maxUV) maxUV = hour.uv_index;
+            if (hour.pop != null && hour.pop > maxRain) maxRain = hour.pop;
+        });
+        
+        console.log('📊 Found max rain from next', next24Hours.length, 'hours:', maxRain);
+        
+        // Display rain percentage
+        // Note: Open-Meteo returns precipitation_probability as 0-100, not 0-1
+        const rainPercent = maxRain; // Already a percentage (0-100)
+        document.getElementById('summaryUV').querySelector('.summary-text').textContent = `UV Peak: ${Math.round(maxUV)}`;
+        document.getElementById('summaryRain').querySelector('.summary-text').textContent = `Rain: ${Math.round(rainPercent)}%`;
+        
+        // Update recommendations based on future weather
+        // Convert to 0-1 decimal for recommendations function
+        updateRecommendations(maxUV, maxRain / 100);
+        
+        console.log('📊 Summary widget updated - UV:', maxUV, 'Rain:', rainPercent + '%');
     }
 }
 
@@ -307,11 +340,73 @@ function formatTime(date) {
 
 // ===== UPDATE PRECIPITATION CHART =====
 function updatePrecipitationChart(hourlyData) {
-    // Your existing chart update code
-    // This depends on how you currently update the chart
-    // If you have this function already, it will be called
-    // If not, you can add Chart.js update code here
-    console.log('📊 Precipitation chart update - implement if needed');
+    console.log('📊 Updating temperature chart with', hourlyData.length, 'data points');
+    
+    // Get current time to filter future hours
+    const now = Date.now();
+    
+    // Filter to only future hours
+    const futureHours = hourlyData.filter(hour => {
+        const hourTime = hour.dt * 1000;
+        return hourTime > now;
+    });
+    
+    // Take next 24 hours (or up to 8 data points if 3-hourly)
+    const chartData = futureHours.slice(0, 8);
+    
+    // Extract data for chart
+    const labels = chartData.map(hour => {
+        const time = new Date(hour.dt * 1000);
+        return time.toLocaleString('en-AU', { 
+            hour: 'numeric',
+            hour12: true,
+            timeZone: 'Australia/Melbourne'
+        });
+    });
+    
+    const temps = chartData.map(hour => Math.round(hour.main.temp));
+    
+    // Get the chart instance
+    const chartCanvas = document.getElementById('precipitationChart');
+    if (!chartCanvas) {
+        console.error('❌ precipitationChart canvas not found');
+        return;
+    }
+    
+    // Extract rain probability
+    const rainProb = chartData.map(hour => Math.round((hour.pop || 0)));
+    
+    // Extract UV data
+    const uvData = chartData.map(hour => hour.uv_index || 0);
+    
+    // Check if chart already exists
+    let chart = Chart.getChart('precipitationChart');
+    
+    if (chart) {
+        // Update existing chart - all 3 datasets
+        chart.data.labels = labels;
+        
+        // Update Rain Chance (dataset 0)
+        if (chart.data.datasets[0]) {
+            chart.data.datasets[0].data = rainProb;
+        }
+        
+        // Update Temperature (dataset 1)
+        if (chart.data.datasets[1]) {
+            chart.data.datasets[1].data = temps;
+        }
+        
+        // Update UV Index (dataset 2)
+        if (chart.data.datasets[2]) {
+            chart.data.datasets[2].data = uvData;
+        }
+        
+        chart.update();
+        console.log('✅ Chart updated - Rain, Temperature, UV');
+    } else {
+        // Create new chart if it doesn't exist
+        console.log('⚠️ Chart not found - it should be created by script.js on initial load');
+    }
 }
 
 console.log('✅ updateWeatherForLocation function loaded');

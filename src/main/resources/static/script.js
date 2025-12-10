@@ -286,7 +286,7 @@ function updateWeatherBackground(weatherCondition) {
     overlay.style.background = background;
 }
 
-// Create precipitation chart
+// Create precipitation chart - UPDATED: NO BLUE BARS, KEEP 3 LINES
 function createPrecipitationChart(forecastData) {
     const ctx = document.getElementById('precipitationChart');
     
@@ -324,16 +324,6 @@ function createPrecipitationChart(forecastData) {
         return 0;
     });
     
-    const precipitation = next24Hours.map(item => {
-        if (item.rain) {
-            if (typeof item.rain === 'number') return item.rain;
-            if (typeof item.rain === 'object') {
-                return item.rain['3h'] || item.rain['1h'] || 0;
-            }
-        }
-        return 0;
-    });
-    
     const temperatures = next24Hours.map(item => {
         return item.main ? item.main.temp : 0;
     });
@@ -347,20 +337,11 @@ function createPrecipitationChart(forecastData) {
     }
     
     window.precipitationChartInstance = new Chart(ctx, {
-        type: 'bar',
+        type: 'line',
         data: {
             labels: labels,
             datasets: [
-                {
-                    label: 'Precipitation (mm)',
-                    data: precipitation,
-                    backgroundColor: 'rgba(74, 158, 255, 0.6)',
-                    borderColor: 'rgba(74, 158, 255, 1)',
-                    borderWidth: 2,
-                    borderRadius: 4,
-                    yAxisID: 'yPrecip',
-                    order: 3
-                },
+                // REMOVED: Blue Precipitation bars
                 {
                     label: 'Rain Chance (%)',
                     data: precipProbability,
@@ -402,7 +383,7 @@ function createPrecipitationChart(forecastData) {
                     pointRadius: 3,
                     pointBackgroundColor: 'rgba(138, 43, 226, 1)',
                     yAxisID: 'yUV',
-                    order: 4
+                    order: 3
                 }
             ]
         },
@@ -437,9 +418,7 @@ function createPrecipitationChart(forecastData) {
                             let label = context.dataset.label || '';
                             if (label) label += ': ';
                             if (context.parsed.y !== null) {
-                                if (label.includes('Precipitation')) {
-                                    label += context.parsed.y.toFixed(1) + ' mm';
-                                } else if (label.includes('Chance') || label.includes('%')) {
+                                if (label.includes('Chance') || label.includes('%')) {
                                     label += context.parsed.y.toFixed(0) + '%';
                                 } else if (label.includes('Temperature')) {
                                     label += context.parsed.y.toFixed(1) + '°C';
@@ -465,14 +444,15 @@ function createPrecipitationChart(forecastData) {
                         minRotation: 45
                     }
                 },
-                yPrecip: {
+                // REMOVED: yPrecip axis (blue bars)
+                yTemp: {
                     type: 'linear',
                     display: true,
                     position: 'left',
                     title: {
                         display: true,
-                        text: 'Precip (mm)',
-                        color: '#4a9eff',
+                        text: 'Temp (°C)',
+                        color: '#ff6347',
                         font: { size: 10, weight: 'bold' }
                     },
                     grid: {
@@ -483,18 +463,22 @@ function createPrecipitationChart(forecastData) {
                         color: '#ffffff',
                         font: { size: 10 }
                     },
-                    beginAtZero: true
+                    // Force reasonable temperature range
+                    suggestedMin: 0,
+                    suggestedMax: 40
                 },
-                yTemp: {
+                yPercent: {
                     type: 'linear',
                     display: true,
                     position: 'right',
                     title: {
                         display: true,
-                        text: 'Temp (°C)',
-                        color: '#ff6347',
+                        text: 'Rain %',
+                        color: '#ffc107',
                         font: { size: 10, weight: 'bold' }
                     },
+                    min: 0,
+                    max: 100,
                     grid: {
                         drawOnChartArea: false
                     },
@@ -503,24 +487,24 @@ function createPrecipitationChart(forecastData) {
                         font: { size: 10 }
                     }
                 },
-                yPercent: {
-                    type: 'linear',
-                    display: false,
-                    position: 'right',
-                    min: 0,
-                    max: 100,
-                    grid: {
-                        drawOnChartArea: false
-                    }
-                },
                 yUV: {
                     type: 'linear',
-                    display: false,
+                    display: true,
                     position: 'right',
+                    title: {
+                        display: true,
+                        text: 'UV',
+                        color: '#8a2be2',
+                        font: { size: 10, weight: 'bold' }
+                    },
                     min: 0,
                     max: 12,
                     grid: {
                         drawOnChartArea: false
+                    },
+                    ticks: {
+                        color: '#ffffff',
+                        font: { size: 10 }
                     }
                 }
             }

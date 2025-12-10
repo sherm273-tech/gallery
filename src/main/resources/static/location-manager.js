@@ -273,17 +273,18 @@ function getWeatherIconForLocation(location) {
 
 // ===== SWITCH TO LOCATION =====
 async function switchToLocation(locationId) {
-    console.log(`Switching to location: ${locationId}`);
+    console.log(`🔄 Switching to location: ${locationId}`);
     
     const location = allLocations.find(loc => loc.id === locationId);
     if (!location) {
-        console.error('Location not found:', locationId);
+        console.error('❌ Location not found:', locationId);
         return;
     }
     
     currentLocationId = locationId;
     if (weatherLocationText) {
         weatherLocationText.textContent = location.locationName;
+        console.log('📍 Updated location text to:', location.locationName);
     }
     
     // Close dropdown and reset arrow
@@ -294,11 +295,51 @@ async function switchToLocation(locationId) {
         weatherLocationClickable.classList.remove('active');
     }
     
-    // Update weather display if function exists (from script.js)
-    if (typeof updateWeatherForLocation === 'function') {
-        await updateWeatherForLocation(locationId);
-    } else {
-        console.warn('updateWeatherForLocation function not found - weather display not updated');
+    // NUCLEAR OPTION: Force full weather refresh from new location
+    console.log('🔥 FORCING WEATHER UPDATE FOR LOCATION:', locationId);
+    
+    try {
+        // Method 1: Use updateWeatherForLocation if available
+        if (typeof updateWeatherForLocation === 'function') {
+            console.log('✅ Method 1: Calling updateWeatherForLocation');
+            await updateWeatherForLocation(locationId);
+            console.log('✅ updateWeatherForLocation completed');
+            return;
+        }
+        
+        // Method 2: Fallback - call script.js functions but force refresh
+        console.warn('⚠️ Method 2: Using fallback - updateWeatherForLocation not found');
+        
+        // Force fetch new location's weather
+        const currentResponse = await fetch(`/api/weather/${locationId}/current`);
+        const forecastResponse = await fetch(`/api/weather/${locationId}/forecast`);
+        
+        if (currentResponse.ok && forecastResponse.ok) {
+            const currentData = await currentResponse.json();
+            const forecastData = await forecastResponse.json();
+            
+            console.log('✅ Fetched weather for location:', locationId);
+            console.log('Current:', currentData);
+            console.log('Forecast:', forecastData);
+            
+            // Now call the update functions with this data
+            if (typeof updateCurrentWeather === 'function') {
+                await updateCurrentWeather();
+            }
+            if (typeof updateForecast === 'function') {
+                await updateForecast();
+            }
+            if (typeof updateWeatherSummary === 'function') {
+                await updateWeatherSummary();
+            }
+            
+            console.log('✅ Weather display updated via fallback');
+        } else {
+            console.error('❌ Failed to fetch weather data');
+        }
+        
+    } catch (error) {
+        console.error('❌ Error in switchToLocation:', error);
     }
 }
 
@@ -435,14 +476,17 @@ async function deleteLocationFromCard(locationId, event) {
     
     if (!location) return;
     
-    if (!confirm(`Delete "${location.locationName}"?`)) {
-        return;
-    }
-    
+    // Don't allow deleting the last location
     if (allLocations.length === 1) {
         alert('❌ Cannot delete the last location.');
         return;
     }
+    
+    console.log('🗑️ DELETE REQUEST:');
+    console.log('  Deleting location ID:', locationId, 'Type:', typeof locationId);
+    console.log('  Current location ID:', currentLocationId, 'Type:', typeof currentLocationId);
+    console.log('  Are they equal?', locationId === currentLocationId);
+    console.log('  Loose equal?', locationId == currentLocationId);
     
     try {
         const response = await fetch(`/api/locations/${locationId}`, {
@@ -450,24 +494,50 @@ async function deleteLocationFromCard(locationId, event) {
         });
         
         if (response.ok) {
+            console.log('✅ Location deleted from server');
+            
             // Remove from cache
             delete locationWeatherCache[locationId];
+            console.log('🗑️ Removed from cache');
             
             // Reload locations
             await loadLocations();
+            console.log('📋 Locations reloaded, count:', allLocations.length);
             
             // Refresh dropdown
             await updateEnhancedDropdown();
+            console.log('🔄 Dropdown refreshed');
             
-            // If we deleted the current location, switch to default
+            // ALWAYS switch to a location after delete (to ensure display is fresh)
+            // If we deleted the current location, switch to first available
+            // If we deleted a different location, just refresh the current one
             if (locationId === currentLocationId) {
-                const defaultLocation = allLocations.find(loc => loc.isDefault);
-                if (defaultLocation) {
-                    await switchToLocation(defaultLocation.id);
+                console.log('⚠️ Deleted current location, switching to new location');
+                
+                // Try to find default location first
+                let newLocation = allLocations.find(loc => loc.isDefault);
+                
+                // If no default, use first location
+                if (!newLocation && allLocations.length > 0) {
+                    newLocation = allLocations[0];
+                }
+                
+                if (newLocation) {
+                    console.log('🔄 Switching to new location:', newLocation.locationName, 'ID:', newLocation.id);
+                    await switchToLocation(newLocation.id);
+                    console.log('✅ Switch complete');
+                } else {
+                    console.error('❌ No location to switch to!');
+                }
+            } else {
+                console.log('ℹ️ Deleted different location, refreshing current display');
+                // Refresh the current location's weather to ensure display is updated
+                if (currentLocationId) {
+                    await switchToLocation(currentLocationId);
                 }
             }
             
-            console.log('✅ Location deleted');
+            console.log('✅ Delete operation completed');
         } else {
             alert('❌ Failed to delete location.');
         }
@@ -503,8 +573,15 @@ setTimeout(() => {
     if (weatherDisplayBtn) {
         weatherDisplayBtn.addEventListener('click', async () => {
             console.log('🌤️ Weather display opened (from location-manager)');
-            // Just load locations - the weather location is always visible now
+            
+            // Load locations first
             await loadLocations();
+            
+            // Then update weather for the default location
+            if (currentLocationId && typeof updateWeatherForLocation === 'function') {
+                console.log('🌤️ Loading initial weather for default location');
+                await updateWeatherForLocation(currentLocationId);
+            }
         });
     }
 
