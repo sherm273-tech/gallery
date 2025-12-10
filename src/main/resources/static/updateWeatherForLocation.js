@@ -14,6 +14,12 @@ async function updateWeatherForLocation(locationId) {
             return;
         }
         
+        // Set the timezone for this location
+        if (currentData.timezone) {
+            currentLocationTimezone = currentData.timezone;
+            console.log('🌍 Timezone set to:', currentLocationTimezone);
+        }
+        
         // Fetch forecast for this location
         const forecastResponse = await fetch(`/api/weather/${locationId}/forecast`);
         const forecastData = await forecastResponse.json();
@@ -140,12 +146,12 @@ function updateHourlyForecast(hourlyData) {
         const icon = hour.weather[0].icon;
         const pop = Math.round((hour.pop || 0) * 100);
         
-        // Format time in Melbourne timezone
+        // Format time in LOCATION'S timezone (not hardcoded Melbourne)
         const timeStr = time.toLocaleString('en-AU', { 
             hour: 'numeric', 
             minute: '2-digit',
             hour12: true,
-            timeZone: 'Australia/Melbourne'
+            timeZone: currentLocationTimezone  // ← Use location's timezone!
         });
         
         // Extract just the time (remove date if present)
@@ -327,14 +333,17 @@ function getAlertIcon(type) {
     }
 }
 
+// Store current location timezone
+let currentLocationTimezone = 'Australia/Melbourne';
+
 // ===== HELPER: FORMAT TIME =====
 function formatTime(date) {
-    // Ensure we're displaying in Melbourne time (AEDT/AEST)
+    // Use the location's timezone
     return date.toLocaleTimeString('en-AU', { 
         hour: 'numeric', 
         minute: '2-digit',
         hour12: true,
-        timeZone: 'Australia/Melbourne'
+        timeZone: currentLocationTimezone
     });
 }
 
@@ -354,13 +363,13 @@ function updatePrecipitationChart(hourlyData) {
     // Take next 24 hours (or up to 8 data points if 3-hourly)
     const chartData = futureHours.slice(0, 8);
     
-    // Extract data for chart
+    // Extract data for chart labels (use location's timezone)
     const labels = chartData.map(hour => {
         const time = new Date(hour.dt * 1000);
         return time.toLocaleString('en-AU', { 
             hour: 'numeric',
             hour12: true,
-            timeZone: 'Australia/Melbourne'
+            timeZone: currentLocationTimezone  // ← Use location's timezone!
         });
     });
     

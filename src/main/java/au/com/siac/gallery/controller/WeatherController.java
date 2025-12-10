@@ -33,11 +33,13 @@ public class WeatherController {
             return ResponseEntity.status(404).body(Map.of("error", "No default location set"));
         }
         
-        double latitude = defaultLocation.get().getLatitude();
-        double longitude = defaultLocation.get().getLongitude();
-        String locationName = defaultLocation.get().getLocationName();
-        
-        return fetchCurrentWeather(latitude, longitude, locationName);
+        WeatherLocation location = defaultLocation.get();
+        return fetchCurrentWeather(
+            location.getLatitude(), 
+            location.getLongitude(), 
+            location.getLocationName(),
+            getTimezoneForLocation(location)
+        );
     }
 
     @GetMapping("/api/weather/forecast")
@@ -49,11 +51,13 @@ public class WeatherController {
             return ResponseEntity.status(404).body(Map.of("error", "No default location set"));
         }
         
-        double latitude = defaultLocation.get().getLatitude();
-        double longitude = defaultLocation.get().getLongitude();
-        String locationName = defaultLocation.get().getLocationName();
-        
-        return fetchForecast(latitude, longitude, locationName);
+        WeatherLocation location = defaultLocation.get();
+        return fetchForecast(
+            location.getLatitude(), 
+            location.getLongitude(), 
+            location.getLocationName(),
+            getTimezoneForLocation(location)
+        );
     }
 
     // ===== NEW LOCATION-SPECIFIC ENDPOINTS =====
@@ -61,43 +65,203 @@ public class WeatherController {
     @GetMapping("/api/weather/{locationId}/current")
     @ResponseBody
     public ResponseEntity<?> getCurrentWeatherById(@PathVariable Long locationId) {
-        Optional<WeatherLocation> location = locationService.getLocationById(locationId);
-        if (location.isEmpty()) {
+        Optional<WeatherLocation> locationOpt = locationService.getLocationById(locationId);
+        if (locationOpt.isEmpty()) {
             return ResponseEntity.status(404).body(Map.of("error", "Location not found"));
         }
         
-        double latitude = location.get().getLatitude();
-        double longitude = location.get().getLongitude();
-        String locationName = location.get().getLocationName();
-        
-        return fetchCurrentWeather(latitude, longitude, locationName);
+        WeatherLocation location = locationOpt.get();
+        return fetchCurrentWeather(
+            location.getLatitude(), 
+            location.getLongitude(), 
+            location.getLocationName(),
+            getTimezoneForLocation(location)
+        );
     }
 
     @GetMapping("/api/weather/{locationId}/forecast")
     @ResponseBody
     public ResponseEntity<?> getForecastById(@PathVariable Long locationId) {
-        Optional<WeatherLocation> location = locationService.getLocationById(locationId);
-        if (location.isEmpty()) {
+        Optional<WeatherLocation> locationOpt = locationService.getLocationById(locationId);
+        if (locationOpt.isEmpty()) {
             return ResponseEntity.status(404).body(Map.of("error", "Location not found"));
         }
         
-        double latitude = location.get().getLatitude();
-        double longitude = location.get().getLongitude();
-        String locationName = location.get().getLocationName();
-        
-        return fetchForecast(latitude, longitude, locationName);
+        WeatherLocation location = locationOpt.get();
+        return fetchForecast(
+            location.getLatitude(), 
+            location.getLongitude(), 
+            location.getLocationName(),
+            getTimezoneForLocation(location)
+        );
     }
 
-    // ===== PRIVATE HELPER METHODS (your existing code) =====
+    // ===== HELPER: DETERMINE TIMEZONE FROM LOCATION =====
     
-    private ResponseEntity<?> fetchCurrentWeather(double latitude, double longitude, String locationName) {
+    private String getTimezoneForLocation(WeatherLocation location) {
+        // TODO: Store timezone in database when location is created
+        // For now, use simple heuristics based on location name
+        String name = location.getLocationName().toLowerCase();
+        
+        // Asia - Southeast
+        if (name.contains("bangkok") || name.contains("thailand")) {
+            return "Asia/Bangkok";
+        }
+        if (name.contains("singapore")) {
+            return "Asia/Singapore";
+        }
+        if (name.contains("hanoi") || name.contains("ho chi minh") || name.contains("vietnam")) {
+            return "Asia/Ho_Chi_Minh";
+        }
+        if (name.contains("jakarta") || name.contains("indonesia")) {
+            return "Asia/Jakarta";
+        }
+        if (name.contains("kuala lumpur") || name.contains("malaysia")) {
+            return "Asia/Kuala_Lumpur";
+        }
+        if (name.contains("manila") || name.contains("philippines")) {
+            return "Asia/Manila";
+        }
+        
+        // Asia - East
+        if (name.contains("tokyo") || name.contains("osaka") || name.contains("kyoto") || 
+            name.contains("japan")) {
+            return "Asia/Tokyo";
+        }
+        if (name.contains("seoul") || name.contains("korea")) {
+            return "Asia/Seoul";
+        }
+        if (name.contains("taipei") || name.contains("taiwan")) {
+            return "Asia/Taipei";
+        }
+        
+        // Asia - China & Hong Kong
+        if (name.contains("beijing") || name.contains("shanghai") || name.contains("china")) {
+            return "Asia/Shanghai";
+        }
+        if (name.contains("hong kong")) {
+            return "Asia/Hong_Kong";
+        }
+        
+        // Asia - South
+        if (name.contains("mumbai") || name.contains("delhi") || name.contains("bangalore") || 
+            name.contains("chennai") || name.contains("india")) {
+            return "Asia/Kolkata";
+        }
+        if (name.contains("dubai") || name.contains("uae")) {
+            return "Asia/Dubai";
+        }
+        
+        // USA
+        if (name.contains("new york") || name.contains("boston") || name.contains("washington") ||
+            name.contains("miami") || name.contains("philadelphia")) {
+            return "America/New_York";
+        }
+        if (name.contains("los angeles") || name.contains("san francisco") || name.contains("seattle") ||
+            name.contains("san diego") || name.contains("las vegas")) {
+            return "America/Los_Angeles";
+        }
+        if (name.contains("chicago") || name.contains("houston") || name.contains("dallas") ||
+            name.contains("austin")) {
+            return "America/Chicago";
+        }
+        if (name.contains("denver") || name.contains("phoenix")) {
+            return "America/Denver";
+        }
+        
+        // UK & Ireland
+        if (name.contains("london") || name.contains("manchester") || name.contains("birmingham") ||
+            name.contains("uk") || name.contains("united kingdom") || name.contains("england")) {
+            return "Europe/London";
+        }
+        if (name.contains("dublin") || name.contains("ireland")) {
+            return "Europe/Dublin";
+        }
+        
+        // Europe - Western
+        if (name.contains("paris") || name.contains("france")) {
+            return "Europe/Paris";
+        }
+        if (name.contains("berlin") || name.contains("munich") || name.contains("hamburg") ||
+            name.contains("germany")) {
+            return "Europe/Berlin";
+        }
+        if (name.contains("amsterdam") || name.contains("netherlands")) {
+            return "Europe/Amsterdam";
+        }
+        if (name.contains("brussels") || name.contains("belgium")) {
+            return "Europe/Brussels";
+        }
+        
+        // Europe - Southern
+        if (name.contains("rome") || name.contains("milan") || name.contains("italy")) {
+            return "Europe/Rome";
+        }
+        if (name.contains("madrid") || name.contains("barcelona") || name.contains("spain")) {
+            return "Europe/Madrid";
+        }
+        if (name.contains("lisbon") || name.contains("portugal")) {
+            return "Europe/Lisbon";
+        }
+        if (name.contains("athens") || name.contains("greece")) {
+            return "Europe/Athens";
+        }
+        
+        // Europe - Eastern
+        if (name.contains("moscow") || name.contains("russia")) {
+            return "Europe/Moscow";
+        }
+        if (name.contains("istanbul") || name.contains("turkey")) {
+            return "Europe/Istanbul";
+        }
+        
+        // Australia & New Zealand
+        if (name.contains("sydney") || name.contains("melbourne") || name.contains("brisbane") ||
+            name.contains("adelaide") || name.contains("perth") || name.contains("australia")) {
+            return "Australia/Melbourne";
+        }
+        if (name.contains("auckland") || name.contains("wellington") || name.contains("new zealand")) {
+            return "Pacific/Auckland";
+        }
+        
+        // Canada
+        if (name.contains("toronto") || name.contains("montreal") || name.contains("ottawa")) {
+            return "America/Toronto";
+        }
+        if (name.contains("vancouver") || name.contains("victoria")) {
+            return "America/Vancouver";
+        }
+        
+        // South America
+        if (name.contains("sao paulo") || name.contains("rio") || name.contains("brazil")) {
+            return "America/Sao_Paulo";
+        }
+        if (name.contains("buenos aires") || name.contains("argentina")) {
+            return "America/Argentina/Buenos_Aires";
+        }
+        
+        // Africa
+        if (name.contains("cairo") || name.contains("egypt")) {
+            return "Africa/Cairo";
+        }
+        if (name.contains("johannesburg") || name.contains("cape town") || name.contains("south africa")) {
+            return "Africa/Johannesburg";
+        }
+        
+        // Default to Australia/Melbourne
+        return "Australia/Melbourne";
+    }
+
+    // ===== PRIVATE HELPER METHODS =====
+    
+    private ResponseEntity<?> fetchCurrentWeather(double latitude, double longitude, String locationName, String timezone) {
         try {
             RestTemplate restTemplate = new RestTemplate();
             
-            // Fetch current weather
+            // Fetch current weather using location's timezone
             String url = String.format(
-                    "%s?latitude=%s&longitude=%s&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,uv_index&daily=sunrise,sunset&timezone=Australia/Melbourne",
-                    WEATHER_URL, latitude, longitude
+                    "%s?latitude=%s&longitude=%s&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,uv_index&daily=sunrise,sunset&timezone=%s",
+                    WEATHER_URL, latitude, longitude, timezone
             );
 
             Map<String, Object> response = restTemplate.getForObject(url, Map.class);
@@ -106,6 +270,7 @@ public class WeatherController {
 
             Map<String, Object> result = new HashMap<>();
             result.put("name", locationName);
+            result.put("timezone", timezone); // ← ADDED TIMEZONE!
             
             Number temp = (Number) current.get("temperature_2m");
             Number humidity = (Number) current.get("relative_humidity_2m");
@@ -186,14 +351,14 @@ public class WeatherController {
             
             result.put("alerts", alerts);
             
-            // Add sunrise and sunset
+            // Add sunrise and sunset (now in location's timezone)
             if (daily != null) {
                 List<String> sunriseList = (List<String>) daily.get("sunrise");
                 List<String> sunsetList = (List<String>) daily.get("sunset");
                 if (sunriseList != null && !sunriseList.isEmpty() && sunsetList != null && !sunsetList.isEmpty()) {
                     result.put("sys", Map.of(
-                            "sunrise", parseTimestamp(sunriseList.get(0)),
-                            "sunset", parseTimestamp(sunsetList.get(0))
+                            "sunrise", parseTimestamp(sunriseList.get(0), timezone),
+                            "sunset", parseTimestamp(sunsetList.get(0), timezone)
                     ));
                 }
             }
@@ -205,18 +370,18 @@ public class WeatherController {
         }
     }
 
-    private ResponseEntity<?> fetchForecast(double latitude, double longitude, String locationName) {
+    private ResponseEntity<?> fetchForecast(double latitude, double longitude, String locationName, String timezone) {
         try {
             RestTemplate restTemplate = new RestTemplate();
 
-            // Use Melbourne timezone for date calculations
-            java.time.ZoneId melbourneZone = java.time.ZoneId.of("Australia/Melbourne");
-            LocalDate today = LocalDate.now(melbourneZone);
+            // Use location's timezone for date calculations
+            java.time.ZoneId zoneId = java.time.ZoneId.of(timezone);
+            LocalDate today = LocalDate.now(zoneId);
             LocalDate endDate = today.plusDays(4); // 5-day forecast (Open-Meteo free tier limit)
 
             String url = String.format(
-                    "%s?latitude=%s&longitude=%s&hourly=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation_probability,precipitation,uv_index&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=Australia/Melbourne&start_date=%s&end_date=%s",
-                    WEATHER_URL, latitude, longitude, today, endDate
+                    "%s?latitude=%s&longitude=%s&hourly=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation_probability,precipitation,uv_index&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=%s&start_date=%s&end_date=%s",
+                    WEATHER_URL, latitude, longitude, timezone, today, endDate
             );
 
             Map<String, Object> response = restTemplate.getForObject(url, Map.class);
@@ -237,7 +402,7 @@ public class WeatherController {
                 String[] weatherInfo = getWeatherFromCode(weatherCodes.get(i).intValue());
 
                 Map<String, Object> forecast = new HashMap<>();
-                forecast.put("dt", parseTimestamp(times.get(i)));
+                forecast.put("dt", parseTimestamp(times.get(i), timezone));
                 forecast.put("main", Map.of(
                         "temp", temps.get(i),
                         "temp_min", temps.get(i),
@@ -288,7 +453,7 @@ public class WeatherController {
                         String[] weatherInfo = getWeatherFromCode(dailyWeatherCodes.get(i).intValue());
                         
                         Map<String, Object> daily = new HashMap<>();
-                        daily.put("dt", parseTimestamp(dailyTimes.get(i) + "T12:00"));
+                        daily.put("dt", parseTimestamp(dailyTimes.get(i) + "T12:00", timezone));
                         daily.put("temp", Map.of(
                                 "max", dailyMaxTemps.get(i),
                                 "min", dailyMinTemps.get(i)
@@ -338,31 +503,32 @@ public class WeatherController {
         }
     }
 
-    // Parse ISO 8601 timestamp to Unix timestamp
-    private long parseTimestamp(String isoTime) {
+    // Parse ISO 8601 timestamp to Unix timestamp using provided timezone
+    private long parseTimestamp(String isoTime, String timezoneStr) {
         try {
-            // Open-Meteo returns format like "2025-12-11T20:00" in the specified timezone (Australia/Melbourne)
-            // We need to parse it as Melbourne time, NOT UTC
-            java.time.ZoneId melbourneZone = java.time.ZoneId.of("Australia/Melbourne");
+            // Open-Meteo returns format like "2025-12-11T20:00" in the specified timezone
+            java.time.ZoneId zoneId = java.time.ZoneId.of(timezoneStr);
             
             // Parse as LocalDateTime first
             java.time.LocalDateTime localDateTime;
             if (isoTime.length() == 16) {
                 // Format: "2025-12-11T20:00"
                 localDateTime = java.time.LocalDateTime.parse(isoTime + ":00");
+            } else if (isoTime.length() == 10) {
+                // Format: "2025-12-11" (date only)
+                localDateTime = java.time.LocalDate.parse(isoTime).atStartOfDay();
             } else {
                 // Already has seconds
                 localDateTime = java.time.LocalDateTime.parse(isoTime);
             }
             
-            // Convert to ZonedDateTime using Melbourne timezone
-            java.time.ZonedDateTime zonedDateTime = localDateTime.atZone(melbourneZone);
+            // Convert to ZonedDateTime using the location's timezone
+            java.time.ZonedDateTime zonedDateTime = localDateTime.atZone(zoneId);
             
             // Get Unix timestamp
-            long timestamp = zonedDateTime.toEpochSecond();
-            return timestamp;
+            return zonedDateTime.toEpochSecond();
         } catch (Exception e) {
-            System.err.println("Failed to parse timestamp: " + isoTime + " - Error: " + e.getMessage());
+            System.err.println("Failed to parse timestamp: " + isoTime + " with timezone: " + timezoneStr + " - Error: " + e.getMessage());
             return System.currentTimeMillis() / 1000;
         }
     }
