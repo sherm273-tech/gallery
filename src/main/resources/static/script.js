@@ -930,6 +930,9 @@ closeWeatherBtn.addEventListener('click', () => {
 
 // ===== MUSIC PLAYER FUNCTIONS =====
 function formatTime(seconds) {
+    if (isNaN(seconds) || seconds === Infinity) {
+        return '0:00';
+    }
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -950,13 +953,42 @@ function updatePlayerUI() {
 }
 
 audioPlayer.addEventListener('loadedmetadata', () => {
-    duration.textContent = formatTime(audioPlayer.duration);
+    console.log('Audio loaded:', audioPlayer.duration);
+    const durationEl = document.getElementById('duration');
+    if (durationEl && audioPlayer.duration) {
+        durationEl.textContent = formatTime(audioPlayer.duration);
+    }
 });
 
 audioPlayer.addEventListener('timeupdate', () => {
-    currentTime.textContent = formatTime(audioPlayer.currentTime);
-    const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-    progressFill.style.width = progress + '%';
+    const currentTimeEl = document.getElementById('currentTime');
+    const progressFillEl = document.getElementById('progressFill');
+    
+    // Update current time display
+    if (currentTimeEl && audioPlayer.currentTime) {
+        currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
+    }
+    
+    // Update progress bar
+    if (progressFillEl && audioPlayer.duration) {
+        const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+        progressFillEl.style.width = progress + '%';
+    }
+});
+
+audioPlayer.addEventListener('play', () => {
+    const durationEl = document.getElementById('duration');
+    if (durationEl && audioPlayer.duration) {
+        durationEl.textContent = formatTime(audioPlayer.duration);
+    }
+});
+
+// ADDED: Reset display when paused
+audioPlayer.addEventListener('pause', () => {
+    const currentTimeEl = document.getElementById('currentTime');
+    if (currentTimeEl && audioPlayer.currentTime) {
+        currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
+    }
 });
 
 audioPlayer.addEventListener('ended', () => {

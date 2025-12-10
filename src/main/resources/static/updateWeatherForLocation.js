@@ -87,8 +87,8 @@ function updateCurrentWeather(data) {
     if (data.sys) {
         const sunrise = new Date(data.sys.sunrise * 1000);
         const sunset = new Date(data.sys.sunset * 1000);
-        document.getElementById('weatherSunrise').textContent = formatTime(sunrise);
-        document.getElementById('weatherSunset').textContent = formatTime(sunset);
+        document.getElementById('weatherSunrise').textContent = formatWeatherTime(sunrise);
+        document.getElementById('weatherSunset').textContent = formatWeatherTime(sunset);
     }
     
     // Update weather alerts
@@ -336,8 +336,8 @@ function getAlertIcon(type) {
 // Store current location timezone
 let currentLocationTimezone = 'Australia/Melbourne';
 
-// ===== HELPER: FORMAT TIME =====
-function formatTime(date) {
+// ===== HELPER: FORMAT TIME FOR WEATHER (renamed to avoid conflict with music player) =====
+function formatWeatherTime(date) {
     // Use the location's timezone
     return date.toLocaleTimeString('en-AU', { 
         hour: 'numeric', 

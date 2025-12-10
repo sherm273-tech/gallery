@@ -27,8 +27,8 @@ body {
     object-fit: contain;
     background: #000;
     z-index: 1;
-    opacity: 0;
-    transition: opacity 0.5s ease;
+    opacity: 1; /* Always visible, no fade */
+    transition: none; /* NO ANIMATION - instant display */
     display: none; /* Hide completely until slideshow starts */
 }
 
@@ -37,7 +37,7 @@ body.slideshow-active #slideshow {
 }
 
 #slideshow.loaded {
-    opacity: 1; /* Fade in when image is loaded */
+    opacity: 1; /* No fade effect */
 }
 
 /* ===== LOADING OVERLAY ===== */
