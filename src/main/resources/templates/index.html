@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sang's and Sherm's Station</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="location-ui.css">
-    <link rel="stylesheet" href="location-dropdown-enhanced.css">
-    <link rel="stylesheet" href="location-weather-widget.css">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/location-ui.css">
+    <link rel="stylesheet" href="/css/location-dropdown-enhanced.css">
+    <link rel="stylesheet" href="/css/location-weather-widget.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -201,7 +201,7 @@
     <div id="initialMenu" class="initial-menu">
         <div class="menu-container">
             <div class="menu-header">
-                <h1>📻 Sang's and Sherm's Station</h1>
+                <h1>🏠 Sang's and Sherm's Station</h1>
                 <p class="menu-subtitle">Choose your experience</p>
             </div>
             
@@ -304,8 +304,6 @@
                 <div class="form-group">
                     <label for="speedSelect">Image display duration</label>
                     <select id="speedSelect" class="form-select">
-                        <option value="500">Very Very Quick (0.5 second)</option>
-                        <option value="1000">Very Quick (1 second)</option>
                         <option value="2000">Fast (2 seconds)</option>
                         <option value="3000">Medium (3 seconds)</option>
                         <option value="5000" selected>Normal (5 seconds)</option>
@@ -361,10 +359,30 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
-    <script src="heartbeat.js"></script>
-    <script src="location-manager.js"></script>
-    <script src="updateWeatherForLocation.js"></script> 
+    <!-- Shared Utilities -->
+    <script src="/js/shared/utils.js"></script>
+    
+    <!-- Weather Modules -->
+    <script src="/js/weather/weather-api.js"></script>
+    <script src="/js/weather/weather-utils.js"></script>
+    <script src="/js/weather/weather-chart.js"></script>
+    <script src="/js/weather/weather-forecast.js"></script>
+    <script src="/js/weather/weather-display.js"></script>
+    
+    <!-- Slideshow Modules -->
+    <script src="/js/slideshow/image-cache.js"></script>
+    <script src="/js/slideshow/folder-manager.js"></script>
+    <script src="/js/slideshow/drag-drop.js"></script>
+    <script src="/js/slideshow/slideshow-core.js"></script>
+    
+    <!-- Music Modules -->
+    <script src="/js/music/playlist-manager.js"></script>
+    <script src="/js/music/music-player.js"></script>
+    
+    <!-- Core Application Scripts -->
+    <script src="/js/script.js"></script>
+    <script src="/js/core/heartbeat.js"></script>
+    <script src="/js/core/location-manager.js"></script> 
     
 </body>
 </html>

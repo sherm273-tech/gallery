@@ -1,3 +1,6 @@
+// ===== LOCATION MANAGER =====
+// Now uses WeatherDisplay module for weather updates
+
 // ===== COMPLETE LOCATION MANAGER WITH ENHANCED DROPDOWN =====
 // This is a standalone file that replaces location-manager.js entirely
 
@@ -273,7 +276,7 @@ function getWeatherIconForLocation(location) {
 
 // ===== SWITCH TO LOCATION =====
 async function switchToLocation(locationId) {
-    console.log(`🔄 Switching to location: ${locationId}`);
+    console.log(`🔄 Switching to location ID: ${locationId}`);
     
     const location = allLocations.find(loc => loc.id === locationId);
     if (!location) {
@@ -281,7 +284,10 @@ async function switchToLocation(locationId) {
         return;
     }
     
+    // Update current location
     currentLocationId = locationId;
+    
+    // Update location name in UI
     if (weatherLocationText) {
         weatherLocationText.textContent = location.locationName;
         console.log('📍 Updated location text to:', location.locationName);
@@ -295,51 +301,14 @@ async function switchToLocation(locationId) {
         weatherLocationClickable.classList.remove('active');
     }
     
-    // NUCLEAR OPTION: Force full weather refresh from new location
-    console.log('🔥 FORCING WEATHER UPDATE FOR LOCATION:', locationId);
-    
-    try {
-        // Method 1: Use updateWeatherForLocation if available
-        if (typeof updateWeatherForLocation === 'function') {
-            console.log('✅ Method 1: Calling updateWeatherForLocation');
-            await updateWeatherForLocation(locationId);
-            console.log('✅ updateWeatherForLocation completed');
-            return;
-        }
-        
-        // Method 2: Fallback - call script.js functions but force refresh
-        console.warn('⚠️ Method 2: Using fallback - updateWeatherForLocation not found');
-        
-        // Force fetch new location's weather
-        const currentResponse = await fetch(`/api/weather/${locationId}/current`);
-        const forecastResponse = await fetch(`/api/weather/${locationId}/forecast`);
-        
-        if (currentResponse.ok && forecastResponse.ok) {
-            const currentData = await currentResponse.json();
-            const forecastData = await forecastResponse.json();
-            
-            console.log('✅ Fetched weather for location:', locationId);
-            console.log('Current:', currentData);
-            console.log('Forecast:', forecastData);
-            
-            // Now call the update functions with this data
-            if (typeof updateCurrentWeather === 'function') {
-                await updateCurrentWeather();
-            }
-            if (typeof updateForecast === 'function') {
-                await updateForecast();
-            }
-            if (typeof updateWeatherSummary === 'function') {
-                await updateWeatherSummary();
-            }
-            
-            console.log('✅ Weather display updated via fallback');
-        } else {
-            console.error('❌ Failed to fetch weather data');
-        }
-        
-    } catch (error) {
-        console.error('❌ Error in switchToLocation:', error);
+    // Update all weather displays for this location
+    console.log('🌤️ Calling updateWeatherForLocation...');
+    if (typeof updateWeatherForLocation === 'function') {
+        await updateWeatherForLocation(locationId);
+        console.log('✅ Weather updated successfully for:', location.locationName);
+    } else {
+        console.error('❌ updateWeatherForLocation function not found!');
+        console.log('Available functions:', Object.keys(window).filter(k => k.includes('weather')));
     }
 }
 

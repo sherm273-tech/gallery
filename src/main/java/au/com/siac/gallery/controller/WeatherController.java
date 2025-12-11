@@ -215,6 +215,25 @@ public class WeatherController {
             return "Europe/Istanbul";
         }
         
+        // Europe - Nordic/Scandinavian
+        if (name.contains("oslo") || name.contains("stavanger") || name.contains("bergen") || 
+            name.contains("trondheim") || name.contains("norway")) {
+            return "Europe/Oslo";
+        }
+        if (name.contains("stockholm") || name.contains("gothenburg") || name.contains("malmo") ||
+            name.contains("sweden")) {
+            return "Europe/Stockholm";
+        }
+        if (name.contains("helsinki") || name.contains("finland")) {
+            return "Europe/Helsinki";
+        }
+        if (name.contains("copenhagen") || name.contains("denmark")) {
+            return "Europe/Copenhagen";
+        }
+        if (name.contains("reykjavik") || name.contains("iceland")) {
+            return "Atlantic/Reykjavik";
+        }
+        
         // Australia & New Zealand
         if (name.contains("sydney") || name.contains("melbourne") || name.contains("brisbane") ||
             name.contains("adelaide") || name.contains("perth") || name.contains("australia")) {
@@ -472,6 +491,7 @@ public class WeatherController {
             result.put("list", forecastList);
             result.put("daily", dailyList);
             result.put("city", Map.of("name", locationName));
+            result.put("timezone", timezone);  // Add timezone to response
 
             return ResponseEntity.ok(result);
 

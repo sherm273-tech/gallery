@@ -1,3 +1,15 @@
+// ===== FULLY MODULAR VERSION =====
+// This version uses separate modules for all major features:
+// - /js/shared/utils.js - Shared utilities
+// - /js/music/* - Music player (2 modules)
+// - /js/slideshow/* - Slideshow (4 modules)
+// - /js/weather/* - Weather display (5 modules)
+//
+// See module integration docs for details.
+
+//
+// See SLIDESHOW_MODULE_INTEGRATION.txt for details.
+
 // ===== GLOBAL VARIABLES =====
 const imgEl = document.getElementById("slideshow");
 const startBtn = document.getElementById("startButton");
@@ -80,13 +92,25 @@ let precipitationChartInstance = null;
 
 // ===== INITIAL MENU HANDLERS =====
 photoSlideshowBtn.addEventListener('click', () => {
+    console.log('📸 Photo Slideshow button clicked');
     currentMode = 'slideshow';
     initialMenu.classList.add('hidden');
     controls.classList.remove('hidden');
+    console.log('  Controls hidden class removed, classList:', controls.classList.toString());
+    console.log('  Controls computed display:', window.getComputedStyle(controls).display);
+    console.log('  Controls pointer-events:', window.getComputedStyle(controls).pointerEvents);
+    
     controlsTitle.textContent = 'Photo Slideshow Setup';
     startButtonText.textContent = 'Start Slideshow';
     tabNav.style.display = 'flex';
+    console.log('  TabNav display set to flex');
+    
     photosTab.classList.add('active');
+    console.log('  Photos tab activated');
+    
+    // Ensure folders are loaded
+    FolderManager.loadFolders();
+    console.log('  FolderManager.loadFolders() called');
 });
 
 musicOnlyBtn.addEventListener('click', () => {
@@ -125,6 +149,45 @@ backToMenuBtn.addEventListener('click', () => {
     document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
     document.querySelector('.tab-button[data-tab="photos"]').classList.add('active');
 });
+
+// ===== TAB SWITCHING =====
+console.log('🔧 Setting up tab switching...');
+const tabButtons = document.querySelectorAll('.tab-button');
+console.log(`Found ${tabButtons.length} tab buttons:`, tabButtons);
+
+document.querySelectorAll('.tab-button').forEach(button => {
+    button.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const tabName = button.getAttribute('data-tab');
+        console.log(`🖱️ Tab button clicked: ${tabName}`);
+        
+        // Remove active class from all buttons and contents
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+            console.log(`  Removed active from button: ${btn.getAttribute('data-tab')}`);
+        });
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+            console.log(`  Removed active from content: ${content.id}`);
+        });
+        
+        // Add active class to clicked button and corresponding content
+        button.classList.add('active');
+        const targetTab = document.getElementById(`${tabName}-tab`);
+        
+        if (targetTab) {
+            targetTab.classList.add('active');
+            console.log(`✅ Switched to ${tabName} tab - element found and activated`);
+        } else {
+            console.error(`❌ Tab content not found: ${tabName}-tab`);
+        }
+    });
+});
+console.log('✅ Tab switching setup complete');
+
+
 
 // ===== MAGIC MIRROR FUNCTIONS =====
 function updateClock() {
@@ -188,21 +251,56 @@ function capitalizeFirst(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-function formatSunTime(timestamp) {
+function formatSunTime(timestamp, timezone = null) {
     const date = new Date(timestamp * 1000);
+    
+    // If timezone provided, format in that timezone
+    if (timezone) {
+        try {
+            const options = {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+                timeZone: timezone
+            };
+            return date.toLocaleTimeString('en-AU', options);
+        } catch (error) {
+            console.warn('Invalid timezone:', timezone, '- falling back to local time');
+        }
+    }
+    
+    // Fallback to local time
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
     return `${hours}:${minutes}`;
 }
 
-async function updateCurrentWeather() {
+// ===== WEATHER TIMEZONE TRACKING =====
+let currentWeatherTimezone = 'Australia/Melbourne'; // Track current location timezone
+
+async function updateCurrentWeather(locationId = null) {
     try {
-        const response = await fetch('/api/weather/current');
+        // Use location-specific endpoint if locationId provided, otherwise use default
+        const url = locationId 
+            ? `/api/weather/${locationId}/current`
+            : '/api/weather/current';
+        
+        console.log(`📡 Fetching current weather from: ${url}`);
+        const response = await fetch(url);
         const data = await response.json();
         
-        if (data.error) return;
+        if (data.error) {
+            console.error('Weather API error:', data.error);
+            return;
+        }
         
-        document.getElementById('weatherLocation').textContent = data.name || 'Essendon';
+        // Update timezone if available
+        if (data.timezone) {
+            currentWeatherTimezone = data.timezone;
+            console.log('🌍 Weather timezone set to:', currentWeatherTimezone);
+        }
+        
+        document.getElementById('weatherLocation').textContent = data.name || 'Unknown Location';
         document.getElementById('weatherTemp').textContent = Math.round(data.main.temp) + '°';
         document.getElementById('weatherDesc').textContent = data.weather[0].description;
         document.getElementById('weatherIcon').src = getWeatherIconUrl(data.weather[0].icon);
@@ -229,10 +327,11 @@ async function updateCurrentWeather() {
             uvElement.title = `${uvInfo.level} - ${uvInfo.description}`;
         }
         
-        // Update sunrise and sunset
+        // Update sunrise and sunset (with timezone from API response)
         if (data.sys) {
-            document.getElementById('weatherSunrise').textContent = formatSunTime(data.sys.sunrise);
-            document.getElementById('weatherSunset').textContent = formatSunTime(data.sys.sunset);
+            const timezone = data.timezone; // Backend sends this!
+            document.getElementById('weatherSunrise').textContent = formatSunTime(data.sys.sunrise, timezone);
+            document.getElementById('weatherSunset').textContent = formatSunTime(data.sys.sunset, timezone);
         }
         
         // Display weather alerts
@@ -240,8 +339,12 @@ async function updateCurrentWeather() {
             displayWeatherAlerts(data.alerts);
         }
         
-        // Update weather background
-        updateWeatherBackground(data.weather[0].main);
+        // Update weather background based on current weather
+        const weatherCondition = data.weather[0].main;
+        console.log(`🎨 Updating background for weather condition: ${weatherCondition}`);
+        updateWeatherBackground(weatherCondition);
+        
+        console.log(`✅ Weather updated for location: ${data.name}`);
     } catch (error) {
         console.error('Error fetching current weather:', error);
     }
@@ -282,9 +385,10 @@ function updateWeatherBackground(weatherCondition) {
         'Fog': 'linear-gradient(135deg, rgba(189, 195, 199, 0.4) 0%, rgba(44, 62, 80, 0.5) 100%), url(\'https://images.unsplash.com/photo-1487621167305-5d248087c724?w=1920&q=80\') center/cover no-repeat'
     };
     
-    const background = weatherBackgrounds[weatherCondition] || 'linear-gradient(135deg, rgba(10, 10, 10, 0.7) 0%, rgba(26, 26, 42, 0.85) 100%), url(\'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&q=80\') center/cover no-repeat';
+    const background = weatherBackgrounds[weatherCondition] || 'linear-gradient(135deg, rgba(10, 10, 10, 0.7) 0%, rgba(26, 26, 42, 0.85) 100%), url(\'https://images.unsplash.com/photo-1601297183305-6df142704ea2?w=1920&q=80\') center/cover no-repeat';
     overlay.style.background = background;
 }
+
 
 // Create precipitation chart - UPDATED: NO BLUE BARS, KEEP 3 LINES
 function createPrecipitationChart(forecastData) {
@@ -314,7 +418,11 @@ function createPrecipitationChart(forecastData) {
         if (index === 0 && timeDiff < 30 * 60 * 1000) {
             return 'Now';
         }
-        return date.toLocaleTimeString('en-AU', { hour: 'numeric', hour12: true });
+        return date.toLocaleTimeString('en-AU', { 
+            hour: 'numeric', 
+            hour12: true,
+            timeZone: currentWeatherTimezone  // Use location's timezone
+        });
     });
     
     const precipProbability = next24Hours.map(item => {
@@ -512,12 +620,27 @@ function createPrecipitationChart(forecastData) {
     });
 }
 
-async function updateForecast() {
+async function updateForecast(locationId = null) {
     try {
-        const response = await fetch('/api/weather/forecast');
+        // Use location-specific endpoint if locationId provided, otherwise use default
+        const url = locationId 
+            ? `/api/weather/${locationId}/forecast`
+            : '/api/weather/forecast';
+        
+        console.log(`📡 Fetching forecast from: ${url}`);
+        const response = await fetch(url);
         const data = await response.json();
         
-        if (data.error) return;
+        if (data.error) {
+            console.error('Forecast API error:', data.error);
+            return;
+        }
+        
+        // Update timezone if available
+        if (data.timezone) {
+            currentWeatherTimezone = data.timezone;
+            console.log('🌍 Forecast timezone set to:', currentWeatherTimezone);
+        }
         
         const hourlyForecasts = processHourlyForecast(data.list);
         displayHourlyForecast(hourlyForecasts);
@@ -558,15 +681,21 @@ async function updateForecast() {
         
         createPrecipitationChart(data.list);
         
+        console.log('✅ Forecast updated');
     } catch (error) {
         console.error('Error fetching forecast:', error);
     }
 }
 
 // ===== WEATHER SUMMARY WIDGET =====
-async function updateWeatherSummary() {
+async function updateWeatherSummary(locationId = null) {
     try {
-        const response = await fetch('/api/weather/forecast');
+        // Use location-specific endpoint if locationId provided, otherwise use default
+        const url = locationId 
+            ? `/api/weather/${locationId}/forecast`
+            : '/api/weather/forecast';
+        
+        const response = await fetch(url);
         const data = await response.json();
         
         if (data.error || !data.daily || data.daily.length === 0) {
@@ -618,6 +747,25 @@ async function updateWeatherSummary() {
         
     } catch (error) {
         console.error('Error updating weather summary:', error);
+    }
+}
+
+// ===== UPDATE WEATHER FOR SPECIFIC LOCATION =====
+// This function is called by location-manager.js when switching locations
+async function updateWeatherForLocation(locationId) {
+    console.log(`🌍 Updating all weather displays for location: ${locationId}`);
+    
+    try {
+        // Update all weather components with the new location
+        await Promise.all([
+            updateCurrentWeather(locationId),
+            updateForecast(locationId),
+            updateWeatherSummary(locationId)
+        ]);
+        
+        console.log('✅ All weather displays updated for location:', locationId);
+    } catch (error) {
+        console.error('❌ Error updating weather for location:', error);
     }
 }
 
@@ -866,7 +1014,8 @@ function displayHourlyForecast(forecasts) {
         const timeStr = isNow ? 'Now' : forecast.time.toLocaleTimeString('en-AU', { 
             hour: 'numeric', 
             minute: '2-digit',
-            hour12: true 
+            hour12: true,
+            timeZone: currentWeatherTimezone  // Use location's timezone
         });
         
         const uvValue = forecast.uv_index || 0;
@@ -929,7 +1078,7 @@ closeWeatherBtn.addEventListener('click', () => {
 });
 
 // ===== MUSIC PLAYER FUNCTIONS =====
-function formatTime(seconds) {
+function formatMusicTime(seconds) {
     if (isNaN(seconds) || seconds === Infinity) {
         return '0:00';
     }
@@ -956,7 +1105,7 @@ audioPlayer.addEventListener('loadedmetadata', () => {
     console.log('Audio loaded:', audioPlayer.duration);
     const durationEl = document.getElementById('duration');
     if (durationEl && audioPlayer.duration) {
-        durationEl.textContent = formatTime(audioPlayer.duration);
+        durationEl.textContent = formatMusicTime(audioPlayer.duration);
     }
 });
 
@@ -966,7 +1115,7 @@ audioPlayer.addEventListener('timeupdate', () => {
     
     // Update current time display
     if (currentTimeEl && audioPlayer.currentTime) {
-        currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
+        currentTimeEl.textContent = formatMusicTime(audioPlayer.currentTime);
     }
     
     // Update progress bar
@@ -979,7 +1128,7 @@ audioPlayer.addEventListener('timeupdate', () => {
 audioPlayer.addEventListener('play', () => {
     const durationEl = document.getElementById('duration');
     if (durationEl && audioPlayer.duration) {
-        durationEl.textContent = formatTime(audioPlayer.duration);
+        durationEl.textContent = formatMusicTime(audioPlayer.duration);
     }
 });
 
@@ -987,7 +1136,7 @@ audioPlayer.addEventListener('play', () => {
 audioPlayer.addEventListener('pause', () => {
     const currentTimeEl = document.getElementById('currentTime');
     if (currentTimeEl && audioPlayer.currentTime) {
-        currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
+        currentTimeEl.textContent = formatMusicTime(audioPlayer.currentTime);
     }
 });
 
@@ -1055,171 +1204,23 @@ closePlayerBtn.addEventListener('click', () => {
     }
 });
 
+function closeMusicPlayer() {
+    musicPlayerOverlay.classList.remove('active');
+    audioPlayer.pause();
+    isPlaying = false;
+    
+    if (currentMode === 'music') {
+        initialMenu.classList.remove('hidden');
+    }
+}
+
+
 editPlaylistBtn.addEventListener('click', () => {
     musicPlayerOverlay.classList.remove('active');
     controls.classList.remove('hidden');
     document.querySelector('.tab-button[data-tab="music"]').click();
 });
 
-// ===== SLIDESHOW FUNCTIONS =====
-document.querySelectorAll('.tab-button').forEach(button => {
-    button.addEventListener('click', () => {
-        const targetTab = button.dataset.tab;
-        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-        button.classList.add('active');
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        document.getElementById(targetTab + '-tab').classList.add('active');
-    });
-});
-
-shuffleAllCheckbox.addEventListener('change', function() {
-    if (this.checked) {
-        folderList.style.opacity = '0.5';
-        folderList.style.pointerEvents = 'none';
-        startFolderSelect.disabled = true;
-        randomizeCheckbox.disabled = true;
-        startFolderSelect.style.opacity = '0.5';
-        folderError.classList.remove('show');
-        startBtn.disabled = false;
-    } else {
-        folderList.style.opacity = '1';
-        folderList.style.pointerEvents = 'auto';
-        startFolderSelect.disabled = false;
-        randomizeCheckbox.disabled = false;
-        startFolderSelect.style.opacity = '1';
-        validateFolderSelection();
-    }
-});
-
-function validateFolderSelection() {
-    if (currentMode === 'music') {
-        startBtn.disabled = false;
-        return true;
-    }
-    
-    if (shuffleAllCheckbox.checked) {
-        startBtn.disabled = false;
-        folderError.classList.remove('show');
-        return true;
-    }
-    
-    const selectedFolders = getSelectedFolders();
-    if (selectedFolders.length === 0) {
-        startBtn.disabled = true;
-        folderError.classList.add('show');
-        return false;
-    } else {
-        startBtn.disabled = false;
-        folderError.classList.remove('show');
-        return true;
-    }
-}
-
-async function loadFolders() {
-    try {
-        const response = await fetch("/api/folders/list");
-        folderFiles = await response.json();
-        
-        folderList.innerHTML = '';
-        startFolderSelect.innerHTML = '<option value="">None (use folder order above)</option>';
-        
-        if (folderFiles.length === 0) {
-            folderList.innerHTML = '<p style="color: #aaa;">No folders found</p>';
-            return;
-        }
-        
-        folderFiles.forEach((folder, idx) => {
-            createFolderItem(folder, idx);
-            const option = document.createElement("option");
-            option.value = folder;
-            option.textContent = folder;
-            startFolderSelect.appendChild(option);
-        });
-        
-        validateFolderSelection();
-    } catch (err) {
-        console.error("Error loading folders:", err);
-    }
-}
-
-if (folderSearchInput) {
-    folderSearchInput.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        const folderItems = folderList.querySelectorAll('.folder-item');
-        
-        folderItems.forEach(item => {
-            const label = item.querySelector('label');
-            const folderName = label ? label.textContent.toLowerCase() : '';
-            
-            if (folderName.includes(searchTerm)) {
-                item.classList.remove('hidden');
-            } else {
-                item.classList.add('hidden');
-            }
-        });
-    });
-}
-
-function createFolderItem(folder, idx) {
-    const div = document.createElement("div");
-    div.className = "folder-item";
-    div.draggable = true;
-    div.dataset.folder = folder;
-    
-    const dragHandle = document.createElement("span");
-    dragHandle.className = "drag-handle";
-    dragHandle.innerHTML = "⋮⋮";
-    
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.id = `folder-${idx}`;
-    checkbox.value = folder;
-    checkbox.checked = true;
-    checkbox.addEventListener('change', validateFolderSelection);
-    
-    const label = document.createElement("label");
-    label.htmlFor = `folder-${idx}`;
-    label.textContent = folder;
-    
-    div.appendChild(dragHandle);
-    div.appendChild(checkbox);
-    div.appendChild(label);
-    
-    div.addEventListener('dragstart', handleFolderDragStart);
-    div.addEventListener('dragover', handleDragOver);
-    div.addEventListener('drop', handleFolderDrop);
-    div.addEventListener('dragend', handleDragEnd);
-    div.addEventListener('dragenter', handleDragEnter);
-    div.addEventListener('dragleave', handleDragLeave);
-    
-    folderList.appendChild(div);
-}
-
-function getSelectedFolders() {
-    const items = folderList.querySelectorAll('.folder-item');
-    const selected = [];
-    
-    items.forEach(item => {
-        const checkbox = item.querySelector('input[type="checkbox"]');
-        if (checkbox && checkbox.checked && !item.classList.contains('hidden')) {
-            selected.push(checkbox.value);
-        }
-    });
-    
-    return selected;
-}
-
-selectAllFoldersBtn.addEventListener('click', () => {
-    const checkboxes = folderList.querySelectorAll('.folder-item:not(.hidden) input[type="checkbox"]');
-    checkboxes.forEach(cb => cb.checked = true);
-    validateFolderSelection();
-});
-
-selectNoFoldersBtn.addEventListener('click', () => {
-    const checkboxes = folderList.querySelectorAll('input[type="checkbox"]');
-    checkboxes.forEach(cb => cb.checked = false);
-    validateFolderSelection();
-});
 
 async function loadMusicFiles() {
     try {
@@ -1417,53 +1418,7 @@ function playCurrentTrack() {
     }).catch(err => console.error('Audio play error:', err));
 }
 
-function stopSlideshow() {
-    if (intervalId) {
-        clearInterval(intervalId);
-        intervalId = null;
-    }
-    
-    if (!audioPlayer.paused) {
-        audioPlayer.pause();
-        audioPlayer.currentTime = 0;
-        isPlaying = false;
-    }
-    
-    isPaused = false;
-    slideshowStarted = false;
-    
-    if (wakeLock) {
-        wakeLock.release().then(() => {
-            wakeLock = null;
-        });
-    }
-    
-    if (keepAwakeInterval) {
-        clearInterval(keepAwakeInterval);
-        keepAwakeInterval = null;
-    }
-}
 
-function togglePause() {
-    if (!slideshowStarted) return;
-    
-    isPaused = !isPaused;
-    
-    if (isPaused) {
-        clearInterval(intervalId);
-        if (!audioPlayer.paused) {
-            audioPlayer.pause();
-            isPlaying = false;
-        }
-    } else {
-        intervalId = setInterval(nextImage, delay);
-        if (selectedMusic.length > 0) {
-            audioPlayer.play().then(() => {
-                isPlaying = true;
-            }).catch(err => console.error('Audio resume error:', err));
-        }
-    }
-}
 
 document.addEventListener('keydown', (e) => {
     // Check if user is typing in an input field - if so, don't interfere
@@ -1514,10 +1469,14 @@ document.addEventListener('keydown', (e) => {
         case 'Escape':
             e.preventDefault();
             if (currentMode === 'slideshow') {
-                stopSlideshow();
+                SlideshowCore.stop();
+                SlideshowCore.hide();
                 controls.classList.remove('hidden');
-                document.body.classList.remove('slideshow-active');
-                slideshowStarted = false;
+                document.body.style.cursor = "default";
+                if (wakeLock) {
+                    wakeLock.release();
+                    wakeLock = null;
+                }
             } else if (currentMode === 'music') {
                 closeMusicPlayer();
             }
@@ -1529,80 +1488,33 @@ document.addEventListener('keydown', (e) => {
             if (currentMode === 'music') {
                 playPauseBtn.click();
             } else {
-                togglePause();
+                SlideshowCore.togglePause();
+                // Also pause/resume music
+                if (MusicPlayer.isPlaying()) {
+                    MusicPlayer.pause();
+                } else {
+                    MusicPlayer.play();
+                }
             }
             break;
         case 'ArrowRight':
             e.preventDefault();
             if (currentMode === 'music') {
                 nextTrack();
-            } else if (isPaused) {
-                nextImage();
+            } else if (SlideshowCore.isPaused()) {
+                SlideshowCore.next();
             }
             break;
         case 'ArrowLeft':
             e.preventDefault();
             if (currentMode === 'music') {
                 prevTrack();
-            } else if (isPaused) {
-                previousImage();
+            } else if (SlideshowCore.isPaused()) {
+                SlideshowCore.previous();
             }
             break;
     }
 });
-
-function previousImage() {
-    if (imageHistory.length > 1) {
-        imageHistory.pop();
-        const prevImage = imageHistory[imageHistory.length - 1];
-        showImageByPath(prevImage);
-    }
-}
-
-async function initializeSlideshow() {
-    currentRequestParams = {
-        startFolder: startFolderSelect.value || null,
-        randomize: randomizeCheckbox.checked,
-        shuffleAll: shuffleAllCheckbox.checked,
-        selectedFolders: shuffleAllCheckbox.checked ? [] : getSelectedFolders()
-    };
-    
-    const response = await fetch('/api/images/list', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(currentRequestParams)
-    });
-    
-    const initialImages = await response.json();
-    totalImages = initialImages.length;
-    
-    for (let i = 0; i < Math.min(PRELOAD_COUNT, initialImages.length); i++) {
-        preloadImage(initialImages[i]);
-    }
-}
-
-function preloadImage(imagePath) {
-    const url = "/images/" + imagePath;
-    
-    if (imageCache.has(url)) return;
-    
-    const img = new Image();
-    img.onload = () => console.log('Preloaded:', imagePath);
-    img.onerror = () => console.error('Failed to preload:', imagePath);
-    img.src = url;
-    imageCache.set(url, img);
-}
-
-function showImageByPath(imagePath) {
-    const url = "/images/" + imagePath;
-    
-    if (imageCache.has(url)) {
-        imgEl.src = imageCache.get(url).src;
-    } else {
-        imgEl.src = url;
-        preloadImage(imagePath);
-    }
-}
 
 function getUVInfo(uvIndex) {
     const uv = Math.round(uvIndex * 10) / 10;
@@ -1620,104 +1532,8 @@ function getUVInfo(uvIndex) {
     }
 }
 
-function showImageByPathAsync(imagePath) {
-    return new Promise((resolve, reject) => {
-        const url = "/images/" + imagePath;
-        
-        imgEl.classList.remove('loaded');
-        
-        if (imageCache.has(url)) {
-            const cachedImg = imageCache.get(url);
-            imgEl.src = cachedImg.src;
-            
-            setTimeout(() => {
-                imgEl.classList.add('loaded');
-            }, 50);
-            
-            resolve();
-        } else {
-            const img = new Image();
-            
-            img.onload = () => {
-                imgEl.src = img.src;
-                imageCache.set(url, img);
-                
-                setTimeout(() => {
-                    imgEl.classList.add('loaded');
-                }, 50);
-                
-                resolve();
-            };
-            
-            img.onerror = () => {
-                imgEl.src = url;
-                imgEl.classList.add('loaded');
-                reject(new Error('Failed to load image: ' + imagePath));
-            };
-            
-            img.src = url;
-        }
-    });
-}
 
-async function nextImage() {
-    try {
-        const response = await fetch('/api/images/next', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(currentRequestParams)
-        });
-        
-        const data = await response.json();
-        
-        if (data.cycleComplete) {
-            imageHistory = [];
-        }
-        
-        if (data.image) {
-            imageHistory.push(data.image);
-            await showImageByPathAsync(data.image);
-            preloadNextImages(data.totalShown, data.totalImages);
-        }
-        
-        if (imageCache.size > MAX_CACHE_SIZE) {
-            const keysToDelete = [];
-            let count = 0;
-            for (const key of imageCache.keys()) {
-                if (count++ < imageCache.size - MIN_CACHE_SIZE) {
-                    keysToDelete.push(key);
-                } else {
-                    break;
-                }
-            }
-            keysToDelete.forEach(key => imageCache.delete(key));
-        }
-    } catch (err) {
-        console.error('Error fetching next image:', err);
-    }
-}
 
-async function preloadNextImages(currentIndex, totalImages) {
-    if (imageCache.size >= MIN_CACHE_SIZE) return;
-    
-    try {
-        const response = await fetch('/api/images/peek', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                ...currentRequestParams,
-                count: 10
-            })
-        });
-        
-        if (response.ok) {
-            const upcomingImages = await response.json();
-            upcomingImages.forEach(imagePath => preloadImage(imagePath));
-        }
-    } catch (err) {
-        console.log('Background preload skipped:', err.message);
-    }
-}
 
 async function requestFullscreen() {
     try {
@@ -1760,13 +1576,16 @@ document.addEventListener('visibilitychange', async () => {
 
 startBtn.addEventListener("click", async () => {
     if (currentMode === 'slideshow') {
-        if (!validateFolderSelection()) return;
+        // Use FolderManager.validate() instead of missing validateFolderSelection()
+        if (!FolderManager.validate()) {
+            console.warn('⚠️ No folders selected');
+            return;
+        }
         
         delay = parseInt(speedSelect.value);
         
         mirrorOverlay.classList.add("hidden");
         controls.classList.add("hidden");
-        loadingOverlay.classList.add("active");
         document.body.classList.add("slideshow-active");
         document.body.style.cursor = "none";
         
@@ -1776,27 +1595,20 @@ startBtn.addEventListener("click", async () => {
         keepAwakeInterval = setInterval(simulateActivity, 30000);
         
         playMusic();
-        await initializeSlideshow();
         
-        let preloadedCount = 0;
-        const checkInterval = setInterval(() => {
-            preloadedCount = imageCache.size;
-            loadingText.textContent = `Preloading images... (${preloadedCount}/${Math.min(PRELOAD_COUNT, totalImages)})`;
-            
-            if (preloadedCount >= Math.min(PRELOAD_COUNT, totalImages) || preloadedCount >= totalImages) {
-                clearInterval(checkInterval);
-                loadingOverlay.classList.remove("active");
-                
-                if (totalImages > 0) {
-                    slideshowStarted = true;
-                    imageHistory = [];
-                    
-                    nextImage().then(() => {
-                        intervalId = setInterval(nextImage, delay);
-                    });
-                }
-            }
-        }, 100);
+        // Use SlideshowCore.start() instead of old initializeSlideshow()
+        try {
+            await SlideshowCore.start(delay);
+            slideshowStarted = true;
+            SlideshowCore.show();
+        } catch (err) {
+            console.error('❌ Failed to start slideshow:', err);
+            alert('Failed to start slideshow. Please try again.');
+            // Reset state
+            document.body.classList.remove("slideshow-active");
+            document.body.style.cursor = "default";
+            controls.classList.remove("hidden");
+        }
         
     } else if (currentMode === 'music') {
         selectedMusic = getSelectedMusic();
@@ -1806,13 +1618,35 @@ startBtn.addEventListener("click", async () => {
             return;
         }
         
-        controls.classList.add("hidden");
-        mirrorOverlay.classList.add("hidden");
-        musicPlayerOverlay.classList.add("active");
+        // Check if music is already playing
+        const isCurrentlyPlaying = MusicPlayer.isPlaying();
         
-        currentMusicIndex = 0;
-        playCurrentTrack();
-        updatePlayerUI();
+        if (isCurrentlyPlaying) {
+            // Music is already playing - just update the playlist without restarting
+            console.log('🎵 Updating playlist while preserving playback...');
+            MusicPlayer.updatePlaylist(selectedMusic);
+            
+            // Just hide controls and show player
+            controls.classList.add("hidden");
+            mirrorOverlay.classList.add("hidden");
+            musicPlayerOverlay.classList.add("active");
+            
+            console.log('✅ Playlist updated, music continues playing');
+        } else {
+            // Starting fresh - use the working original code but with MusicPlayer for state
+            console.log('🎵 Starting new music playback...');
+            controls.classList.add("hidden");
+            mirrorOverlay.classList.add("hidden");
+            musicPlayerOverlay.classList.add("active");
+            
+            // Set playlist in MusicPlayer module for state tracking
+            MusicPlayer.setPlaylist(selectedMusic);
+            
+            // Use old playback system (it works!)
+            currentMusicIndex = 0;
+            playCurrentTrack();
+            updatePlayerUI();
+        }
         
         await requestWakeLock();
     }
@@ -1825,7 +1659,12 @@ window.addEventListener('beforeunload', () => {
 });
 
 // ===== INITIALIZATION =====
-loadFolders();
+// Initialize modules (sets up DOM references and event listeners)
+FolderManager.init();
+SlideshowCore.init();
+MusicPlayer.init();  // Initialize music player module
+// Note: FolderManager.loadFolders() is called when user clicks "Photo Slideshow" button
+
 loadMusicFiles();
 
 updateClock();

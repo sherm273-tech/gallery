@@ -41,39 +41,44 @@ function stopHeartbeat() {
 
 // ===== INTEGRATE WITH EXISTING CODE =====
 
-// Store original playCurrentTrack function
-const originalPlayCurrentTrack = playCurrentTrack;
-
-// Override playCurrentTrack to start heartbeat
-playCurrentTrack = function() {
+// Start heartbeat when music starts playing
+const originalAudioPlayerPlay = audioPlayer.addEventListener('play', () => {
     startHeartbeat();
-    originalPlayCurrentTrack();
-};
+});
 
-// Store original closeMusicPlayer function
-const originalClosePlayerBtn = closePlayerBtn.onclick;
+// Start heartbeat when slideshow or music mode starts
+// Monitor the start button (already has event listener, so we add another one)
+const startBtnElement = document.getElementById('startButton');
+if (startBtnElement) {
+    startBtnElement.addEventListener('click', () => {
+        // Slight delay to let currentMode be set
+        setTimeout(() => {
+            if (currentMode === 'slideshow' || currentMode === 'music') {
+                startHeartbeat();
+            }
+        }, 100);
+    });
+}
 
-// Override close button to stop heartbeat
-closePlayerBtn.onclick = function() {
-    stopHeartbeat();
-    if (originalClosePlayerBtn) originalClosePlayerBtn();
-};
+// Stop heartbeat when music player closes
+const closeMusicBtn = document.getElementById('closePlayerBtn');
+if (closeMusicBtn) {
+    closeMusicBtn.addEventListener('click', () => {
+        stopHeartbeat();
+    });
+}
 
-// Start heartbeat when slideshow starts
-const originalStartBtn = startBtn.onclick;
-startBtn.onclick = async function() {
-    if (originalStartBtn) await originalStartBtn();
-    if (currentMode === 'slideshow' || currentMode === 'music') {
-        startHeartbeat();
+// Stop heartbeat when returning to menu (ESC key during slideshow)
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        // Delay to ensure slideshow/music has stopped
+        setTimeout(() => {
+            if (currentMode !== 'slideshow' && currentMode !== 'music') {
+                stopHeartbeat();
+            }
+        }, 100);
     }
-};
-
-// Stop heartbeat when stopping slideshow
-const originalStopSlideshow = stopSlideshow;
-stopSlideshow = function() {
-    stopHeartbeat();
-    originalStopSlideshow();
-};
+});
 
 // Stop heartbeat on page unload
 window.addEventListener('beforeunload', stopHeartbeat);
