@@ -1618,31 +1618,41 @@ startBtn.addEventListener("click", async () => {
             return;
         }
         
-        // Check if music is already playing
-        const isCurrentlyPlaying = MusicPlayer.isPlaying();
+        // Check if music is actually playing by checking the audio element
+        const isCurrentlyPlaying = !audioPlayer.paused && audioPlayer.src;
         
         if (isCurrentlyPlaying) {
             // Music is already playing - just update the playlist without restarting
             console.log('🎵 Updating playlist while preserving playback...');
-            MusicPlayer.updatePlaylist(selectedMusic);
+            
+            // Update selectedMusic array
+            // Find current track in new list
+            const currentTrack = selectedMusic.length > currentMusicIndex ? 
+                                 selectedMusic[currentMusicIndex] : null;
+            
+            // If current track is in new list, keep playing it
+            // Otherwise switch to first track in new list
+            const trackStillExists = currentTrack && selectedMusic.includes(selectedMusic[currentMusicIndex]);
+            if (!trackStillExists && selectedMusic.length > 0) {
+                currentMusicIndex = 0;
+            }
             
             // Just hide controls and show player
             controls.classList.add("hidden");
             mirrorOverlay.classList.add("hidden");
             musicPlayerOverlay.classList.add("active");
             
+            updatePlayerUI();
+            
             console.log('✅ Playlist updated, music continues playing');
         } else {
-            // Starting fresh - use the working original code but with MusicPlayer for state
+            // Starting fresh - use the working original code
             console.log('🎵 Starting new music playback...');
             controls.classList.add("hidden");
             mirrorOverlay.classList.add("hidden");
             musicPlayerOverlay.classList.add("active");
             
-            // Set playlist in MusicPlayer module for state tracking
-            MusicPlayer.setPlaylist(selectedMusic);
-            
-            // Use old playback system (it works!)
+            // Start from beginning
             currentMusicIndex = 0;
             playCurrentTrack();
             updatePlayerUI();

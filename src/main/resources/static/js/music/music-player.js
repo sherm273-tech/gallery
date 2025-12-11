@@ -164,10 +164,13 @@ const MusicPlayer = (() => {
         editPlaylistBtn.addEventListener('click', () => {
             hide();
             
-            // Update button text based on playback state
+            // Update button text based on actual playback state
             const startButtonText = document.getElementById('startButtonText');
             if (startButtonText) {
-                if (playing) {
+                // Check if audio is actually playing
+                const isActuallyPlaying = audioPlayer && !audioPlayer.paused && audioPlayer.src;
+                
+                if (isActuallyPlaying) {
                     startButtonText.textContent = 'Save & Return to Player';
                 } else {
                     startButtonText.textContent = 'Start Music Player';
