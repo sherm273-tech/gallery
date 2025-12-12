@@ -163,11 +163,26 @@ const PlaylistManager = (() => {
     }
     
     /**
+     * Show loading spinner in music list
+     */
+    function showLoadingSpinner() {
+        musicList.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px;">
+                <div class="spinner" style="border: 4px solid rgba(255, 255, 255, 0.1); border-top: 4px solid #4a9eff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 15px;"></div>
+                <p style="color: #aaa; font-size: 14px;">Loading music files...</p>
+            </div>
+        `;
+    }
+    
+    /**
      * Load music files from server
      * @returns {Promise<Array<string>>} Array of music filenames
      */
     async function loadFiles() {
         try {
+            // Show loading spinner
+            showLoadingSpinner();
+            
             const response = await fetch("/api/music/list");
             musicFiles = await response.json();
             
