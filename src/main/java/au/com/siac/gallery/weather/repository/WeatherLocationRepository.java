@@ -1,6 +1,6 @@
-package au.com.siac.gallery.repository;
+package au.com.siac.gallery.weather.repository;
 
-import au.com.siac.gallery.entity.WeatherLocation;
+import au.com.siac.gallery.weather.entity.WeatherLocation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

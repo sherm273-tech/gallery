@@ -1,4 +1,4 @@
-package au.com.siac.gallery.entity;
+package au.com.siac.gallery.weather.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;

@@ -1,4 +1,4 @@
-package au.com.siac.gallery.controller;
+package au.com.siac.gallery.core;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;

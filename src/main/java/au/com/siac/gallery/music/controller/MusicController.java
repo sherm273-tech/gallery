@@ -1,4 +1,4 @@
-package au.com.siac.gallery.controller;
+package au.com.siac.gallery.music.controller;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;

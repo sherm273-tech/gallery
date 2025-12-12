@@ -1,7 +1,7 @@
-package au.com.siac.gallery.service;
+package au.com.siac.gallery.weather.service;
 
-import au.com.siac.gallery.entity.WeatherLocation;
-import au.com.siac.gallery.repository.WeatherLocationRepository;
+import au.com.siac.gallery.weather.entity.WeatherLocation;
+import au.com.siac.gallery.weather.repository.WeatherLocationRepository;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

@@ -1,7 +1,7 @@
-package au.com.siac.gallery.controller;
+package au.com.siac.gallery.weather.controller;
 
-import au.com.siac.gallery.entity.WeatherLocation;
-import au.com.siac.gallery.service.WeatherLocationService;
+import au.com.siac.gallery.weather.entity.WeatherLocation;
+import au.com.siac.gallery.weather.service.WeatherLocationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
