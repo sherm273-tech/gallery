@@ -142,7 +142,7 @@ body.slideshow-active #slideshow {
     border-radius: 16px;
     padding: 35px 25px;
     min-width: 280px;
-    flex: 1 1 calc(33.333% - 20px);
+    flex: 1 1 calc(25% - 20px);
     max-width: 400px;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -1685,7 +1685,7 @@ kbd {
 /* Tablet Landscape - 3 buttons side by side */
 @media (min-width: 1024px) and (max-width: 1280px) {
     .menu-option-btn {
-        flex: 1 1 calc(33.333% - 20px);
+        flex: 1 1 calc(25% - 20px);
         max-width: 350px;
     }
 }

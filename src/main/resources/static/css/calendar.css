@@ -1,0 +1,351 @@
+/* ===== STEP 1: MINIMAL CALENDAR CSS ===== */
+/* All styles scoped to calendar overlay - NO position:fixed, NO global styles */
+
+/* Calendar header */
+#calendarDisplayOverlay .calendar-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid rgba(74, 158, 255, 0.3);
+}
+
+#calendarDisplayOverlay .calendar-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+#calendarDisplayOverlay .calendar-heading {
+    font-size: 36px;
+    font-weight: 300;
+    color: #4a9eff;
+    margin: 0;
+}
+
+#calendarDisplayOverlay .add-event-btn-header {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #4a9eff, #357abd);
+    border: none;
+    border-radius: 25px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 4px 15px rgba(74, 158, 255, 0.4);
+    transition: all 0.3s ease;
+}
+
+#calendarDisplayOverlay .add-event-btn-header:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(74, 158, 255, 0.5);
+}
+
+/* Calendar content area */
+#calendarDisplayOverlay .calendar-content {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+/* Event list */
+#calendarDisplayOverlay .events-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Event card */
+#calendarDisplayOverlay .event-card {
+    background: rgba(40, 40, 60, 0.8);
+    border-left: 4px solid #4a9eff;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+#calendarDisplayOverlay .event-title {
+    font-size: 18px;
+    color: #fff;
+    margin: 0;
+}
+
+/* Empty state */
+#calendarDisplayOverlay .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #888;
+}
+
+/* Simple button */
+
+/* That's it - MINIMAL */
+
+/* Event Form Modal */
+.event-form-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.event-form-modal.active {
+    display: flex;
+}
+
+.event-form-container {
+    background: rgba(30, 40, 60, 0.98);
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.event-form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.event-form-header h2 {
+    color: #4a9eff;
+    font-size: 24px;
+    margin: 0;
+}
+
+.close-form-btn {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 32px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close-form-btn:hover {
+    color: #fff;
+}
+
+.form-row {
+    margin-bottom: 20px;
+}
+
+.form-row label {
+    display: block;
+    color: #fff;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.form-row input,
+.form-row select,
+.form-row textarea {
+    width: 100%;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 15px;
+}
+
+.form-row input:focus,
+.form-row select:focus,
+.form-row textarea:focus {
+    outline: none;
+    border-color: #4a9eff;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.form-row textarea {
+    resize: vertical;
+    font-family: inherit;
+}
+
+.form-row select option {
+    background: #1a2332;
+    color: #fff;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.btn-primary,
+.btn-secondary {
+    flex: 1;
+    padding: 14px 24px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #4a9eff, #357abd);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Event Cards */
+.event-card {
+    background: rgba(40, 40, 60, 0.8);
+    border-left: 4px solid #4a9eff;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 15px;
+}
+
+.event-card.type-appointment { border-left-color: #4a9eff; }
+.event-card.type-birthday { border-left-color: #ff6b9d; }
+.event-card.type-bill { border-left-color: #ffa500; }
+.event-card.type-reminder { border-left-color: #9b59b6; }
+.event-card.type-holiday { border-left-color: #2ecc71; }
+.event-card.type-val-athletics { border-left-color: #ff5722; }
+.event-card.type-other { border-left-color: #95a5a6; }
+
+.event-type-icon {
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+.event-title {
+    font-size: 20px;
+    font-weight: 500;
+    color: #fff;
+    margin-bottom: 8px;
+}
+
+.event-time {
+    font-size: 16px;
+    color: #4a9eff;
+    margin-bottom: 5px;
+}
+
+.event-date-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(74, 158, 255, 0.2);
+    border-radius: 12px;
+    font-size: 13px;
+    color: #4a9eff;
+    margin: 8px 0;
+}
+
+.event-description {
+    color: #ccc;
+    font-size: 14px;
+    margin-top: 10px;
+    line-height: 1.5;
+}
+
+.event-actions {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+.event-action-btn {
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.event-action-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.event-action-btn.delete-btn {
+    border-color: #ff4d4d;
+    color: #ff4d4d;
+}
+
+.event-action-btn.delete-btn:hover {
+    background: rgba(255, 77, 77, 0.2);
+}
+
+/* Calendar Stats */
+.calendar-stats {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: rgba(74, 158, 255, 0.1);
+    border-radius: 15px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-number {
+    font-size: 36px;
+    font-weight: 600;
+    color: #4a9eff;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #aaa;
+    text-transform: uppercase;
+}
+
+/* Filter Buttons */
+.calendar-filters {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.calendar-filter-btn {
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 25px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.calendar-filter-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.calendar-filter-btn.active {
+    background: rgba(74, 158, 255, 0.3);
+    border-color: #4a9eff;
+    box-shadow: 0 4px 15px rgba(74, 158, 255, 0.4);
+}

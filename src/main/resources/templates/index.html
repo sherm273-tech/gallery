@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/css/location-ui.css">
     <link rel="stylesheet" href="/css/location-dropdown-enhanced.css">
     <link rel="stylesheet" href="/css/location-weather-widget.css">
+    <link rel="stylesheet" href="/css/calendar.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -257,9 +258,113 @@
                     <span class="menu-title">Weather Display</span>
                     <span class="menu-desc">Magic mirror with weather, clock & forecast</span>
                 </button>
+                
+                <button class="menu-option-btn" id="calendarDisplayBtn">
+                    <span class="menu-icon">📅</span>
+                    <span class="menu-title">Calendar & Events</span>
+                    <span class="menu-desc">View your schedule & appointments</span>
+                </button>
             </div>
         </div>
     </div>
+
+
+    <!-- Calendar Display Overlay -->
+    <div class="weather-display-overlay" id="calendarDisplayOverlay">
+        <button class="close-weather-btn" id="closeCalendarBtn">✕ Exit</button>
+        
+        <div class="mirror-overlay" id="calendarMirrorOverlay">
+            <div class="calendar-header">
+                <div class="calendar-title-row">
+                    <h1 class="calendar-heading">📅 Calendar & Events</h1>
+                    <button class="add-event-btn-header" id="addEventBtn">+ Add Event</button>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="calendar-stats" id="calendarStats">
+                <div class="stat-item">
+                    <span class="stat-number" id="statToday">0</span>
+                    <span class="stat-label">Today</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="statWeek">0</span>
+                    <span class="stat-label">This Week</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="statPending">0</span>
+                    <span class="stat-label">Pending</span>
+                </div>
+            </div>
+
+            <!-- Filter Buttons -->
+            <div class="calendar-filters">
+                <button class="calendar-filter-btn active" data-filter="all">All Events</button>
+                <button class="calendar-filter-btn" data-filter="today">Today</button>
+                <button class="calendar-filter-btn" data-filter="upcoming">Upcoming (7 days)</button>
+                <button class="calendar-filter-btn" data-filter="completed">Completed</button>
+            </div>
+
+            <div class="calendar-content">
+                <div class="events-list" id="eventsList">
+                    <div class="empty-state">
+                        <p>No events yet. Click + Add Event to create one.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Form Modal -->
+    <div class="event-form-modal" id="eventFormModal">
+        <div class="event-form-container">
+            <div class="event-form-header">
+                <h2 id="eventFormTitle">Add Event</h2>
+                <button class="close-form-btn" id="closeFormBtn">✕</button>
+            </div>
+            
+            <form id="eventForm">
+                <div class="form-row">
+                    <label>Title *</label>
+                    <input type="text" id="eventTitle" required>
+                </div>
+                
+                <div class="form-row">
+                    <label>Description</label>
+                    <textarea id="eventDescription" rows="3"></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <label>Date *</label>
+                    <input type="date" id="eventDate" required>
+                </div>
+                
+                <div class="form-row">
+                    <label>Time</label>
+                    <input type="time" id="eventTime">
+                </div>
+                
+                <div class="form-row">
+                    <label>Type *</label>
+                    <select id="eventType" required>
+                        <option value="appointment">📅 Appointment</option>
+                        <option value="birthday">🎂 Birthday</option>
+                        <option value="bill">💳 Bill Payment</option>
+                        <option value="reminder">⏰ Reminder</option>
+                        <option value="holiday">🎉 Holiday</option>
+                        <option value="val-athletics">🏃 VAL Athletics</option>
+                        <option value="other">📌 Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Event</button>
+                    <button type="button" class="btn-secondary" id="cancelEventBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
 
     <!-- Controls Panel -->
     <div id="controls" class="hidden">
@@ -412,6 +517,10 @@
     <!-- Music Modules -->
     <script src="/js/music/playlist-manager.js"></script>
     <script src="/js/music/music-player.js"></script>
+    
+    <!-- Calendar Scripts -->
+    <script src="/js/calendar/calendar-manager.js"></script>
+    <script src="/js/calendar/calendar-form.js"></script>
     
     <!-- Core Application Scripts -->
     <script src="/js/script.js"></script>

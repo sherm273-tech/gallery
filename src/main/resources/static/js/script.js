@@ -138,6 +138,34 @@ weatherDisplayBtn.addEventListener('click', async () => {
     await requestWakeLock();
 });
 
+// Calendar Display Button
+const calendarDisplayBtn = document.getElementById('calendarDisplayBtn');
+const calendarDisplayOverlay = document.getElementById('calendarDisplayOverlay');
+const closeCalendarBtn = document.getElementById('closeCalendarBtn');
+const calendarMirrorOverlay = document.getElementById('calendarMirrorOverlay');
+
+calendarDisplayBtn.addEventListener('click', async () => {
+    currentMode = 'calendar';
+    initialMenu.classList.add('hidden');
+    calendarDisplayOverlay.classList.add('active');
+    calendarMirrorOverlay.classList.remove('hidden');
+    
+    // Initialize calendar
+    CalendarManager.init();
+    CalendarForm.init();
+    
+    await requestWakeLock();
+});
+
+closeCalendarBtn.addEventListener('click', () => {
+    calendarDisplayOverlay.classList.remove('active');
+    calendarMirrorOverlay.classList.add('hidden');
+    initialMenu.classList.remove('hidden');
+    currentMode = null;
+    releaseWakeLock();
+});
+
+
 backToMenuBtn.addEventListener('click', () => {
     controls.classList.add('hidden');
     initialMenu.classList.remove('hidden');
