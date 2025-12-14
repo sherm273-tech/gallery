@@ -1,0 +1,10 @@
+
+loadMusicFiles();
+
+updateClock();
+updateCurrentWeather();
+updateForecast();
+
+setInterval(updateClock, 1000);
+setInterval(updateCurrentWeather, 600000);
+setInterval(updateForecast, 1800000);

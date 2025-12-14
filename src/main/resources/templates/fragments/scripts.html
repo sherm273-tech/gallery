@@ -1,37 +1,35 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-    <th:block th:fragment="scripts">
-    <script src="/js/shared/utils.js"></script>
-    
-    <!-- Weather Modules -->
-    <script src="/js/weather/weather-api.js"></script>
-    <script src="/js/weather/weather-utils.js"></script>
-    <script src="/js/weather/weather-chart.js"></script>
-    <script src="/js/weather/weather-forecast.js"></script>
-    <script src="/js/weather/weather-display.js"></script>
-    
-    <!-- Slideshow Modules -->
-    <script src="/js/slideshow/image-cache.js"></script>
-    <script src="/js/slideshow/folder-manager.js"></script>
-    <script src="/js/slideshow/drag-drop.js"></script>
-    <script src="/js/slideshow/slideshow-core.js"></script>
-    
-    <!-- Music Modules -->
-    <script src="/js/music/playlist-manager.js"></script>
-    <script src="/js/music/music-player.js"></script>
-    
-    <!-- Core Application Scripts -->
-    <script src="/js/script.js"></script>
-    <script src="/js/core/heartbeat.js"></script>
-    <script src="/js/core/location-manager.js"></script> 
-    
-</body>
-</html>
-    
-    <!-- Events Modules -->
-    <script src="/js/events/event-manager.js"></script>
-    <script src="/js/events/event-form.js"></script>
+    <th:block th:fragment="all-scripts">
+        <!-- Shared Utilities -->
+        <script src="/js/shared/utils.js"></script>
+        
+        <!-- Weather Modules -->
+        <script src="/js/weather/weather-api.js"></script>
+        <script src="/js/weather/weather-utils.js"></script>
+        <script src="/js/weather/weather-chart.js"></script>
+        <script src="/js/weather/weather-forecast.js"></script>
+        <script src="/js/weather/weather-display.js"></script>
+        
+        <!-- Slideshow Modules -->
+        <script src="/js/slideshow/image-cache.js"></script>
+        <script src="/js/slideshow/folder-manager.js"></script>
+        <script src="/js/slideshow/drag-drop.js"></script>
+        <script src="/js/slideshow/slideshow-core.js"></script>
+        
+        <!-- Music Modules -->
+        <script src="/js/music/playlist-manager.js"></script>
+        <script src="/js/music/music-player.js"></script>
+        
+        <!-- Calendar Scripts -->
+        <script src="/js/calendar/calendar-manager.js"></script>
+        <script src="/js/calendar/calendar-form.js"></script>
+        
+        <!-- Core Application Scripts -->
+        <script src="/js/script.js"></script>
+        <script src="/js/core/heartbeat.js"></script>
+        <script src="/js/core/location-manager.js"></script>
     </th:block>
 </body>
 </html>

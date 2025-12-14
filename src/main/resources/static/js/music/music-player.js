@@ -20,6 +20,7 @@ const MusicPlayer = (() => {
     let progressBar;
     let progressFill;
     let playlistPosition;
+    let nextUpTitle;
     let musicPlayerOverlay;
     let closePlayerBtn;
     let editPlaylistBtn;
@@ -43,6 +44,7 @@ const MusicPlayer = (() => {
         progressFill = document.getElementById('progressFill');
         playlistPosition = document.getElementById('playlistPosition');
         musicPlayerOverlay = document.getElementById('musicPlayerOverlay');
+        nextUpTitle = document.getElementById('nextUpTitle');
         closePlayerBtn = document.getElementById('closePlayerBtn');
         editPlaylistBtn = document.getElementById('editPlaylistBtn');
     }
@@ -56,6 +58,13 @@ const MusicPlayer = (() => {
         const currentTrack = playlist[currentIndex];
         trackTitle.textContent = currentTrack;
         playlistPosition.textContent = `Track ${currentIndex + 1} of ${playlist.length}`;
+        
+        // Update "Next Up" display
+        const nextIndex = (currentIndex + 1) % playlist.length;
+        const nextTrack = playlist[nextIndex];
+        if (nextUpTitle) {
+            nextUpTitle.textContent = nextTrack || '—';
+        }
         
         if (playing) {
             playPauseBtn.textContent = '⏸';

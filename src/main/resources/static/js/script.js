@@ -105,7 +105,14 @@ photoSlideshowBtn.addEventListener('click', () => {
     tabNav.style.display = 'flex';
     console.log('  TabNav display set to flex');
     
+    // Reset all tabs first
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    
+    // Activate photos tab
+    document.querySelector('.tab-button[data-tab="photos"]').classList.add('active');
     photosTab.classList.add('active');
+    console.log('  Photos tab button and content activated');
     console.log('  Photos tab activated');
     
     // Ensure folders are loaded
@@ -1122,6 +1129,14 @@ function updatePlayerUI() {
     trackTitle.textContent = currentTrack;
     playlistPosition.textContent = `Track ${currentMusicIndex + 1} of ${selectedMusic.length}`;
     
+    // Update "Next Up" display
+    const nextIndex = (currentMusicIndex + 1) % selectedMusic.length;
+    const nextTrack = selectedMusic[nextIndex];
+    const nextUpTitle = document.getElementById('nextUpTitle');
+    if (nextUpTitle) {
+        nextUpTitle.textContent = nextTrack || '—';
+    }
+    
     if (isPlaying) {
         playPauseBtn.textContent = '⏸';
     } else {
@@ -1244,9 +1259,16 @@ function closeMusicPlayer() {
 
 
 editPlaylistBtn.addEventListener('click', () => {
-    musicPlayerOverlay.classList.remove('active');
-    controls.classList.remove('hidden');
-    document.querySelector('.tab-button[data-tab="music"]').click();
+        musicPlayerOverlay.classList.remove('active');
+        controls.classList.remove('hidden');
+        
+    // Make sure only music tab is active
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    
+    // Activate music tab
+    document.querySelector('.tab-button[data-tab="music"]').classList.add('active');
+    document.getElementById('music-tab').classList.add('active');
 });
 
 
@@ -1703,12 +1725,46 @@ SlideshowCore.init();
 MusicPlayer.init();  // Initialize music player module
 // Note: FolderManager.loadFolders() is called when user clicks "Photo Slideshow" button
 
+
 loadMusicFiles();
 
 updateClock();
-updateCurrentWeather();
-updateForecast();
+
+// Weather update coordination using sessionStorage to prevent multiple tabs from updating simultaneously
+function shouldUpdateWeather(type) {
+    const now = Date.now();
+    const lastUpdateKey = `weather_last_update_${type}`;
+    const lastUpdate = sessionStorage.getItem(lastUpdateKey);
+    
+    // Update intervals: current weather every 2 hours, forecast every 4 hours
+    const updateInterval = type === 'current' ? 7200000 : 14400000; // 2 hours / 4 hours in milliseconds
+    
+    if (!lastUpdate || (now - parseInt(lastUpdate)) > updateInterval) {
+        sessionStorage.setItem(lastUpdateKey, now.toString());
+        return true;
+    }
+    return false;
+}
+
+// Initial weather updates (only if needed)
+if (shouldUpdateWeather('current')) {
+    updateCurrentWeather();
+}
+if (shouldUpdateWeather('forecast')) {
+    updateForecast();
+}
 
 setInterval(updateClock, 1000);
-setInterval(updateCurrentWeather, 600000);
-setInterval(updateForecast, 1800000);
+
+// Check every 30 minutes if weather needs updating (but only one tab will actually update)
+setInterval(() => {
+    if (shouldUpdateWeather('current')) {
+        updateCurrentWeather();
+    }
+}, 1800000); // Check every 30 minutes
+
+setInterval(() => {
+    if (shouldUpdateWeather('forecast')) {
+        updateForecast();
+    }
+}, 1800000); // Check every 30 minutes
