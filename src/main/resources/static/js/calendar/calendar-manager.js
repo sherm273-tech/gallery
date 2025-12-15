@@ -8,24 +8,21 @@ const CalendarManager = {
     init() {
         console.log('CalendarManager initialized');
         this.eventsList = document.getElementById('eventsList');
-        this.setupFilterButtons();
+        this.setupShowCompletedToggle();
         this.loadEvents();
         this.updateStatistics();
     },
     
-    setupFilterButtons() {
-        const filterButtons = document.querySelectorAll('.calendar-filter-btn');
-        filterButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                // Remove active from all
-                filterButtons.forEach(b => b.classList.remove('active'));
-                // Add active to clicked
-                btn.classList.add('active');
-                // Apply filter
-                this.currentFilter = btn.dataset.filter;
+    setupShowCompletedToggle() {
+        const checkbox = document.getElementById('showCompletedCheckbox');
+        if (checkbox) {
+            checkbox.addEventListener('change', () => {
+                this.currentFilter = checkbox.checked ? 'completed' : 'all';
                 this.applyFilter();
+            if (window.CalendarFC) CalendarFC.loadEvents(this.allEvents);
+            if (window.CalendarFC) CalendarFC.refresh();
             });
-        });
+        }
     },
     
     async loadEvents() {
@@ -41,6 +38,12 @@ const CalendarManager = {
             console.log('Loaded events:', this.allEvents);
             
             this.applyFilter();
+            if (window.CalendarFC) CalendarFC.refresh();
+            
+            // Refresh calendar grid dots
+            if (window.CalendarGrid) {
+                CalendarGrid.refreshEventDots();
+            }
         } catch (error) {
             console.error('Error loading events:', error);
             this.showError('Failed to load events');
@@ -111,8 +114,22 @@ const CalendarManager = {
             return;
         }
         
-        // Sort events by date (newest first)
-        events.sort((a, b) => new Date(b.eventDate) - new Date(a.eventDate));
+        // Sort events by date ASCENDING (next event first, then future events)
+        events.sort((a, b) => {
+            const dateA = new Date(a.eventDate);
+            const dateB = new Date(b.eventDate);
+            const dateCompare = dateA - dateB;
+            
+            // If same date, sort by time
+            if (dateCompare === 0) {
+                if (a.eventTime && b.eventTime) {
+                    return a.eventTime.localeCompare(b.eventTime);
+                }
+                if (a.eventTime) return -1;
+                if (b.eventTime) return 1;
+            }
+            return dateCompare;
+        });
         
         // Display each event
         events.forEach(event => {
@@ -129,15 +146,41 @@ const CalendarManager = {
         }
         
         const eventDate = new Date(event.eventDate);
-        const formattedDate = eventDate.toLocaleDateString('en-AU', { 
-            weekday: 'short', 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric' 
-        });
+        const eventEndDate = event.eventEndDate ? new Date(event.eventEndDate) : eventDate;
         
-        const timeStr = event.eventTime ? 
-            `<div class="event-time">${event.eventTime}</div>` : '';
+        // Check if multi-day event
+        const isMultiDay = event.eventEndDate && event.eventEndDate !== event.eventDate;
+        
+        let dateTimeStr;
+        if (isMultiDay) {
+            // Show date range for multi-day events
+            const startDateStr = eventDate.toLocaleDateString('en-AU', { 
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+            const endDateStr = eventEndDate.toLocaleDateString('en-AU', { 
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric',
+                year: 'numeric'
+            });
+            dateTimeStr = `${startDateStr} - ${endDateStr}`;
+            if (event.eventTime) {
+                dateTimeStr += ` • ${event.eventTime}`;
+            }
+        } else {
+            // Single day event
+            const formattedDate = eventDate.toLocaleDateString('en-AU', { 
+                weekday: 'short', 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+            dateTimeStr = event.eventTime ? 
+                `${formattedDate} • ${event.eventTime}` : 
+                formattedDate;
+        }
         
         const descStr = event.description ? 
             `<div class="event-description">${event.description}</div>` : '';
@@ -145,16 +188,20 @@ const CalendarManager = {
         const completedClass = event.completed ? 'completed-badge' : '';
         
         card.innerHTML = `
-            <div class="event-type-icon">${this.getEventIcon(event.eventType)}</div>
-            <div class="event-title">${event.title}</div>
-            ${timeStr}
-            <div class="event-date-badge ${completedClass}">${formattedDate}</div>
+            <div class="event-header">
+                <div class="event-type-icon">${this.getEventIcon(event.eventType)}</div>
+                <div class="event-header-content">
+                    <div class="event-title">${event.title}</div>
+                    <div class="event-datetime">${dateTimeStr}</div>
+                </div>
+            </div>
             ${descStr}
             <div class="event-actions">
                 ${!event.completed ? 
                     `<button class="event-action-btn complete-btn" onclick="CalendarManager.completeEvent(${event.id})">✓ Complete</button>` :
                     `<button class="event-action-btn" onclick="CalendarManager.uncompleteEvent(${event.id})">↶ Undo</button>`
                 }
+                <button class="event-action-btn edit-btn" onclick="CalendarManager.editEvent(${event.id})">✏️ Edit</button>
                 <button class="event-action-btn delete-btn" onclick="CalendarManager.deleteEvent(${event.id})">🗑️ Delete</button>
             </div>
         `;
@@ -224,6 +271,63 @@ const CalendarManager = {
             }
         } catch (error) {
             console.error('Error deleting event:', error);
+        }
+    },
+    
+    showEventDetails(eventId) {
+        const event = this.allEvents.find(e => e.id === eventId);
+        if (event) {
+            this.renderEventList([event], 'Event Details');
+        }
+    },
+    
+    filterByDate(date) {
+        console.log('Filtering events for date:', date);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        const eventsOnDate = this.allEvents.filter(event => {
+            return event.eventDate === dateStr && !event.completed;
+        });
+        
+        if (eventsOnDate.length > 0) {
+            const formattedDate = date.toLocaleDateString('en-AU', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            this.renderEventList(eventsOnDate, formattedDate);
+        } else {
+            this.eventsList.innerHTML = '<div class="empty-state"><p>No events on this date.</p></div>';
+        }
+    },
+    
+    
+    renderEventList(events, title) {
+        // Update sidebar title
+        const sidebarTitle = document.querySelector('.sidebar-title');
+        if (sidebarTitle) {
+            sidebarTitle.textContent = title || 'Upcoming Events';
+        }
+        
+        this.eventsList.innerHTML = '';
+        
+        if (events.length === 0) {
+            this.eventsList.innerHTML = '<div class="empty-state"><p>No events found.</p></div>';
+            return;
+        }
+        
+        events.forEach(event => {
+            const card = this.createEventCard(event);
+            this.eventsList.appendChild(card);
+        });
+    },
+    
+    editEvent(eventId) {
+        console.log('Editing event:', eventId);
+        const event = this.allEvents.find(e => e.id === eventId);
+        if (event && window.CalendarForm) {
+            CalendarForm.openFormForEdit(event);
         }
     },
     

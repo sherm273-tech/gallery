@@ -9,7 +9,9 @@
     <link rel="stylesheet" href="/css/location-ui.css">
     <link rel="stylesheet" href="/css/location-dropdown-enhanced.css">
     <link rel="stylesheet" href="/css/location-weather-widget.css">
-    <link rel="stylesheet" href="/css/calendar.css">
+    <link rel="stylesheet" href="/css/calendar.css?v=11.0">
+    <link rel="stylesheet" href="/css/fullcalendar-custom.css?v=13.0">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -31,49 +33,58 @@
 
     <!-- Calendar Display Overlay -->
     <div class="weather-display-overlay" id="calendarDisplayOverlay">
-        <button class="close-weather-btn" id="closeCalendarBtn">✕ Exit</button>
-        
         <div class="mirror-overlay" id="calendarMirrorOverlay">
-            <div class="calendar-header">
-                <div class="calendar-title-row">
-                    <h1 class="calendar-heading">📅 Calendar & Events</h1>
-                    <button class="add-event-btn-header" id="addEventBtn">+ Add Event</button>
+            <!-- FullCalendar Layout -->
+            <div class="fullcalendar-layout">
+                <!-- Left: FullCalendar -->
+                <div class="fullcalendar-container">
+                    <div class="calendar-header">
+                        <button class="close-calendar-btn" id="closeCalendarBtn">✕ Exit</button>
+                        <h1 class="calendar-heading">Calendar & Events</h1>
+                        <button class="add-event-btn-header" id="addEventBtn">+ Add Event</button>
+                    </div>
+                    <div id="fullcalendar"></div>
                 </div>
-            </div>
-
-            <!-- Quick Stats -->
-            <div class="calendar-stats" id="calendarStats">
-                <div class="stat-item">
-                    <span class="stat-number" id="statToday">0</span>
-                    <span class="stat-label">Today</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number" id="statWeek">0</span>
-                    <span class="stat-label">This Week</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number" id="statPending">0</span>
-                    <span class="stat-label">Pending</span>
-                </div>
-            </div>
-
-            <!-- Filter Buttons -->
-            <div class="calendar-filters">
-                <button class="calendar-filter-btn active" data-filter="all">All Events</button>
-                <button class="calendar-filter-btn" data-filter="today">Today</button>
-                <button class="calendar-filter-btn" data-filter="upcoming">Upcoming (7 days)</button>
-                <button class="calendar-filter-btn" data-filter="completed">Completed</button>
-            </div>
-
-            <div class="calendar-content">
-                <div class="events-list" id="eventsList">
-                    <div class="empty-state">
-                        <p>No events yet. Click + Add Event to create one.</p>
+                
+                <!-- Right: Event Details & Stats -->
+                <div class="events-sidebar">
+                    <!-- Stats -->
+                    <div class="calendar-stats-compact">
+                        <div class="stat-compact">
+                            <span class="stat-num" id="statToday">0</span>
+                            <span class="stat-lbl">Today</span>
+                        </div>
+                        <div class="stat-compact">
+                            <span class="stat-num" id="statWeek">0</span>
+                            <span class="stat-lbl">This Week</span>
+                        </div>
+                        <div class="stat-compact">
+                            <span class="stat-num" id="statPending">0</span>
+                            <span class="stat-lbl">Pending</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Event List -->
+                    <div class="sidebar-events">
+                        <div class="sidebar-title-row">
+                            <h3 class="sidebar-title">Upcoming Events</h3>
+                            <label class="completed-toggle-inline">
+                                <input type="checkbox" id="showCompletedCheckbox">
+                                <span>Show Completed</span>
+                            </label>
+                        </div>
+                        <div class="events-list" id="eventsList">
+                            <div class="empty-state">
+                                <p>No events selected</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Event Form Modal -->
 
     <!-- Event Form Modal -->
     <div class="event-form-modal" id="eventFormModal">
@@ -97,6 +108,11 @@
                 <div class="form-row">
                     <label>Date *</label>
                     <input type="date" id="eventDate" required>
+                </div>
+                
+                <div class="form-row">
+                    <label>End Date <span class="optional-label">(optional, defaults to start date)</span></label>
+                    <input type="date" id="eventEndDate">
                 </div>
                 
                 <div class="form-row">

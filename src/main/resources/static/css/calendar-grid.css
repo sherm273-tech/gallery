@@ -1,0 +1,121 @@
+/* Calendar Grid Layout */
+.calendar-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+/* Mini Calendar */
+.mini-calendar {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.mini-calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.cal-month {
+    font-size: 14px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.cal-nav-btn {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 5px 10px;
+    transition: color 0.2s;
+}
+
+.cal-nav-btn:hover {
+    color: #4a9eff;
+}
+
+/* Calendar Grid Table */
+.cal-grid {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.cal-grid th {
+    font-size: 11px;
+    font-weight: 600;
+    color: #888;
+    text-align: center;
+    padding: 8px 0;
+    text-transform: uppercase;
+}
+
+.cal-grid td {
+    text-align: center;
+    padding: 8px;
+    font-size: 13px;
+    color: #b0b0b0;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.cal-grid td:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.cal-grid td.other-month {
+    color: #555;
+    cursor: default;
+}
+
+.cal-grid td.other-month:hover {
+    background: transparent;
+}
+
+.cal-grid td.today {
+    background: rgba(74, 158, 255, 0.2);
+    color: #4a9eff;
+    font-weight: 600;
+}
+
+.cal-grid td.has-event::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    background: #4a9eff;
+    border-radius: 50%;
+}
+
+.cal-grid td.selected {
+    background: rgba(74, 158, 255, 0.3);
+    border: 1px solid #4a9eff;
+}
+
+/* Events Section */
+.events-section {
+    min-width: 0;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .calendar-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .mini-calendar {
+        max-width: 350px;
+        margin: 0 auto 20px;
+    }
+}

@@ -157,9 +157,19 @@ calendarDisplayBtn.addEventListener('click', async () => {
     calendarDisplayOverlay.classList.add('active');
     calendarMirrorOverlay.classList.remove('hidden');
     
-    // Initialize calendar
-    CalendarManager.init();
-    CalendarForm.init();
+    // Initialize calendar components if not already initialized
+    if (typeof CalendarFC !== 'undefined' && !CalendarFC.calendar) {
+        console.log('Initializing FullCalendar...');
+        CalendarFC.init();
+    }
+    if (typeof CalendarManager !== 'undefined' && !CalendarManager.eventsList) {
+        console.log('Initializing CalendarManager...');
+        CalendarManager.init();
+    }
+    if (typeof CalendarForm !== 'undefined' && !CalendarForm.formModal) {
+        console.log('Initializing CalendarForm...');
+        CalendarForm.init();
+    }
     
     await requestWakeLock();
 });

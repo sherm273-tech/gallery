@@ -103,6 +103,10 @@ public class EventService {
         if (event.getCompleted() == null) {
             event.setCompleted(false);
         }
+        // If eventEndDate is null, default to eventDate (single-day event)
+        if (event.getEventEndDate() == null) {
+            event.setEventEndDate(event.getEventDate());
+        }
         
         return eventRepository.save(event);
     }
@@ -120,6 +124,12 @@ public class EventService {
         existing.setEventDate(updatedEvent.getEventDate());
         existing.setEventTime(updatedEvent.getEventTime());
         existing.setEventType(updatedEvent.getEventType());
+        // If eventEndDate is null, default to eventDate
+        if (updatedEvent.getEventEndDate() != null) {
+            existing.setEventEndDate(updatedEvent.getEventEndDate());
+        } else {
+            existing.setEventEndDate(updatedEvent.getEventDate());
+        }
         
         if (updatedEvent.getRecurring() != null) {
             existing.setRecurring(updatedEvent.getRecurring());

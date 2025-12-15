@@ -22,6 +22,9 @@ public class Event {
     @Column(nullable = false, name = "event_date")
     private LocalDate eventDate;
     
+    @Column(name = "event_end_date")
+    private LocalDate eventEndDate;
+    
     @Column(name = "event_time")
     private LocalTime eventTime;
     
@@ -110,7 +113,15 @@ public class Event {
     
     public void setEventDate(LocalDate eventDate) {
         this.eventDate = eventDate;
+    }    
+    public LocalDate getEventEndDate() {
+        return eventEndDate;
     }
+    
+    public void setEventEndDate(LocalDate eventEndDate) {
+        this.eventEndDate = eventEndDate;
+    }
+    
     
     public LocalTime getEventTime() {
         return eventTime;

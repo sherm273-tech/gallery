@@ -1,85 +1,346 @@
-/* ===== STEP 1: MINIMAL CALENDAR CSS ===== */
-/* All styles scoped to calendar overlay - NO position:fixed, NO global styles */
+/* ===== PROFESSIONAL CALENDAR INTERFACE ===== */
+/* Clean, modern design inspired by Google Calendar */
 
-/* Calendar header */
+/* OLD HEADER STYLES - NOW IN fullcalendar-custom.css 
 #calendarDisplayOverlay .calendar-header {
-    text-align: center;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid rgba(74, 158, 255, 0.3);
+    margin-bottom: 40px;
+    padding: 0 0 30px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 #calendarDisplayOverlay .calendar-title-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 20px;
+    gap: 30px;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
 #calendarDisplayOverlay .calendar-heading {
-    font-size: 36px;
-    font-weight: 300;
-    color: #4a9eff;
+    font-size: 32px;
+    font-weight: 400;
+    color: #ffffff;
     margin: 0;
+    letter-spacing: -0.3px;
 }
 
 #calendarDisplayOverlay .add-event-btn-header {
     padding: 12px 24px;
-    background: linear-gradient(135deg, #4a9eff, #357abd);
+    background: #4a9eff;
     border: none;
-    border-radius: 25px;
+    border-radius: 8px;
     color: #fff;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
-    box-shadow: 0 4px 15px rgba(74, 158, 255, 0.4);
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
 #calendarDisplayOverlay .add-event-btn-header:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(74, 158, 255, 0.5);
+    background: #5aa9ff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
 }
+*/
+
+/* Stats Section with Completed Toggle */
+.calendar-stats-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 30px;
+    margin-bottom: 40px;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.calendar-stats {
+    display: flex;
+    gap: 20px;
+    flex: 1;
+}
+
+.stat-item {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.stat-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(74, 158, 255, 0.3);
+}
+
+.stat-number {
+    font-size: 36px;
+    font-weight: 300;
+    color: #4a9eff;
+    margin-bottom: 8px;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #a0a0a0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+/* Show Completed Toggle */
+.show-completed-toggle {
+    flex-shrink: 0;
+}
+
+.show-completed-toggle label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.show-completed-toggle label:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(74, 158, 255, 0.3);
+}
+
+.show-completed-toggle input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #4a9eff;
+}
+
+.show-completed-toggle span {
+    font-size: 14px;
+    color: #e0e0e0;
+    font-weight: 500;
+}
+
+/* Remove old filter buttons styles */
 
 /* Calendar content area */
 #calendarDisplayOverlay .calendar-content {
-    max-height: 60vh;
+    max-height: 65vh;
     overflow-y: auto;
     padding-right: 10px;
 }
 
-/* Event list */
+#calendarDisplayOverlay .calendar-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+#calendarDisplayOverlay .calendar-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+
+#calendarDisplayOverlay .calendar-content::-webkit-scrollbar-thumb {
+    background: rgba(74, 158, 255, 0.4);
+    border-radius: 4px;
+}
+
+#calendarDisplayOverlay .calendar-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(74, 158, 255, 0.6);
+}
+
+/* Event list - Time-bucketed layout */
 #calendarDisplayOverlay .events-list {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 30px;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
-/* Event card */
-#calendarDisplayOverlay .event-card {
-    background: rgba(40, 40, 60, 0.8);
+/* Time bucket header */
+.time-bucket-header {
+    font-size: 11px;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Time bucket container */
+.time-bucket {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Event Cards - Clean card design */
+.event-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-left: 4px solid #4a9eff;
-    border-radius: 12px;
-    padding: 20px;
+    border-radius: 8px;
+    padding: 20px 24px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 20px;
 }
 
-#calendarDisplayOverlay .event-title {
-    font-size: 18px;
-    color: #fff;
-    margin: 0;
+.event-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Event type accent colors */
+.event-card.type-appointment { border-left-color: #4a9eff; }
+.event-card.type-birthday { border-left-color: #ff6b9d; }
+.event-card.type-bill { border-left-color: #ffa500; }
+.event-card.type-reminder { border-left-color: #9b59b6; }
+.event-card.type-holiday { border-left-color: #2ecc71; }
+.event-card.type-val-athletics { border-left-color: #ff5722; }
+.event-card.type-other { border-left-color: #95a5a6; }
+
+/* Event header - icon and content side by side */
+.event-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+}
+
+.event-type-icon {
+    font-size: 32px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.event-header-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.event-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: #ffffff;
+    margin: 0 0 4px 0;
+    line-height: 1.3;
+}
+
+.event-datetime {
+    font-size: 13px;
+    color: #888;
+}
+
+.event-date-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background: rgba(74, 158, 255, 0.15);
+    border-radius: 4px;
+    font-size: 11px;
+    color: #4a9eff;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.event-date-badge.completed-badge {
+    background: rgba(46, 204, 113, 0.15);
+    color: #2ecc71;
+}
+
+.event-time {
+    font-size: 13px;
+    color: #888;
+    margin-top: 4px;
+}
+
+.event-description {
+    color: #b0b0b0;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-top: 8px;
+}
+
+/* Event actions - on the right side */
+.event-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.event-action-btn {
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.event-action-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.event-action-btn.complete-btn {
+    background: rgba(46, 204, 113, 0.1);
+    border-color: rgba(46, 204, 113, 0.3);
+    color: #2ecc71;
+}
+
+.event-action-btn.complete-btn:hover {
+    background: rgba(46, 204, 113, 0.2);
+}
+
+.event-action-btn.edit-btn {
+    background: rgba(74, 158, 255, 0.1);
+    border-color: rgba(74, 158, 255, 0.3);
+    color: #4a9eff;
+}
+
+.event-action-btn.edit-btn:hover {
+    background: rgba(74, 158, 255, 0.2);
+}
+
+.event-action-btn.delete-btn {
+    background: rgba(255, 77, 77, 0.1);
+    border-color: rgba(255, 77, 77, 0.3);
+    color: #ff6b6b;
+}
+
+.event-action-btn.delete-btn:hover {
+    background: rgba(255, 77, 77, 0.2);
 }
 
 /* Empty state */
 #calendarDisplayOverlay .empty-state {
     text-align: center;
-    padding: 40px;
+    padding: 60px 40px;
     color: #888;
 }
 
-/* Simple button */
-
-/* That's it - MINIMAL */
+#calendarDisplayOverlay .empty-state p {
+    font-size: 15px;
+    color: #a0a0a0;
+}
 
 /* Event Form Modal */
 .event-form-modal {
@@ -88,7 +349,8 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
     display: none;
     align-items: center;
     justify-content: center;
@@ -100,62 +362,78 @@
 }
 
 .event-form-container {
-    background: rgba(30, 40, 60, 0.98);
-    border-radius: 20px;
-    padding: 40px;
-    max-width: 500px;
+    background: #1e1e2e;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 32px 40px;
+    max-width: 700px;
     width: 90%;
-    max-height: 80vh;
+    max-height: 90vh;
     overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
 }
 
 .event-form-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .event-form-header h2 {
-    color: #4a9eff;
-    font-size: 24px;
+    color: #ffffff;
+    font-size: 22px;
+    font-weight: 500;
     margin: 0;
 }
 
 .close-form-btn {
     background: none;
     border: none;
-    color: #aaa;
-    font-size: 32px;
+    color: #888;
+    font-size: 28px;
     cursor: pointer;
     line-height: 1;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
 }
 
 .close-form-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
     color: #fff;
 }
 
 .form-row {
-    margin-bottom: 20px;
+    margin-bottom: 18px;
 }
 
 .form-row label {
     display: block;
-    color: #fff;
+    color: #e0e0e0;
     margin-bottom: 8px;
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 500;
 }
 
 .form-row input,
 .form-row select,
 .form-row textarea {
     width: 100%;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 8px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
     color: #fff;
-    font-size: 15px;
+    font-size: 14px;
+    transition: all 0.2s ease;
 }
 
 .form-row input:focus,
@@ -163,189 +441,125 @@
 .form-row textarea:focus {
     outline: none;
     border-color: #4a9eff;
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .form-row textarea {
     resize: vertical;
     font-family: inherit;
+    min-height: 80px;
 }
 
 .form-row select option {
-    background: #1a2332;
+    background: #1a1a2a;
     color: #fff;
 }
 
 .form-actions {
     display: flex;
-    gap: 15px;
-    margin-top: 30px;
+    gap: 12px;
+    margin-top: 24px;
 }
 
 .btn-primary,
 .btn-secondary {
     flex: 1;
-    padding: 14px 24px;
+    padding: 12px 20px;
     border: none;
-    border-radius: 10px;
-    font-size: 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
     cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #4a9eff, #357abd);
+    background: #4a9eff;
     color: #fff;
 }
 
 .btn-primary:hover {
-    opacity: 0.9;
+    background: #5aa9ff;
+    box-shadow: 0 4px 12px rgba(74, 158, 255, 0.3);
 }
 
 .btn-secondary {
     background: rgba(255, 255, 255, 0.08);
     color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.12);
 }
 
-/* Event Cards */
-.event-card {
-    background: rgba(40, 40, 60, 0.8);
-    border-left: 4px solid #4a9eff;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 15px;
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .calendar-main-layout {
+        grid-template-columns: 280px 1fr;
+        gap: 20px;
+    }
+    
+    .calendar-widget {
+        padding: 16px;
+    }
 }
 
-.event-card.type-appointment { border-left-color: #4a9eff; }
-.event-card.type-birthday { border-left-color: #ff6b9d; }
-.event-card.type-bill { border-left-color: #ffa500; }
-.event-card.type-reminder { border-left-color: #9b59b6; }
-.event-card.type-holiday { border-left-color: #2ecc71; }
-.event-card.type-val-athletics { border-left-color: #ff5722; }
-.event-card.type-other { border-left-color: #95a5a6; }
-
-.event-type-icon {
-    font-size: 28px;
-    margin-bottom: 10px;
+@media (max-width: 1024px) {
+    .calendar-stats {
+        flex-wrap: wrap;
+    }
+    
+    .stat-item {
+        flex: 1 1 calc(33.333% - 14px);
+        min-width: 150px;
+    }
 }
 
-.event-title {
-    font-size: 20px;
-    font-weight: 500;
-    color: #fff;
-    margin-bottom: 8px;
-}
-
-.event-time {
-    font-size: 16px;
-    color: #4a9eff;
-    margin-bottom: 5px;
-}
-
-.event-date-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    background: rgba(74, 158, 255, 0.2);
-    border-radius: 12px;
-    font-size: 13px;
-    color: #4a9eff;
-    margin: 8px 0;
-}
-
-.event-description {
-    color: #ccc;
-    font-size: 14px;
-    margin-top: 10px;
-    line-height: 1.5;
-}
-
-.event-actions {
-    margin-top: 15px;
-    display: flex;
-    gap: 10px;
-}
-
-.event-action-btn {
-    padding: 8px 16px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 8px;
-    color: #fff;
-    cursor: pointer;
-    font-size: 13px;
-}
-
-.event-action-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
-}
-
-.event-action-btn.delete-btn {
-    border-color: #ff4d4d;
-    color: #ff4d4d;
-}
-
-.event-action-btn.delete-btn:hover {
-    background: rgba(255, 77, 77, 0.2);
-}
-
-/* Calendar Stats */
-.calendar-stats {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-    margin-bottom: 30px;
-    padding: 20px;
-    background: rgba(74, 158, 255, 0.1);
-    border-radius: 15px;
-}
-
-.stat-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.stat-number {
-    font-size: 36px;
-    font-weight: 600;
-    color: #4a9eff;
-}
-
-.stat-label {
-    font-size: 14px;
-    color: #aaa;
-    text-transform: uppercase;
-}
-
-/* Filter Buttons */
-.calendar-filters {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    margin-bottom: 30px;
-    flex-wrap: wrap;
-}
-
-.calendar-filter-btn {
-    padding: 12px 24px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 25px;
-    color: #fff;
-    cursor: pointer;
-    font-size: 15px;
-}
-
-.calendar-filter-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.calendar-filter-btn.active {
-    background: rgba(74, 158, 255, 0.3);
-    border-color: #4a9eff;
-    box-shadow: 0 4px 15px rgba(74, 158, 255, 0.4);
+@media (max-width: 768px) {
+    #calendarDisplayOverlay .calendar-heading {
+        font-size: 24px;
+    }
+    
+    #calendarDisplayOverlay .add-event-btn-header {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+    
+    .calendar-stats {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .stat-item {
+        padding: 20px;
+    }
+    
+    .stat-number {
+        font-size: 32px;
+    }
+    
+    .event-card {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 16px;
+    }
+    
+    .event-header {
+        width: 100%;
+    }
+    
+    .event-actions {
+        width: 100%;
+        margin-top: 12px;
+    }
+    
+    .event-action-btn {
+        flex: 1;
+    }
+    
+    .calendar-filter-btn {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
 }
