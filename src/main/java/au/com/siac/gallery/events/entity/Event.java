@@ -55,6 +55,9 @@ public class Event {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
     
+    @Transient
+    private Boolean hasSlideshowConfig = false;
+    
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -201,5 +204,13 @@ public class Event {
     
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+    
+    public Boolean getHasSlideshowConfig() {
+        return hasSlideshowConfig;
+    }
+    
+    public void setHasSlideshowConfig(Boolean hasSlideshowConfig) {
+        this.hasSlideshowConfig = hasSlideshowConfig;
     }
 }

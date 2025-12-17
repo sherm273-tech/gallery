@@ -2,6 +2,7 @@ package au.com.siac.gallery.events.service;
 
 import au.com.siac.gallery.events.entity.Event;
 import au.com.siac.gallery.events.repository.EventRepository;
+import au.com.siac.gallery.slideshow.service.SlideshowConfigurationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,18 +17,41 @@ public class EventService {
     @Autowired
     private EventRepository eventRepository;
     
+    @Autowired
+    private SlideshowConfigurationService slideshowConfigService;
+    
+    /**
+     * Populate slideshow config flag for a single event
+     */
+    private void populateSlideshowConfig(Event event) {
+        if (event != null && event.getId() != null) {
+            event.setHasSlideshowConfig(slideshowConfigService.existsByEventId(event.getId()));
+        }
+    }
+    
+    /**
+     * Populate slideshow config flag for a list of events
+     */
+    private void populateSlideshowConfigs(List<Event> events) {
+        events.forEach(this::populateSlideshowConfig);
+    }
+    
     /**
      * Get all events ordered by date and time
      */
     public List<Event> getAllEvents() {
-        return eventRepository.findAllByOrderByEventDateAscEventTimeAsc();
+        List<Event> events = eventRepository.findAllByOrderByEventDateAscEventTimeAsc();
+        populateSlideshowConfigs(events);
+        return events;
     }
     
     /**
      * Get event by ID
      */
     public Optional<Event> getEventById(Long id) {
-        return eventRepository.findById(id);
+        Optional<Event> event = eventRepository.findById(id);
+        event.ifPresent(this::populateSlideshowConfig);
+        return event;
     }
     
     /**
@@ -35,7 +59,9 @@ public class EventService {
      */
     public List<Event> getTodayEvents() {
         LocalDate today = LocalDate.now();
-        return eventRepository.findByEventDateOrderByEventTimeAsc(today);
+        List<Event> events = eventRepository.findByEventDateOrderByEventTimeAsc(today);
+        populateSlideshowConfigs(events);
+        return events;
     }
     
     /**
@@ -43,7 +69,9 @@ public class EventService {
      */
     public List<Event> getUpcomingEvents() {
         LocalDate today = LocalDate.now();
-        return eventRepository.findUpcomingEvents(today);
+        List<Event> events = eventRepository.findUpcomingEvents(today);
+        populateSlideshowConfigs(events);
+        return events;
     }
     
     /**
@@ -52,7 +80,9 @@ public class EventService {
     public List<Event> getThisWeekEvents() {
         LocalDate today = LocalDate.now();
         LocalDate endOfWeek = today.plusDays(7);
-        return eventRepository.findByEventDateBetweenOrderByEventDateAscEventTimeAsc(today, endOfWeek);
+        List<Event> events = eventRepository.findByEventDateBetweenOrderByEventDateAscEventTimeAsc(today, endOfWeek);
+        populateSlideshowConfigs(events);
+        return events;
     }
     
     /**
@@ -61,28 +91,36 @@ public class EventService {
     public List<Event> getThisMonthEvents() {
         LocalDate today = LocalDate.now();
         LocalDate endOfMonth = today.withDayOfMonth(today.lengthOfMonth());
-        return eventRepository.findByEventDateBetweenOrderByEventDateAscEventTimeAsc(today, endOfMonth);
+        List<Event> events = eventRepository.findByEventDateBetweenOrderByEventDateAscEventTimeAsc(today, endOfMonth);
+        populateSlideshowConfigs(events);
+        return events;
     }
     
     /**
      * Get events by type
      */
     public List<Event> getEventsByType(String eventType) {
-        return eventRepository.findByEventTypeOrderByEventDateAscEventTimeAsc(eventType);
+        List<Event> events = eventRepository.findByEventTypeOrderByEventDateAscEventTimeAsc(eventType);
+        populateSlideshowConfigs(events);
+        return events;
     }
     
     /**
      * Get completed events
      */
     public List<Event> getCompletedEvents() {
-        return eventRepository.findByCompletedOrderByEventDateDesc(true);
+        List<Event> events = eventRepository.findByCompletedOrderByEventDateDesc(true);
+        populateSlideshowConfigs(events);
+        return events;
     }
     
     /**
      * Get events in date range
      */
     public List<Event> getEventsByDateRange(LocalDate startDate, LocalDate endDate) {
-        return eventRepository.findByEventDateBetweenOrderByEventDateAscEventTimeAsc(startDate, endDate);
+        List<Event> events = eventRepository.findByEventDateBetweenOrderByEventDateAscEventTimeAsc(startDate, endDate);
+        populateSlideshowConfigs(events);
+        return events;
     }
     
     /**

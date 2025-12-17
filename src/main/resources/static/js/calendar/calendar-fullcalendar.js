@@ -4,7 +4,7 @@ const CalendarFC = {
     calendar: null,
     
     init() {
-        console.log('FullCalendar initialized');
+        console.log('FullCalendar initialised');
         
         const calendarEl = document.getElementById('fullcalendar');
         
@@ -29,7 +29,11 @@ const CalendarFC = {
                 meridiem: 'short'
             },
             validRange: null,
-            nowIndicator: true
+            nowIndicator: true,
+            eventDidMount: (info) => {
+                // Add indicators after each event is mounted
+                setTimeout(() => this.addSlideshowIndicators(), 10);
+            }
         });
         
         this.calendar.render();
@@ -62,7 +66,8 @@ const CalendarFC = {
                     description: event.description,
                     eventType: event.eventType,
                     completed: event.completed,
-                    originalEndDate: endDate || startDate
+                    originalEndDate: endDate || startDate,
+                    hasSlideshowConfig: event.hasSlideshowConfig
                 },
                 backgroundColor: this.getEventColor(event.eventType),
                 borderColor: this.getEventColor(event.eventType)
@@ -71,6 +76,49 @@ const CalendarFC = {
         
         this.calendar.removeAllEvents();
         this.calendar.addEventSource(fcEvents);
+        
+        // Re-render indicators after events are loaded
+        setTimeout(() => this.addSlideshowIndicators(), 100);
+    },
+    
+    addSlideshowIndicators() {
+        // Find all event elements and add indicators/quick play buttons
+        const eventElements = document.querySelectorAll('.fc-event');
+        
+        eventElements.forEach(eventEl => {
+            const event = this.calendar.getEventById(eventEl.fcSeg?.eventRange?.def?.publicId);
+            if (!event) return;
+            
+            const hasSlideshowConfig = event.extendedProps?.hasSlideshowConfig;
+            if (!hasSlideshowConfig) return;
+            
+            // Check if already has indicator
+            if (eventEl.querySelector('.event-slideshow-indicator')) return;
+            
+            // Add indicator badge
+            const indicator = document.createElement('span');
+            indicator.className = 'event-slideshow-indicator';
+            indicator.title = 'Has slideshow configuration';
+            
+            // Add quick play button
+            const quickPlay = document.createElement('button');
+            quickPlay.className = 'event-quick-play';
+            quickPlay.innerHTML = '▶';
+            quickPlay.title = 'Play slideshow';
+            quickPlay.onclick = (e) => {
+                e.stopPropagation();
+                EventSlideshowPlayer.playEventSlideshow(event.id);
+            };
+            
+            // Find title element to prepend indicators (put them BEFORE the title)
+            const titleEl = eventEl.querySelector('.fc-event-title');
+            if (titleEl) {
+                // Insert quick play button at the beginning
+                titleEl.insertBefore(quickPlay, titleEl.firstChild);
+                // Insert indicator after quick play button
+                titleEl.insertBefore(indicator, quickPlay.nextSibling);
+            }
+        });
     },
     
     getEventColor(type) {

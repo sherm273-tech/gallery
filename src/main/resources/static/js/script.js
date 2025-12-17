@@ -78,8 +78,9 @@ const MAX_CACHE_SIZE = 50;
 const MIN_CACHE_SIZE = 15;
 let draggedElement = null;
 let isPaused = false;
-let slideshowStarted = false;
-let currentMode = null;
+window.window.slideshowStarted = false;
+window.slideshowLaunchSource = 'controls'; // Track where slideshow was launched from: 'controls' or 'calendar'
+window.currentMode = null; // Can be: 'slideshow', 'weather', 'music'
 let isPlaying = false;
 
 // Session-based tracking
@@ -93,7 +94,7 @@ let precipitationChartInstance = null;
 // ===== INITIAL MENU HANDLERS =====
 photoSlideshowBtn.addEventListener('click', () => {
     console.log('📸 Photo Slideshow button clicked');
-    currentMode = 'slideshow';
+    window.currentMode = 'slideshow';
     initialMenu.classList.add('hidden');
     controls.classList.remove('hidden');
     console.log('  Controls hidden class removed, classList:', controls.classList.toString());
@@ -121,7 +122,7 @@ photoSlideshowBtn.addEventListener('click', () => {
 });
 
 musicOnlyBtn.addEventListener('click', () => {
-    currentMode = 'music';
+    window.currentMode = 'music';
     initialMenu.classList.add('hidden');
     controls.classList.remove('hidden');
     controlsTitle.textContent = 'Music Player Setup';
@@ -132,7 +133,7 @@ musicOnlyBtn.addEventListener('click', () => {
 });
 
 weatherDisplayBtn.addEventListener('click', async () => {
-    currentMode = 'weather';
+    window.currentMode = 'weather';
     initialMenu.classList.add('hidden');
     weatherDisplayOverlay.classList.add('active');
     mirrorOverlay.classList.remove('hidden');
@@ -152,7 +153,7 @@ const closeCalendarBtn = document.getElementById('closeCalendarBtn');
 const calendarMirrorOverlay = document.getElementById('calendarMirrorOverlay');
 
 calendarDisplayBtn.addEventListener('click', async () => {
-    currentMode = 'calendar';
+    window.currentMode = 'calendar';
     initialMenu.classList.add('hidden');
     calendarDisplayOverlay.classList.add('active');
     calendarMirrorOverlay.classList.remove('hidden');
@@ -171,6 +172,15 @@ calendarDisplayBtn.addEventListener('click', async () => {
         CalendarForm.init();
     }
     
+    // Refresh FullCalendar to ensure proper rendering after returning from slideshow
+    if (typeof CalendarFC !== 'undefined' && CalendarFC.calendar) {
+        console.log('Refreshing FullCalendar layout...');
+        setTimeout(() => {
+            CalendarFC.calendar.updateSize();
+            CalendarFC.calendar.render();
+        }, 100);
+    }
+    
     await requestWakeLock();
 });
 
@@ -178,7 +188,7 @@ closeCalendarBtn.addEventListener('click', () => {
     calendarDisplayOverlay.classList.remove('active');
     calendarMirrorOverlay.classList.add('hidden');
     initialMenu.classList.remove('hidden');
-    currentMode = null;
+    window.currentMode = null;
     releaseWakeLock();
 });
 
@@ -186,7 +196,7 @@ closeCalendarBtn.addEventListener('click', () => {
 backToMenuBtn.addEventListener('click', () => {
     controls.classList.add('hidden');
     initialMenu.classList.remove('hidden');
-    currentMode = null;
+    window.currentMode = null;
     // Reset tabs
     tabNav.style.display = 'flex';
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -1194,7 +1204,7 @@ audioPlayer.addEventListener('pause', () => {
 });
 
 audioPlayer.addEventListener('ended', () => {
-    if (currentMode === 'music') {
+    if (window.currentMode === 'music') {
         nextTrack();
     } else {
         currentMusicIndex = (currentMusicIndex + 1) % selectedMusic.length;
@@ -1252,7 +1262,7 @@ closePlayerBtn.addEventListener('click', () => {
     audioPlayer.pause();
     isPlaying = false;
     
-    if (currentMode === 'music') {
+    if (window.currentMode === 'music') {
         initialMenu.classList.remove('hidden');
     }
 });
@@ -1262,7 +1272,7 @@ function closeMusicPlayer() {
     audioPlayer.pause();
     isPlaying = false;
     
-    if (currentMode === 'music') {
+    if (window.currentMode === 'music') {
         initialMenu.classList.remove('hidden');
     }
 }
@@ -1494,7 +1504,7 @@ document.addEventListener('keydown', (e) => {
         return;
     }
     
-    if (currentMode === 'weather') {
+    if (window.currentMode === 'weather') {
         const weatherOverlay = document.getElementById('weatherDisplayOverlay');
         const scrollAmount = 100;
         
@@ -1523,21 +1533,46 @@ document.addEventListener('keydown', (e) => {
         return;
     }
     
-    if (!slideshowStarted && currentMode !== 'music') return;
+    if (!window.slideshowStarted && currentMode !== 'music') return;
     
     switch(e.key) {
         case 'Escape':
             e.preventDefault();
-            if (currentMode === 'slideshow') {
+            console.log('[Escape Key] Pressed. currentMode:', currentMode, 'slideshowLaunchSource:', window.slideshowLaunchSource);
+            if (window.currentMode === 'slideshow') {
+                console.log('[Escape Key] Stopping slideshow...');
                 SlideshowCore.stop();
                 SlideshowCore.hide();
-                controls.classList.remove('hidden');
                 document.body.style.cursor = "default";
+                
+                // Return to the location where slideshow was launched from
+                console.log('[Escape Key] Checking launch source:', window.slideshowLaunchSource);
+                if (window.slideshowLaunchSource === 'calendar') {
+                    // Return to calendar
+                    const calendarOverlay = document.getElementById('calendarDisplayOverlay');
+                    const calendarMirror = document.getElementById('calendarMirrorOverlay');
+                    console.log('[Escape Key] Calendar elements:', {
+                        calendarOverlay: !!calendarOverlay,
+                        calendarMirror: !!calendarMirror
+                    });
+                    if (calendarOverlay) calendarOverlay.classList.add('active');
+                    if (calendarMirror) calendarMirror.classList.remove('hidden');
+                    console.log('[Slideshow Exit] Returning to calendar');
+                } else {
+                    // Return to slideshow controls
+                    console.log('[Escape Key] Controls element:', !!controls);
+                    controls.classList.remove('hidden');
+                    console.log('[Slideshow Exit] Returning to slideshow controls');
+                }
+                
+                // Reset launch source
+                window.slideshowLaunchSource = 'controls';
+                
                 if (wakeLock) {
                     wakeLock.release();
                     wakeLock = null;
                 }
-            } else if (currentMode === 'music') {
+            } else if (window.currentMode === 'music') {
                 closeMusicPlayer();
             }
             break;
@@ -1545,7 +1580,7 @@ document.addEventListener('keydown', (e) => {
         case 'p':
         case 'P':
             e.preventDefault();
-            if (currentMode === 'music') {
+            if (window.currentMode === 'music') {
                 playPauseBtn.click();
             } else {
                 SlideshowCore.togglePause();
@@ -1559,7 +1594,7 @@ document.addEventListener('keydown', (e) => {
             break;
         case 'ArrowRight':
             e.preventDefault();
-            if (currentMode === 'music') {
+            if (window.currentMode === 'music') {
                 nextTrack();
             } else if (SlideshowCore.isPaused()) {
                 SlideshowCore.next();
@@ -1567,7 +1602,7 @@ document.addEventListener('keydown', (e) => {
             break;
         case 'ArrowLeft':
             e.preventDefault();
-            if (currentMode === 'music') {
+            if (window.currentMode === 'music') {
                 prevTrack();
             } else if (SlideshowCore.isPaused()) {
                 SlideshowCore.previous();
@@ -1635,7 +1670,7 @@ document.addEventListener('visibilitychange', async () => {
 });
 
 startBtn.addEventListener("click", async () => {
-    if (currentMode === 'slideshow') {
+    if (window.currentMode === 'slideshow') {
         // Use FolderManager.validate() instead of missing validateFolderSelection()
         if (!FolderManager.validate()) {
             console.warn('⚠️ No folders selected');
@@ -1659,7 +1694,7 @@ startBtn.addEventListener("click", async () => {
         // Use SlideshowCore.start() instead of old initializeSlideshow()
         try {
             await SlideshowCore.start(delay);
-            slideshowStarted = true;
+            window.slideshowStarted = true;
             SlideshowCore.show();
         } catch (err) {
             console.error('❌ Failed to start slideshow:', err);
@@ -1670,7 +1705,7 @@ startBtn.addEventListener("click", async () => {
             controls.classList.remove("hidden");
         }
         
-    } else if (currentMode === 'music') {
+    } else if (window.currentMode === 'music') {
         selectedMusic = getSelectedMusic();
         
         if (selectedMusic.length === 0) {
@@ -1778,3 +1813,101 @@ setInterval(() => {
         updateForecast();
     }
 }, 1800000); // Check every 30 minutes
+
+// Handle fullscreen exit (when user exits fullscreen without pressing Escape)
+document.addEventListener('fullscreenchange', () => {
+    console.log('[Fullscreen Change] Event fired. Fullscreen element:', !!document.fullscreenElement);
+    console.log('[Fullscreen Change] Current state:', {
+        currentMode: window.currentMode,
+        slideshowStarted: window.slideshowStarted,
+        slideshowLaunchSource: window.slideshowLaunchSource
+    });
+    
+    // If exiting fullscreen while slideshow is active
+    if (!document.fullscreenElement && window.currentMode === 'slideshow' && window.slideshowStarted) {
+        console.log('[Fullscreen Exit] Detected, stopping slideshow');
+        
+        // Stop the slideshow
+        SlideshowCore.stop();
+        
+        // Manually hide slideshow instead of calling SlideshowCore.hide() 
+        // (which always shows controls)
+        document.body.classList.remove('slideshow-active');
+        
+        // Stop event slideshow interval if it exists
+        if (window.slideshowIntervalId) {
+            clearInterval(window.slideshowIntervalId);
+            window.slideshowIntervalId = null;
+            console.log('[Fullscreen Exit] Stopped event slideshow interval');
+        }
+        
+        // Stop music
+        const audioPlayer = document.getElementById('audioPlayer');
+        if (audioPlayer) {
+            audioPlayer.pause();
+            audioPlayer.currentTime = 0;
+        }
+        if (window.MusicPlayer && typeof MusicPlayer.pause === 'function') {
+            MusicPlayer.pause();
+        }
+        
+        document.body.style.cursor = "default";
+        
+        // Hide loading overlay if it's showing
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+            loadingOverlay.classList.remove('active');
+        }
+        
+        // Return to the location where slideshow was launched from
+        console.log('[Fullscreen Exit] Checking launch source:', window.slideshowLaunchSource);
+        if (window.slideshowLaunchSource === 'calendar') {
+            // Return to calendar
+            const calendarOverlay = document.getElementById('calendarDisplayOverlay');
+            const calendarMirror = document.getElementById('calendarMirrorOverlay');
+            const initialMenu = document.getElementById('initialMenu');
+            
+            console.log('[Fullscreen Exit] Returning to calendar. Elements:', {
+                overlay: !!calendarOverlay,
+                mirror: !!calendarMirror,
+                initialMenu: !!initialMenu
+            });
+            
+            // Hide initial menu (it might be blocking the calendar)
+            if (initialMenu) {
+                initialMenu.classList.add('hidden');
+                console.log('[Fullscreen Exit] Hidden initial menu');
+            }
+            
+            if (calendarOverlay) {
+                calendarOverlay.classList.add('active');
+                calendarOverlay.style.display = ''; // Remove any inline display style
+                console.log('[Fullscreen Exit] Added active class, classList:', calendarOverlay.className);
+            }
+            if (calendarMirror) {
+                calendarMirror.classList.remove('hidden');
+                calendarMirror.style.display = ''; // Remove any inline display style
+                console.log('[Fullscreen Exit] Removed hidden class, classList:', calendarMirror.className);
+            }
+            // Set mode back to calendar
+            window.currentMode = 'calendar';
+            console.log('[Fullscreen Exit] Set currentMode to calendar');
+        } else {
+            // Return to slideshow controls
+            console.log('[Fullscreen Exit] Returning to slideshow controls. Launch source was:', window.slideshowLaunchSource);
+            const controls = document.getElementById('controls');
+            if (controls) controls.classList.remove('hidden');
+            // Keep currentMode as null since we're not in any specific mode
+            window.currentMode = null;
+        }
+        
+        // Reset launch source
+        window.slideshowLaunchSource = 'controls';
+        window.slideshowStarted = false;
+        
+        if (wakeLock) {
+            wakeLock.release();
+            wakeLock = null;
+        }
+    }
+});

@@ -213,4 +213,7 @@ const ImageCache = (() => {
     };
 })();
 
+// Export to window for global access
+window.ImageCache = ImageCache;
+
 console.log('✅ Image Cache module loaded');

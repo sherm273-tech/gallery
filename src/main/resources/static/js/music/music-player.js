@@ -390,4 +390,7 @@ const MusicPlayer = (() => {
     };
 })();
 
+// Export to window for global access
+window.MusicPlayer = MusicPlayer;
+
 console.log('✅ Music Player module loaded');

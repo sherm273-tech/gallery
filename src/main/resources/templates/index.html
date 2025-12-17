@@ -48,22 +48,6 @@
                 
                 <!-- Right: Event Details & Stats -->
                 <div class="events-sidebar">
-                    <!-- Stats -->
-                    <div class="calendar-stats-compact">
-                        <div class="stat-compact">
-                            <span class="stat-num" id="statToday">0</span>
-                            <span class="stat-lbl">Today</span>
-                        </div>
-                        <div class="stat-compact">
-                            <span class="stat-num" id="statWeek">0</span>
-                            <span class="stat-lbl">This Week</span>
-                        </div>
-                        <div class="stat-compact">
-                            <span class="stat-num" id="statPending">0</span>
-                            <span class="stat-lbl">Pending</span>
-                        </div>
-                    </div>
-                    
                     <!-- Event List -->
                     <div class="sidebar-events">
                         <div class="sidebar-title-row">
@@ -73,6 +57,27 @@
                                 <span>Show Completed</span>
                             </label>
                         </div>
+                        
+                        <!-- Search Box -->
+                        <div class="event-search-container">
+                            <input type="text" id="eventSearchInput" class="event-search-input" placeholder="🔍 Search events...">
+                            <button id="clearSearchBtn" class="clear-search-btn" style="display: none;">✕</button>
+                        </div>
+                        
+                        <!-- Filter Chips -->
+                        <div class="filter-chips-container">
+                            <div class="filter-chips-scroll">
+                                <button class="filter-chip" data-type="appointment">📅 Appointments</button>
+                                <button class="filter-chip" data-type="birthday">🎂 Birthdays</button>
+                                <button class="filter-chip" data-type="bill">💳 Bills</button>
+                                <button class="filter-chip" data-type="reminder">⏰ Reminders</button>
+                                <button class="filter-chip" data-type="holiday">🎉 Holidays</button>
+                                <button class="filter-chip" data-type="val-athletics">🏃 VAL Athletics</button>
+                                <button class="filter-chip" data-type="other">📌 Other</button>
+                            </div>
+                            <button id="clearChipsBtn" class="clear-chips-btn" style="display: none;">Clear All</button>
+                        </div>
+                        
                         <div class="events-list" id="eventsList">
                             <div class="empty-state">
                                 <p>No events selected</p>
@@ -131,6 +136,88 @@
                         <option value="val-athletics">🏃 VAL Athletics</option>
                         <option value="other">📌 Other</option>
                     </select>
+                </div>
+                
+                <!-- Slideshow Configuration Section -->
+                <div class="form-section-divider"></div>
+                <div class="slideshow-config-section">
+                    <div class="slideshow-config-header">
+                        <label class="slideshow-toggle-label">
+                            <input type="checkbox" id="enableSlideshowConfig">
+                            <span class="slideshow-toggle-text">📸 Configure Slideshow</span>
+                        </label>
+                        <span class="slideshow-help-text">Link photos and music to this event</span>
+                    </div>
+                    
+                    <div id="slideshowConfigContent" class="slideshow-config-content" style="display: none;">
+                        <!-- Folder Selection -->
+                        <div class="config-subsection">
+                            <h4 class="config-subsection-title">Photo Folders</h4>
+                            <div class="folder-controls-mini">
+                                <button type="button" class="control-btn-mini" id="selectAllFoldersEvent">Select All</button>
+                                <button type="button" class="control-btn-mini" id="selectNoFoldersEvent">Clear</button>
+                            </div>
+                            <div class="search-container-mini">
+                                <input type="text" id="folderSearchEvent" class="search-input-mini" placeholder="🔍 Search folders...">
+                            </div>
+                            <div id="folderListEvent" class="item-list-mini">
+                                <p style="color: #aaa;">Loading folders...</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Music Selection -->
+                        <div class="config-subsection">
+                            <h4 class="config-subsection-title">Music</h4>
+                            <div class="music-controls-mini">
+                                <button type="button" class="control-btn-mini" id="selectAllMusicEvent">Select All</button>
+                                <button type="button" class="control-btn-mini" id="selectNoMusicEvent">Clear</button>
+                            </div>
+                            <div class="search-container-mini">
+                                <input type="text" id="musicSearchEvent" class="search-input-mini" placeholder="🔍 Search music...">
+                            </div>
+                            <div id="musicListEvent" class="item-list-mini">
+                                <p style="color: #aaa;">Loading music...</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Playback Options -->
+                        <div class="config-subsection">
+                            <h4 class="config-subsection-title">Playback Options</h4>
+                            
+                            <div class="form-group-mini">
+                                <label for="startFolderSelectEvent">Starting folder</label>
+                                <select id="startFolderSelectEvent" class="form-select-mini">
+                                    <option value="">None</option>
+                                </select>
+                            </div>
+                            
+                            <div class="checkbox-container-mini">
+                                <input type="checkbox" id="shuffleAllCheckboxEvent">
+                                <label for="shuffleAllCheckboxEvent">Shuffle all images together</label>
+                            </div>
+                            
+                            <div class="checkbox-container-mini">
+                                <input type="checkbox" id="randomizeCheckboxEvent" checked>
+                                <label for="randomizeCheckboxEvent">Randomise within folders</label>
+                            </div>
+                            
+                            <div class="checkbox-container-mini">
+                                <input type="checkbox" id="randomizeMusicCheckboxEvent">
+                                <label for="randomizeMusicCheckboxEvent">Randomise music playback</label>
+                            </div>
+                            
+                            <div class="form-group-mini">
+                                <label for="speedSelectEvent">Image duration</label>
+                                <select id="speedSelectEvent" class="form-select-mini">
+                                    <option value="2000">Fast (2 seconds)</option>
+                                    <option value="3000">Medium (3 seconds)</option>
+                                    <option value="5000" selected>Normal (5 seconds)</option>
+                                    <option value="7000">Slow (7 seconds)</option>
+                                    <option value="10000">Very Slow (10 seconds)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="form-actions">

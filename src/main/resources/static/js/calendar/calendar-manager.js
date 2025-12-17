@@ -4,11 +4,15 @@ const CalendarManager = {
     eventsList: null,
     allEvents: [],
     currentFilter: 'all',
+    searchQuery: '',
+    activeTypeFilters: new Set(),
     
     init() {
         console.log('CalendarManager initialized');
         this.eventsList = document.getElementById('eventsList');
         this.setupShowCompletedToggle();
+        this.setupEventSearch();
+        this.setupFilterChips();
         this.loadEvents();
         this.updateStatistics();
     },
@@ -21,6 +25,76 @@ const CalendarManager = {
                 this.applyFilter();
             if (window.CalendarFC) CalendarFC.loadEvents(this.allEvents);
             if (window.CalendarFC) CalendarFC.refresh();
+            });
+        }
+    },
+    
+    setupEventSearch() {
+        const searchInput = document.getElementById('eventSearchInput');
+        const clearBtn = document.getElementById('clearSearchBtn');
+        
+        if (searchInput) {
+            // Search as user types (debounced)
+            let searchTimeout;
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    this.searchQuery = e.target.value.toLowerCase().trim();
+                    this.applyFilter();
+                    
+                    // Show/hide clear button
+                    if (clearBtn) {
+                        clearBtn.style.display = this.searchQuery ? 'flex' : 'none';
+                    }
+                }, 300);
+            });
+        }
+        
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                if (searchInput) {
+                    searchInput.value = '';
+                    this.searchQuery = '';
+                    this.applyFilter();
+                    clearBtn.style.display = 'none';
+                    searchInput.focus();
+                }
+            });
+        }
+    },
+    
+    setupFilterChips() {
+        const chips = document.querySelectorAll('.filter-chip');
+        const clearChipsBtn = document.getElementById('clearChipsBtn');
+        
+        chips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                const eventType = chip.dataset.type;
+                
+                // Toggle filter
+                if (this.activeTypeFilters.has(eventType)) {
+                    this.activeTypeFilters.delete(eventType);
+                    chip.classList.remove('active');
+                } else {
+                    this.activeTypeFilters.add(eventType);
+                    chip.classList.add('active');
+                }
+                
+                // Show/hide clear all button
+                if (clearChipsBtn) {
+                    clearChipsBtn.style.display = this.activeTypeFilters.size > 0 ? 'block' : 'none';
+                }
+                
+                this.applyFilter();
+            });
+        });
+        
+        if (clearChipsBtn) {
+            clearChipsBtn.addEventListener('click', () => {
+                this.activeTypeFilters.clear();
+                chips.forEach(chip => chip.classList.remove('active'));
+                clearChipsBtn.style.display = 'none';
+                this.applyFilter();
             });
         }
     },
@@ -55,6 +129,7 @@ const CalendarManager = {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
+        // Apply completed/all filter
         switch(this.currentFilter) {
             case 'today':
                 const todayStr = today.toISOString().split('T')[0];
@@ -76,8 +151,25 @@ const CalendarManager = {
                 
             case 'all':
             default:
-                // Show all
+                // Show all (will apply other filters below)
                 break;
+        }
+        
+        // Apply type chip filters (if any are active)
+        if (this.activeTypeFilters.size > 0) {
+            filteredEvents = filteredEvents.filter(event => {
+                return this.activeTypeFilters.has(event.eventType);
+            });
+        }
+        
+        // Apply search filter
+        if (this.searchQuery) {
+            filteredEvents = filteredEvents.filter(event => {
+                const titleMatch = event.title.toLowerCase().includes(this.searchQuery);
+                const descMatch = event.description ? event.description.toLowerCase().includes(this.searchQuery) : false;
+                const typeMatch = event.eventType.toLowerCase().includes(this.searchQuery);
+                return titleMatch || descMatch || typeMatch;
+            });
         }
         
         this.displayEvents(filteredEvents);
@@ -106,9 +198,13 @@ const CalendarManager = {
         this.eventsList.innerHTML = '';
         
         if (!events || events.length === 0) {
+            const emptyMessage = this.searchQuery 
+                ? `No events found matching "${this.searchQuery}"` 
+                : 'No events found for this filter.';
+            
             this.eventsList.innerHTML = `
                 <div class="empty-state">
-                    <p>No events found for this filter.</p>
+                    <p>${emptyMessage}</p>
                 </div>
             `;
             return;
@@ -187,22 +283,30 @@ const CalendarManager = {
         
         const completedClass = event.completed ? 'completed-badge' : '';
         
+        // Add play slideshow button if config exists
+        const playSlideshowBtn = event.hasSlideshowConfig ? 
+            `<button class="play-slideshow-btn" onclick="EventSlideshowPlayer.playEventSlideshow(${event.id})">▶ Play Slideshow</button>` : 
+            `<div class="slideshow-placeholder"></div>`;
+        
         card.innerHTML = `
             <div class="event-header">
                 <div class="event-type-icon">${this.getEventIcon(event.eventType)}</div>
                 <div class="event-header-content">
                     <div class="event-title">${event.title}</div>
                     <div class="event-datetime">${dateTimeStr}</div>
+                    ${descStr}
                 </div>
             </div>
-            ${descStr}
-            <div class="event-actions">
-                ${!event.completed ? 
-                    `<button class="event-action-btn complete-btn" onclick="CalendarManager.completeEvent(${event.id})">✓ Complete</button>` :
-                    `<button class="event-action-btn" onclick="CalendarManager.uncompleteEvent(${event.id})">↶ Undo</button>`
-                }
-                <button class="event-action-btn edit-btn" onclick="CalendarManager.editEvent(${event.id})">✏️ Edit</button>
-                <button class="event-action-btn delete-btn" onclick="CalendarManager.deleteEvent(${event.id})">🗑️ Delete</button>
+            <div class="event-footer">
+                ${playSlideshowBtn}
+                <div class="event-actions">
+                    ${!event.completed ? 
+                        `<button class="event-action-btn complete-btn" onclick="CalendarManager.completeEvent(${event.id})">✓ Complete</button>` :
+                        `<button class="event-action-btn undo-btn" onclick="CalendarManager.uncompleteEvent(${event.id})">↶ Undo</button>`
+                    }
+                    <button class="event-action-btn edit-btn" onclick="CalendarManager.editEvent(${event.id})">✏️ Edit</button>
+                    <button class="event-action-btn delete-btn" onclick="CalendarManager.deleteEvent(${event.id})">🗑️ Delete</button>
+                </div>
             </div>
         `;
         
@@ -286,7 +390,14 @@ const CalendarManager = {
         const dateStr = date.toISOString().split('T')[0];
         
         const eventsOnDate = this.allEvents.filter(event => {
-            return event.eventDate === dateStr && !event.completed;
+            if (event.completed) return false;
+            
+            // Check if the clicked date falls within the event's date range
+            const eventStartDate = event.eventDate;
+            const eventEndDate = event.eventEndDate || event.eventDate;
+            
+            // Date falls within range if it's >= start and <= end
+            return dateStr >= eventStartDate && dateStr <= eventEndDate;
         });
         
         if (eventsOnDate.length > 0) {

@@ -6,7 +6,7 @@ const CalendarForm = {
     currentEditId: null,
     
     init() {
-        console.log('CalendarForm initialized');
+        console.log('CalendarForm initialised');
         
         this.formModal = document.getElementById('eventFormModal');
         this.eventForm = document.getElementById('eventForm');
@@ -31,6 +31,11 @@ const CalendarForm = {
         if (this.eventForm) {
             this.eventForm.addEventListener('submit', (e) => this.handleSubmit(e));
         }
+
+        // Initialise slideshow config if available
+        if (window.EventSlideshowConfig) {
+            EventSlideshowConfig.init();
+        }
     },
     
     openForm() {
@@ -44,13 +49,38 @@ const CalendarForm = {
             const today = new Date().toISOString().split('T')[0];
             eventDateInput.value = today;
         }
+
+        // Setup slideshow config (don't await - let it load in background)
+        if (window.EventSlideshowConfig) {
+            EventSlideshowConfig.ensureListenersAttached();
+            
+            // Clear selections and hide config panel
+            const enableCheckbox = document.getElementById('enableSlideshowConfig');
+            const configContent = document.getElementById('slideshowConfigContent');
+            if (enableCheckbox) {
+                enableCheckbox.checked = false;
+                configContent.style.display = 'none';
+            }
+            EventSlideshowConfig.selectedFolders = [];
+            EventSlideshowConfig.selectedMusic = [];
+            
+            // Reset form values
+            document.getElementById('shuffleAllCheckboxEvent').checked = false;
+            document.getElementById('randomizeCheckboxEvent').checked = true;
+            document.getElementById('randomizeMusicCheckboxEvent').checked = false;
+            document.getElementById('speedSelectEvent').value = 5000;
+            document.getElementById('startFolderSelectEvent').value = '';
+            
+            // Start loading lists (shows spinner when checkbox is checked)
+            EventSlideshowConfig.renderLists();
+        }
         
         if (this.formModal) {
             this.formModal.classList.add('active');
         }
     },
     
-    openFormForEdit(event) {
+    async openFormForEdit(event) {
         console.log('Opening event form for editing...', event);
         this.currentEditId = event.id;
         this.updateFormTitle('Edit Event');
@@ -62,6 +92,13 @@ const CalendarForm = {
         document.getElementById('eventEndDate').value = event.eventEndDate || '';
         document.getElementById('eventTime').value = event.eventTime || '';
         document.getElementById('eventType').value = event.eventType || 'other';
+
+        // Setup slideshow config (don't await - let it load in background)
+        if (window.EventSlideshowConfig) {
+            EventSlideshowConfig.ensureListenersAttached();
+            EventSlideshowConfig.renderLists(); // Shows "Loading..." then populates
+            await EventSlideshowConfig.loadConfigForEvent(event.id);
+        }
         
         if (this.formModal) {
             this.formModal.classList.add('active');
@@ -85,6 +122,11 @@ const CalendarForm = {
         }
         this.currentEditId = null;
         this.updateFormTitle('Add Event');
+
+        // Clear slideshow config
+        if (window.EventSlideshowConfig) {
+            EventSlideshowConfig.clearConfig();
+        }
     },
     
     async handleSubmit(e) {
@@ -109,6 +151,7 @@ const CalendarForm = {
         
         try {
             let response;
+            let savedEventId;
             
             if (this.currentEditId) {
                 // Update existing event
@@ -117,6 +160,7 @@ const CalendarForm = {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
                 });
+                savedEventId = this.currentEditId;
             } else {
                 // Create new event
                 response = await fetch('/api/events/create', {
@@ -124,10 +168,21 @@ const CalendarForm = {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
                 });
+                
+                if (response.ok) {
+                    const savedEvent = await response.json();
+                    savedEventId = savedEvent.id;
+                }
             }
             
             if (response.ok) {
                 console.log(this.currentEditId ? 'Event updated successfully!' : 'Event created successfully!');
+                
+                // Save slideshow configuration
+                if (window.EventSlideshowConfig && savedEventId) {
+                    await EventSlideshowConfig.saveConfig(savedEventId);
+                }
+
                 this.closeForm();
                 // Reload events
                 if (window.CalendarManager) {

@@ -392,4 +392,7 @@ const SlideshowCore = (() => {
     };
 })();
 
+// Export to window for global access
+window.SlideshowCore = SlideshowCore;
+
 console.log('✅ Slideshow Core module loaded');

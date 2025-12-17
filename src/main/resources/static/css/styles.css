@@ -475,9 +475,9 @@ body.slideshow-active #slideshow {
     position: fixed;
     top: 30px;
     right: 30px;
-    background: rgba(74, 158, 255, 0.2);
-    border: 2px solid rgba(74, 158, 255, 0.4);
-    color: #ffffff;
+    background: rgba(255, 77, 77, 0.2);
+    border: 2px solid rgba(255, 77, 77, 0.3);
+    color: #ff6b6b;
     padding: 12px 24px;
     border-radius: 10px;
     font-size: 16px;
@@ -490,8 +490,8 @@ body.slideshow-active #slideshow {
 }
 
 .close-weather-btn:hover {
-    background: rgba(74, 158, 255, 0.3);
-    border-color: rgba(74, 158, 255, 0.6);
+    background: rgba(255, 77, 77, 0.3);
+    border-color: rgba(255, 77, 77, 0.5);
     transform: translateY(-2px);
 }
 
@@ -688,7 +688,7 @@ body.slideshow-active #slideshow {
     line-height: 1.5;
     color: rgba(255, 255, 255, 0.95);
     padding: 10px 14px;
-    background: rgba(74, 158, 255, 0.2);
+    background: rgba(255, 77, 77, 0.2);
     border-radius: 8px;
     border-left: 3px solid #4a9eff;
 }

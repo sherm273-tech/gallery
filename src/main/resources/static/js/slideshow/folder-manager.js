@@ -353,4 +353,7 @@ const FolderManager = (() => {
     };
 })();
 
+// Export to window for global access
+window.FolderManager = FolderManager;
+
 console.log('✅ Folder Manager module loaded');
