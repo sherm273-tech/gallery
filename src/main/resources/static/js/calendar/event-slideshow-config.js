@@ -8,6 +8,8 @@ const EventSlideshowConfig = {
     selectedMusic: [],
     currentEventId: null,
     listenersAttached: false,
+    currentFolderFilter: '',
+    currentMusicFilter: '',
 
     async init() {
         console.log('[EventSlideshowConfig] Initialising...');
@@ -241,7 +243,7 @@ const EventSlideshowConfig = {
         } else {
             this.selectedFolders = this.selectedFolders.filter(f => f !== folder);
         }
-        this.renderFolderList();
+        this.renderFolderList(this.currentFolderFilter);
         this.populateStartFolderDropdown();
     },
 
@@ -253,36 +255,38 @@ const EventSlideshowConfig = {
         } else {
             this.selectedMusic = this.selectedMusic.filter(m => m !== track);
         }
-        this.renderMusicList();
+        this.renderMusicList(this.currentMusicFilter);
     },
 
     selectAllFolders() {
         this.selectedFolders = [...this.folders];
-        this.renderFolderList();
+        this.renderFolderList(this.currentFolderFilter);
         this.populateStartFolderDropdown();
     },
 
     clearFolderSelection() {
         this.selectedFolders = [];
-        this.renderFolderList();
+        this.renderFolderList(this.currentFolderFilter);
         this.populateStartFolderDropdown();
     },
 
     selectAllMusic() {
         this.selectedMusic = [...this.music];
-        this.renderMusicList();
+        this.renderMusicList(this.currentMusicFilter);
     },
 
     clearMusicSelection() {
         this.selectedMusic = [];
-        this.renderMusicList();
+        this.renderMusicList(this.currentMusicFilter);
     },
 
     filterFolders(query) {
+        this.currentFolderFilter = query;
         this.renderFolderList(query);
     },
 
     filterMusic(query) {
+        this.currentMusicFilter = query;
         this.renderMusicList(query);
     },
 
@@ -367,6 +371,8 @@ const EventSlideshowConfig = {
         this.selectedFolders = [];
         this.selectedMusic = [];
         this.currentEventId = null;
+        this.currentFolderFilter = '';
+        this.currentMusicFilter = '';
 
         // Reset form
         document.getElementById('shuffleAllCheckboxEvent').checked = false;
@@ -374,6 +380,12 @@ const EventSlideshowConfig = {
         document.getElementById('randomizeMusicCheckboxEvent').checked = false;
         document.getElementById('speedSelectEvent').value = 5000;
         document.getElementById('startFolderSelectEvent').value = '';
+        
+        // Clear search inputs
+        const folderSearch = document.getElementById('folderSearchEvent');
+        const musicSearch = document.getElementById('musicSearchEvent');
+        if (folderSearch) folderSearch.value = '';
+        if (musicSearch) musicSearch.value = '';
 
         this.renderFolderList();
         this.renderMusicList();

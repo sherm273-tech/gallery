@@ -1713,44 +1713,32 @@ startBtn.addEventListener("click", async () => {
             return;
         }
         
-        // Check if music is actually playing by checking the audio element
-        const isCurrentlyPlaying = !audioPlayer.paused && audioPlayer.src;
+        // Check if music is actually playing using MusicPlayer module
+        const isCurrentlyPlaying = MusicPlayer.isPlaying();
         
         if (isCurrentlyPlaying) {
-            // Music is already playing - just update the playlist without restarting
+            // Music is already playing - update the playlist without restarting
             console.log('🎵 Updating playlist while preserving playback...');
             
-            // Update selectedMusic array
-            // Find current track in new list
-            const currentTrack = selectedMusic.length > currentMusicIndex ? 
-                                 selectedMusic[currentMusicIndex] : null;
-            
-            // If current track is in new list, keep playing it
-            // Otherwise switch to first track in new list
-            const trackStillExists = currentTrack && selectedMusic.includes(selectedMusic[currentMusicIndex]);
-            if (!trackStillExists && selectedMusic.length > 0) {
-                currentMusicIndex = 0;
-            }
+            // Use MusicPlayer's updatePlaylist method which handles everything properly
+            MusicPlayer.updatePlaylist(selectedMusic);
             
             // Just hide controls and show player
             controls.classList.add("hidden");
             mirrorOverlay.classList.add("hidden");
-            musicPlayerOverlay.classList.add("active");
-            
-            updatePlayerUI();
+            MusicPlayer.show();
             
             console.log('✅ Playlist updated, music continues playing');
         } else {
-            // Starting fresh - use the working original code
+            // Starting fresh - use MusicPlayer module
             console.log('🎵 Starting new music playback...');
             controls.classList.add("hidden");
             mirrorOverlay.classList.add("hidden");
-            musicPlayerOverlay.classList.add("active");
             
-            // Start from beginning
-            currentMusicIndex = 0;
-            playCurrentTrack();
-            updatePlayerUI();
+            // Set playlist and start playing
+            MusicPlayer.setPlaylist(selectedMusic);
+            MusicPlayer.start();
+            MusicPlayer.show();
         }
         
         await requestWakeLock();
