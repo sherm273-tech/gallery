@@ -14,6 +14,9 @@ const CalendarForm = {
         const closeFormBtn = document.getElementById('closeFormBtn');
         const cancelEventBtn = document.getElementById('cancelEventBtn');
         
+        // Auto-open date/time pickers on click
+        this.setupDateTimePickers();
+        
         // Open form when clicking + Add Event
         if (addEventBtn) {
             addEventBtn.addEventListener('click', () => this.openForm());
@@ -35,6 +38,32 @@ const CalendarForm = {
         // Initialise slideshow config if available
         if (window.EventSlideshowConfig) {
             EventSlideshowConfig.init();
+        }
+        
+        // Initialise notification form if available
+        if (window.EventNotificationForm) {
+            EventNotificationForm.init();
+        }
+    },
+    
+    setupDateTimePickers() {
+        // Auto-open date picker when clicking date fields
+        const dateFields = ['eventDate', 'eventEndDate'];
+        dateFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.addEventListener('click', function() {
+                    this.showPicker();
+                });
+            }
+        });
+        
+        // Auto-open time picker when clicking time field
+        const timeField = document.getElementById('eventTime');
+        if (timeField) {
+            timeField.addEventListener('click', function() {
+                this.showPicker();
+            });
         }
     },
     
@@ -75,6 +104,11 @@ const CalendarForm = {
             EventSlideshowConfig.renderLists();
         }
         
+        // Clear notification form
+        if (window.EventNotificationForm) {
+            EventNotificationForm.clearForm();
+        }
+        
         if (this.formModal) {
             this.formModal.classList.add('active');
         }
@@ -100,6 +134,11 @@ const CalendarForm = {
             await EventSlideshowConfig.loadConfigForEvent(event.id);
         }
         
+        // Load notification settings
+        if (window.EventNotificationForm) {
+            EventNotificationForm.loadNotificationData(event);
+        }
+        
         if (this.formModal) {
             this.formModal.classList.add('active');
         }
@@ -108,7 +147,9 @@ const CalendarForm = {
     updateFormTitle(title) {
         const formTitle = document.getElementById('eventFormTitle');
         if (formTitle) {
-            formTitle.textContent = title;
+            // Add calendar icon to both Add and Edit titles
+            const icon = title.includes('Edit') ? '✏️' : '📅';
+            formTitle.textContent = `${icon} ${title}`;
         }
     },
     
@@ -136,6 +177,11 @@ const CalendarForm = {
         const startDate = document.getElementById('eventDate').value;
         const endDate = document.getElementById('eventEndDate').value;
         
+        // Get notification data
+        const notificationData = window.EventNotificationForm ? 
+            EventNotificationForm.getNotificationData() : 
+            { notificationsEnabled: false, notificationTimings: null, notifyBrowser: true, notifyEmail: false, notifySms: false };
+        
         const formData = {
             title: document.getElementById('eventTitle').value,
             description: document.getElementById('eventDescription').value,
@@ -144,7 +190,8 @@ const CalendarForm = {
             eventTime: document.getElementById('eventTime').value,
             eventType: document.getElementById('eventType').value,
             recurring: false,
-            completed: false
+            completed: false,
+            ...notificationData  // Merge notification settings
         };
         
         console.log('Event data:', formData);

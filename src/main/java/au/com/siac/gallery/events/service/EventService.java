@@ -132,11 +132,17 @@ public class EventService {
         if (event.getRecurring() == null) {
             event.setRecurring(false);
         }
-        if (event.getNotificationEnabled() == null) {
-            event.setNotificationEnabled(false);
+        if (event.getNotificationsEnabled() == null) {
+            event.setNotificationsEnabled(false);
         }
-        if (event.getSmsEnabled() == null) {
-            event.setSmsEnabled(false);
+        if (event.getNotifyBrowser() == null) {
+            event.setNotifyBrowser(true);
+        }
+        if (event.getNotifyEmail() == null) {
+            event.setNotifyEmail(false);
+        }
+        if (event.getNotifySms() == null) {
+            event.setNotifySms(false);
         }
         if (event.getCompleted() == null) {
             event.setCompleted(false);
@@ -175,14 +181,20 @@ public class EventService {
         if (updatedEvent.getRecurrencePattern() != null) {
             existing.setRecurrencePattern(updatedEvent.getRecurrencePattern());
         }
-        if (updatedEvent.getNotificationEnabled() != null) {
-            existing.setNotificationEnabled(updatedEvent.getNotificationEnabled());
+        if (updatedEvent.getNotificationsEnabled() != null) {
+            existing.setNotificationsEnabled(updatedEvent.getNotificationsEnabled());
         }
-        if (updatedEvent.getNotificationLeadTime() != null) {
-            existing.setNotificationLeadTime(updatedEvent.getNotificationLeadTime());
+        if (updatedEvent.getNotificationTimings() != null) {
+            existing.setNotificationTimings(updatedEvent.getNotificationTimings());
         }
-        if (updatedEvent.getSmsEnabled() != null) {
-            existing.setSmsEnabled(updatedEvent.getSmsEnabled());
+        if (updatedEvent.getNotifyBrowser() != null) {
+            existing.setNotifyBrowser(updatedEvent.getNotifyBrowser());
+        }
+        if (updatedEvent.getNotifyEmail() != null) {
+            existing.setNotifyEmail(updatedEvent.getNotifyEmail());
+        }
+        if (updatedEvent.getNotifySms() != null) {
+            existing.setNotifySms(updatedEvent.getNotifySms());
         }
         if (updatedEvent.getCompleted() != null) {
             existing.setCompleted(updatedEvent.getCompleted());
@@ -234,10 +246,10 @@ public class EventService {
         long upcoming = eventRepository.countUpcomingEvents(today);
         long completed = eventRepository.findByCompletedOrderByEventDateDesc(true).size();
         long todayCount = eventRepository.findByEventDateOrderByEventTimeAsc(today).stream()
-                .filter(e -> !e.getCompleted())
+                .filter(e -> e != null && !e.getCompleted())
                 .count();
         long weekCount = eventRepository.findByEventDateBetweenOrderByEventDateAscEventTimeAsc(today, weekFromNow).stream()
-                .filter(e -> !e.getCompleted())
+                .filter(e -> e != null && !e.getCompleted())
                 .count();
         
         return new EventStatistics(total, upcoming, completed, todayCount, weekCount);

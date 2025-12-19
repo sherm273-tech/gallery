@@ -108,7 +108,9 @@ const CalendarManager = {
                 throw new Error('Failed to load events');
             }
             
-            this.allEvents = await response.json();
+            const events = await response.json();
+            // Filter out null events
+            this.allEvents = events.filter(e => e != null);
             console.log('Loaded events:', this.allEvents);
             
             this.applyFilter();
@@ -183,9 +185,14 @@ const CalendarManager = {
             const stats = await response.json();
             console.log('Statistics from API:', stats);
             
-            document.getElementById('statToday').textContent = stats.todayEvents || 0;
-            document.getElementById('statWeek').textContent = stats.weekEvents || 0;
-            document.getElementById('statPending').textContent = stats.upcomingEvents || 0;
+            // Only update if elements exist (they might not be on all pages)
+            const statToday = document.getElementById('statToday');
+            const statWeek = document.getElementById('statWeek');
+            const statPending = document.getElementById('statPending');
+            
+            if (statToday) statToday.textContent = stats.todayEvents || 0;
+            if (statWeek) statWeek.textContent = stats.weekEvents || 0;
+            if (statPending) statPending.textContent = stats.upcomingEvents || 0;
         } catch (error) {
             console.error('Error loading statistics:', error);
         }
@@ -205,6 +212,18 @@ const CalendarManager = {
             this.eventsList.innerHTML = `
                 <div class="empty-state">
                     <p>${emptyMessage}</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Filter out null events
+        events = events.filter(e => e != null && e.eventDate != null);
+        
+        if (events.length === 0) {
+            this.eventsList.innerHTML = `
+                <div class="empty-state">
+                    <p>No valid events found</p>
                 </div>
             `;
             return;
@@ -288,11 +307,28 @@ const CalendarManager = {
             `<button class="play-slideshow-btn" onclick="EventSlideshowPlayer.playEventSlideshow(${event.id})">▶ Play Slideshow</button>` : 
             `<div class="slideshow-placeholder"></div>`;
         
+        // Add notification badges if notifications enabled
+        let notificationBadges = '';
+        if (event.notificationsEnabled) {
+            if (event.notifyBrowser) {
+                notificationBadges += '<span class="notif-badge browser">🔔</span>';
+            }
+            if (event.notifyEmail) {
+                notificationBadges += '<span class="notif-badge email">📧</span>';
+            }
+            if (event.notifySms) {
+                notificationBadges += '<span class="notif-badge sms">📱</span>';
+            }
+        }
+        
         card.innerHTML = `
             <div class="event-header">
                 <div class="event-type-icon">${this.getEventIcon(event.eventType)}</div>
                 <div class="event-header-content">
-                    <div class="event-title">${event.title}</div>
+                    <div class="event-title">
+                        ${event.title}
+                        ${notificationBadges ? `<span class="notification-badges">${notificationBadges}</span>` : ''}
+                    </div>
                     <div class="event-datetime">${dateTimeStr}</div>
                     ${descStr}
                 </div>

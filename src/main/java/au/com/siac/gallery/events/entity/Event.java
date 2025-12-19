@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 public class Event {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     
     @Column(nullable = false, length = 255)
@@ -37,14 +37,21 @@ public class Event {
     @Column(length = 50, name = "recurrence_pattern")
     private String recurrencePattern;  // 'daily', 'weekly', 'monthly', 'yearly'
     
-    @Column(nullable = false, name = "notification_enabled")
-    private Boolean notificationEnabled = false;
+    // Notification settings
+    @Column(nullable = false, name = "notifications_enabled")
+    private Boolean notificationsEnabled = false;
     
-    @Column(name = "notification_lead_time")
-    private Integer notificationLeadTime;  // minutes before event to notify
+    @Column(name = "notification_timings", columnDefinition = "TEXT")
+    private String notificationTimings;  // JSON array: ["1_week_before", "1_day_before", "1_hour_before"]
     
-    @Column(nullable = false, name = "sms_enabled")
-    private Boolean smsEnabled = false;
+    @Column(nullable = false, name = "notify_browser")
+    private Boolean notifyBrowser = true;
+    
+    @Column(nullable = false, name = "notify_email")
+    private Boolean notifyEmail = false;
+    
+    @Column(nullable = false, name = "notify_sms")
+    private Boolean notifySms = false;
     
     @Column(nullable = false)
     private Boolean completed = false;
@@ -80,8 +87,10 @@ public class Event {
         this.eventTime = eventTime;
         this.eventType = eventType;
         this.recurring = false;
-        this.notificationEnabled = false;
-        this.smsEnabled = false;
+        this.notificationsEnabled = false;
+        this.notifyBrowser = true;
+        this.notifyEmail = false;
+        this.notifySms = false;
         this.completed = false;
     }
     
@@ -158,28 +167,44 @@ public class Event {
         this.recurrencePattern = recurrencePattern;
     }
     
-    public Boolean getNotificationEnabled() {
-        return notificationEnabled;
+    public Boolean getNotificationsEnabled() {
+        return notificationsEnabled;
     }
     
-    public void setNotificationEnabled(Boolean notificationEnabled) {
-        this.notificationEnabled = notificationEnabled;
+    public void setNotificationsEnabled(Boolean notificationsEnabled) {
+        this.notificationsEnabled = notificationsEnabled;
     }
     
-    public Integer getNotificationLeadTime() {
-        return notificationLeadTime;
+    public String getNotificationTimings() {
+        return notificationTimings;
     }
     
-    public void setNotificationLeadTime(Integer notificationLeadTime) {
-        this.notificationLeadTime = notificationLeadTime;
+    public void setNotificationTimings(String notificationTimings) {
+        this.notificationTimings = notificationTimings;
     }
     
-    public Boolean getSmsEnabled() {
-        return smsEnabled;
+    public Boolean getNotifyBrowser() {
+        return notifyBrowser;
     }
     
-    public void setSmsEnabled(Boolean smsEnabled) {
-        this.smsEnabled = smsEnabled;
+    public void setNotifyBrowser(Boolean notifyBrowser) {
+        this.notifyBrowser = notifyBrowser;
+    }
+    
+    public Boolean getNotifyEmail() {
+        return notifyEmail;
+    }
+    
+    public void setNotifyEmail(Boolean notifyEmail) {
+        this.notifyEmail = notifyEmail;
+    }
+    
+    public Boolean getNotifySms() {
+        return notifySms;
+    }
+    
+    public void setNotifySms(Boolean notifySms) {
+        this.notifySms = notifySms;
     }
     
     public Boolean getCompleted() {

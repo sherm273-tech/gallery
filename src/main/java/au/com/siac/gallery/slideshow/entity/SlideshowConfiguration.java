@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 public class SlideshowConfiguration {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     
     @Column(name = "event_id", unique = true)

@@ -42,6 +42,7 @@ const initialMenu = document.getElementById('initialMenu');
 const photoSlideshowBtn = document.getElementById('photoSlideshowBtn');
 const musicOnlyBtn = document.getElementById('musicOnlyBtn');
 const weatherDisplayBtn = document.getElementById('weatherDisplayBtn');
+const settingsBtn = document.getElementById('settingsBtn');
 const backToMenuBtn = document.getElementById('backToMenuBtn');
 
 // Music Player
@@ -190,6 +191,11 @@ closeCalendarBtn.addEventListener('click', () => {
     initialMenu.classList.remove('hidden');
     window.currentMode = null;
     releaseWakeLock();
+});
+
+// Settings Button
+settingsBtn.addEventListener('click', () => {
+    window.location.href = '/settings';
 });
 
 

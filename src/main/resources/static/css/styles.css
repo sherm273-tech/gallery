@@ -121,6 +121,35 @@ body.slideshow-active #slideshow {
     background-clip: text;
 }
 
+
+.menu-header {
+    position: relative;
+}
+
+.settings-icon-btn {
+    position: absolute;
+    top: 30px;
+    right: 0;
+    background: rgba(74, 158, 255, 0.1);
+    border: 2px solid rgba(74, 158, 255, 0.3);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.settings-icon-btn:hover {
+    background: rgba(74, 158, 255, 0.2);
+    border-color: #4a9eff;
+    transform: rotate(90deg) scale(1.1);
+    box-shadow: 0 0 20px rgba(74, 158, 255, 0.4);
+}
 .menu-subtitle {
     font-size: 20px;
     color: #b0b0b0;
@@ -1766,6 +1795,13 @@ kbd {
     .menu-header h1 {
         font-size: 36px;
         margin-top: 20px;
+    }
+
+    .settings-icon-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+        top: 20px;
     }
     
     .menu-subtitle {

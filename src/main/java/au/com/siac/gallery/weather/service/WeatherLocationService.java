@@ -161,7 +161,7 @@ public class WeatherLocationService {
     public void reorderLocations(List<Long> orderedIds) {
         for (int i = 0; i < orderedIds.size(); i++) {
             Long id = orderedIds.get(i);
-            final int displayOrder = i + 1;  // Make it final for lambda
+            final int displayOrder = i + 1;
             locationRepository.findById(id).ifPresent(location -> {
                 location.setDisplayOrder(displayOrder);
                 locationRepository.save(location);

@@ -41,7 +41,16 @@
                     <div class="calendar-header">
                         <button class="close-calendar-btn" id="closeCalendarBtn">✕ Exit</button>
                         <h1 class="calendar-heading">Calendar & Events</h1>
-                        <button class="add-event-btn-header" id="addEventBtn">+ Add Event</button>
+                        <div class="calendar-header-right">
+                            <button class="settings-btn" onclick="window.location.href='/settings'" title="Notification Settings">
+                                ⚙️ Settings
+                            </button>
+                            <div class="notification-status" id="notificationStatus" title="Click to enable browser notifications">
+                                <span class="notif-status-icon">🔔</span>
+                                <span class="notif-status-text">Notifications: <span id="notifPermissionText">Checking...</span></span>
+                            </div>
+                            <button class="add-event-btn-header" id="addEventBtn">+ Add Event</button>
+                        </div>
                     </div>
                     <div id="fullcalendar"></div>
                 </div>
@@ -95,7 +104,7 @@
     <div class="event-form-modal" id="eventFormModal">
         <div class="event-form-container">
             <div class="event-form-header">
-                <h2 id="eventFormTitle">Add Event</h2>
+                <h2 id="eventFormTitle">📅 Add Event</h2>
                 <button class="close-form-btn" id="closeFormBtn">✕</button>
             </div>
             
@@ -215,6 +224,94 @@
                                     <option value="7000">Slow (7 seconds)</option>
                                     <option value="10000">Very Slow (10 seconds)</option>
                                 </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Notification Configuration Section -->
+                <div class="form-section-divider"></div>
+                <div class="notification-config-section">
+                    <div class="notification-config-header">
+                        <label class="notification-toggle-label">
+                            <input type="checkbox" id="enableNotifications">
+                            <span class="notification-toggle-text">🔔 Enable Notifications</span>
+                        </label>
+                        <span class="notification-help-text">Get reminded about this event</span>
+                    </div>
+                    
+                    <div id="notificationConfigContent" class="notification-config-content" style="display: none;">
+                        <!-- Notification Timing -->
+                        <div class="config-subsection">
+                            <h4 class="config-subsection-title">When to Notify</h4>
+                            <div class="timing-options">
+                                <div class="checkbox-container-mini">
+                                    <input type="checkbox" id="timing1WeekBefore" value="1_week_before">
+                                    <label for="timing1WeekBefore">1 week before (9:00 AM)</label>
+                                </div>
+                                <div class="checkbox-container-mini">
+                                    <input type="checkbox" id="timing3DaysBefore" value="3_days_before">
+                                    <label for="timing3DaysBefore">3 days before (9:00 AM)</label>
+                                </div>
+                                <div class="checkbox-container-mini">
+                                    <input type="checkbox" id="timing1DayBefore" value="1_day_before">
+                                    <label for="timing1DayBefore">1 day before (9:00 AM)</label>
+                                </div>
+                                <div class="checkbox-container-mini">
+                                    <input type="checkbox" id="timingMorningOf" value="morning_of">
+                                    <label for="timingMorningOf">Morning of event (9:00 AM)</label>
+                                </div>
+                                <div class="checkbox-container-mini">
+                                    <input type="checkbox" id="timing1HourBefore" value="1_hour_before">
+                                    <label for="timing1HourBefore">1 hour before event time</label>
+                                </div>
+                                <div class="checkbox-container-mini">
+                                    <input type="checkbox" id="timing30MinsBefore" value="30_mins_before">
+                                    <label for="timing30MinsBefore">30 minutes before event time</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Notification Channels -->
+                        <div class="config-subsection">
+                            <h4 class="config-subsection-title">Send Via</h4>
+                            <div class="channel-options">
+                                <div class="checkbox-container-mini">
+                                    <input type="checkbox" id="notifyBrowser" checked>
+                                    <label for="notifyBrowser">🔔 Browser notification (Free)</label>
+                                </div>
+                                <div class="checkbox-container-mini">
+                                    <input type="checkbox" id="notifyEmail">
+                                    <label for="notifyEmail">📧 Email notification (Free)</label>
+                                </div>
+                                <div class="checkbox-container-mini">
+                                    <input type="checkbox" id="notifySms">
+                                    <label for="notifySms">📱 SMS notification (Paid ~$0.08/msg)</label>
+                                </div>
+                            </div>
+                            <p class="notification-info-text">
+                                <span id="notificationRecipientInfo" style="color: #888; font-size: 12px;">
+                                    📧 Email & 📱 Phone can be configured in Settings
+                                </span>
+                            </p>
+                        </div>
+                        
+                        <!-- Quick Presets -->
+                        <div class="config-subsection">
+                            <h4 class="config-subsection-title">Quick Presets</h4>
+                            <div class="preset-buttons">
+                                <button type="button" class="preset-btn" id="presetLowPriority">
+                                    Low Priority
+                                    <span class="preset-desc">Browser only, 1 day before</span>
+                                </button>
+                                <button type="button" class="preset-btn" id="presetStandard">
+                                    Standard
+                                    <span class="preset-desc">Browser + Email, 1 day before</span>
+                                </button>
+                                <button type="button" class="preset-btn" id="presetCritical">
+                                    Critical
+                                    <span class="preset-desc">All channels, multiple reminders</span>
+                                </button>
                             </div>
                         </div>
                     </div>

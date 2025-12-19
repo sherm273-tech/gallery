@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Settings - Sang's and Sherm's Station</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/calendar.css">
+    <link rel="stylesheet" href="/css/notification-settings.css">
+</head>
+<body>
+
+    <!-- Slideshow Background -->
+    <div th:replace="~{fragments/slideshow/slideshow-background :: slideshow-background}"></div>
+
+    <!-- Loading Overlay -->
+    <div th:replace="~{fragments/slideshow/loading-overlay :: loading-overlay}"></div>
+
+    <!-- Menu -->
+    <div th:replace="~{fragments/menu :: initial-menu}"></div>
+
+    <!-- Settings Container -->
+    <div class="settings-container">
+        <div class="settings-panel">
+            <div class="settings-header">
+                <h1>🔔 Notification Settings</h1>
+            </div>
+
+            <!-- Contact Configuration -->
+            <div class="settings-section">
+                <h2>📧 Contact Information</h2>
+                <p class="section-help">Configure where notifications should be sent</p>
+                
+                <div class="form-group">
+                    <label for="defaultEmail">Email Address</label>
+                    <input type="email" id="defaultEmail" placeholder="your@email.com">
+                    <button class="test-btn" id="testEmailBtn">📧 Send Test Email</button>
+                </div>
+
+                <div class="form-group">
+                    <label for="defaultPhone">Phone Number (SMS)</label>
+                    <input type="tel" id="defaultPhone" placeholder="+61 4XX XXX XXX">
+                    <small class="help-text">Include country code (e.g., +61 for Australia)</small>
+                    <button class="test-btn" id="testSmsBtn">📱 Send Test SMS (~$0.08 AUD)</button>
+                </div>
+            </div>
+
+            <!-- Default Preferences -->
+            <div class="settings-section">
+                <h2>🔔 Default Notification Channels</h2>
+                <p class="section-help">These defaults apply to new events</p>
+                
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="defaultBrowserEnabled" checked>
+                        <span>🔔 Browser notifications (Free)</span>
+                    </label>
+                </div>
+
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="defaultEmailEnabled">
+                        <span>📧 Email notifications (Free)</span>
+                    </label>
+                </div>
+
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="defaultSmsEnabled">
+                        <span>📱 SMS notifications (~$0.08 per message)</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Quiet Hours -->
+            <div class="settings-section">
+                <h2>🌙 Quiet Hours</h2>
+                <p class="section-help">No notifications will be sent during these hours</p>
+                
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" id="quietHoursEnabled" checked>
+                        <span>Enable quiet hours</span>
+                    </label>
+                </div>
+
+                <div class="time-range">
+                    <div class="form-group">
+                        <label for="quietHoursStart">Start Time</label>
+                        <input type="time" id="quietHoursStart" value="22:00">
+                    </div>
+                    <span class="time-separator">to</span>
+                    <div class="form-group">
+                        <label for="quietHoursEnd">End Time</label>
+                        <input type="time" id="quietHoursEnd" value="07:00">
+                    </div>
+                </div>
+            </div>
+
+            <!-- SMS Cost Tracking -->
+            <div class="settings-section">
+                <h2>💰 SMS Cost Tracking</h2>
+                
+                <div class="cost-stats">
+                    <div class="cost-stat">
+                        <div class="stat-label">This Month</div>
+                        <div class="stat-value" id="smsMonthCount">-</div>
+                        <div class="stat-cost" id="smsMonthCost">$0.00 AUD</div>
+                    </div>
+                    <div class="cost-stat">
+                        <div class="stat-label">All Time</div>
+                        <div class="stat-value" id="smsAllTimeCount">-</div>
+                        <div class="stat-cost" id="smsAllTimeCost">$0.00 AUD</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Statistics -->
+            <div class="settings-section">
+                <h2>📊 Notification Statistics</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="statTodayNotifs">-</div>
+                        <div class="stat-label">Today</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="statWeekNotifs">-</div>
+                        <div class="stat-label">This Week</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="statTotalSent">-</div>
+                        <div class="stat-label">Total Sent</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="statTotalFailed">-</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification History -->
+            <div class="settings-section">
+                <h2>📜 Notification History</h2>
+                
+                <div class="history-controls">
+                    <div class="filter-group">
+                        <select id="filterType">
+                            <option value="">All Types</option>
+                            <option value="BROWSER">🔔 Browser</option>
+                            <option value="EMAIL">📧 Email</option>
+                            <option value="SMS">📱 SMS</option>
+                        </select>
+                        <select id="filterStatus">
+                            <option value="">All Status</option>
+                            <option value="SENT">✅ Sent</option>
+                            <option value="FAILED">❌ Failed</option>
+                        </select>
+                        <button class="btn-secondary" id="refreshHistoryBtn">🔄 Refresh</button>
+                    </div>
+                    <button class="btn-danger" id="clearHistoryBtn">🗑️ Clear Old History</button>
+                </div>
+
+                <div class="history-list" id="historyList">
+                    <div class="loading-text">Loading history...</div>
+                </div>
+
+                <button class="btn-secondary load-more-btn" id="loadMoreBtn" style="display: none;">Load More</button>
+            </div>
+
+            <!-- Save Button -->
+            <div class="settings-footer">
+                <button class="btn-primary btn-large" id="saveSettingsBtn">Save Settings</button>
+                <button class="btn-secondary btn-large" onclick="window.location.href='/'">Cancel</button>
+                <div class="save-status" id="saveStatus"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls Panel -->
+    <div th:replace="~{fragments/slideshow/controls-panel :: controls-panel}"></div>
+
+    <!-- Scripts -->
+    <div th:replace="~{fragments/scripts :: all-scripts}"></div>
+    <script src="/js/settings/notification-settings.js"></script>
+    
+</body>
+</html>
