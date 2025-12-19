@@ -1550,6 +1550,11 @@ document.addEventListener('keydown', (e) => {
                 SlideshowCore.stop();
                 SlideshowCore.hide();
                 document.body.style.cursor = "default";
+                document.body.classList.remove("slideshow-active");
+                
+                // Reset mode so slideshow can be restarted
+                window.currentMode = null;
+                window.slideshowStarted = false;
                 
                 // Return to the location where slideshow was launched from
                 console.log('[Escape Key] Checking launch source:', window.slideshowLaunchSource);
@@ -1563,11 +1568,13 @@ document.addEventListener('keydown', (e) => {
                     });
                     if (calendarOverlay) calendarOverlay.classList.add('active');
                     if (calendarMirror) calendarMirror.classList.remove('hidden');
+                    window.currentMode = 'calendar';
                     console.log('[Slideshow Exit] Returning to calendar');
                 } else {
                     // Return to slideshow controls
                     console.log('[Escape Key] Controls element:', !!controls);
                     controls.classList.remove('hidden');
+                    window.currentMode = 'slideshow';
                     console.log('[Slideshow Exit] Returning to slideshow controls');
                 }
                 
@@ -1676,13 +1683,23 @@ document.addEventListener('visibilitychange', async () => {
 });
 
 startBtn.addEventListener("click", async () => {
+    console.log('🔘 Start button clicked! State:', {
+        currentMode: window.currentMode,
+        slideshowStarted: window.slideshowStarted,
+        buttonDisabled: startBtn.disabled,
+        buttonVisible: startBtn.offsetParent !== null
+    });
+    
     if (window.currentMode === 'slideshow') {
+        console.log('✅ Mode is slideshow, proceeding...');
+        
         // Use FolderManager.validate() instead of missing validateFolderSelection()
         if (!FolderManager.validate()) {
             console.warn('⚠️ No folders selected');
             return;
         }
         
+        console.log('✅ Folders validated, starting slideshow...');
         delay = parseInt(speedSelect.value);
         
         mirrorOverlay.classList.add("hidden");
@@ -1891,8 +1908,9 @@ document.addEventListener('fullscreenchange', () => {
             console.log('[Fullscreen Exit] Returning to slideshow controls. Launch source was:', window.slideshowLaunchSource);
             const controls = document.getElementById('controls');
             if (controls) controls.classList.remove('hidden');
-            // Keep currentMode as null since we're not in any specific mode
-            window.currentMode = null;
+            // Set currentMode back to slideshow setup mode so Start button works
+            window.currentMode = 'slideshow';
+            window.slideshowStarted = false;
         }
         
         // Reset launch source

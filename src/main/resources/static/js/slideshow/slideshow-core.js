@@ -170,8 +170,8 @@ const SlideshowCore = (() => {
      * @returns {Promise<void>}
      */
     async function start(speed = 5000) {
+        console.log("🎬 SlideshowCore.start() called. State:", { started, isPaused, intervalId: !!intervalId });
         if (started) {
-            console.warn('⚠️ Slideshow already started');
             return;
         }
         
@@ -240,7 +240,7 @@ const SlideshowCore = (() => {
         started = false;
         imageHistory = [];
         
-        console.log('⏹️ Slideshow stopped');
+        console.log("⏹️ Slideshow stopped. State:", { started, isPaused, intervalId: !!intervalId });
     }
     
     /**

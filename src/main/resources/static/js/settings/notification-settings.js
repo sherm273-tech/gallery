@@ -112,27 +112,39 @@ const NotificationSettingsManager = {
             
             if (!response.ok) throw new Error('Failed to save settings');
             
-            this.showSaveStatus('Settings saved successfully!', 'success');
+            // Success - just redirect back to home
+            window.location.href = '/';
             
         } catch (error) {
             console.error('[NotificationSettingsManager] Error saving settings:', error);
-            this.showSaveStatus('Failed to save settings', 'error');
+            this.showToast('❌ Failed to save settings', 'error');
         }
     },
     
     /**
-     * Show save status message
+     * Show toast notification (only for errors)
      */
-    showSaveStatus(message, type) {
-        const statusEl = document.getElementById('saveStatus');
-        if (!statusEl) return;
+    showToast(message, type = 'error') {
+        const toast = document.getElementById('toastNotification');
+        const messageEl = document.getElementById('toastMessage');
         
-        statusEl.textContent = message;
-        statusEl.className = `save-status ${type}`;
+        if (!toast || !messageEl) {
+            // Fallback to alert if toast doesn't exist
+            alert(message);
+            return;
+        }
         
+        // Set message and type
+        messageEl.textContent = message;
+        toast.className = 'toast-notification show error';
+        
+        // Auto-hide after 5 seconds (longer for errors so user can read)
         setTimeout(() => {
-            statusEl.className = 'save-status';
-        }, 3000);
+            toast.classList.add('hiding');
+            setTimeout(() => {
+                toast.classList.remove('show', 'hiding', 'error');
+            }, 300);
+        }, 5000);
     },
     
     /**
@@ -146,8 +158,30 @@ const NotificationSettingsManager = {
             return;
         }
         
-        // Note: Test email would need backend implementation
-        alert('Test email functionality coming soon!\nWould send to: ' + email);
+        const btn = document.getElementById('testEmailBtn');
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+        
+        try {
+            const response = await fetch(`/api/notifications/test/email?email=${encodeURIComponent(email)}`, {
+                method: 'POST'
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                alert('✅ ' + result.message + '\n\nCheck your inbox (and spam folder)!');
+            } else {
+                alert('❌ ' + result.message);
+            }
+        } catch (error) {
+            console.error('[NotificationSettingsManager] Error sending test email:', error);
+            alert('❌ Failed to send test email: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
     },
     
     /**
@@ -161,11 +195,37 @@ const NotificationSettingsManager = {
             return;
         }
         
-        const confirm = window.confirm('This will send a test SMS (~$0.08 AUD).\n\nContinue?');
-        if (!confirm) return;
+        const confirmed = window.confirm(
+            '💰 This will send a test SMS (~$0.08 AUD).\n\n' +
+            'Phone: ' + phone + '\n\n' +
+            'Continue?'
+        );
+        if (!confirmed) return;
         
-        // Note: Test SMS would need backend implementation
-        alert('Test SMS functionality coming soon!\nWould send to: ' + phone);
+        const btn = document.getElementById('testSmsBtn');
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+        
+        try {
+            const response = await fetch(`/api/notifications/test/sms?phone=${encodeURIComponent(phone)}`, {
+                method: 'POST'
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                alert('✅ ' + result.message + '\n\nYou should receive the SMS shortly!');
+            } else {
+                alert('❌ ' + result.message);
+            }
+        } catch (error) {
+            console.error('[NotificationSettingsManager] Error sending test SMS:', error);
+            alert('❌ Failed to send test SMS: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
     },
     
     /**

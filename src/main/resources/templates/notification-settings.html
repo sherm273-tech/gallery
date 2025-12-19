@@ -20,6 +20,11 @@
     <!-- Menu -->
     <div th:replace="~{fragments/menu :: initial-menu}"></div>
 
+    <!-- Toast Notification (for errors only) -->
+    <div id="toastNotification" class="toast-notification">
+        <span id="toastMessage"></span>
+    </div>
+
     <!-- Settings Container -->
     <div class="settings-container">
         <div class="settings-panel">
@@ -173,7 +178,6 @@
             <div class="settings-footer">
                 <button class="btn-primary btn-large" id="saveSettingsBtn">Save Settings</button>
                 <button class="btn-secondary btn-large" onclick="window.location.href='/'">Cancel</button>
-                <div class="save-status" id="saveStatus"></div>
             </div>
         </div>
     </div>

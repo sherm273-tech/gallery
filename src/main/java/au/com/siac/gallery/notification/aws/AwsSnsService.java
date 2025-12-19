@@ -1,16 +1,22 @@
 package au.com.siac.gallery.notification.aws;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.services.sns.model.PublishRequest;
 import software.amazon.awssdk.services.sns.model.PublishResponse;
+import software.amazon.awssdk.services.sts.StsClient;
+import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
+import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
 
 /**
  * AWS SNS Service
- * Wrapper for AWS SNS operations
+ * Wrapper for AWS SNS operations with support for AssumeRole
  * Only attempts to use AWS if configured
  */
 @Service
@@ -18,6 +24,18 @@ public class AwsSnsService {
     
     @Autowired
     private AwsConfigChecker awsConfigChecker;
+    
+    @Value("${aws.sns.email.topic.arn:}")
+    private String emailTopicArn;
+    
+    @Value("${aws.sns.region:ap-southeast-2}")
+    private String awsRegion;
+    
+    @Value("${aws.sns.role.arn:}")
+    private String roleArn;
+    
+    @Value("${aws.sns.role.session.name:gallery-notification-session}")
+    private String roleSessionName;
     
     private SnsClient snsClient;
     
@@ -32,12 +50,46 @@ public class AwsSnsService {
         
         if (snsClient == null) {
             try {
+                AwsCredentialsProvider credentialsProvider;
+                
+                // If role ARN is configured, use AssumeRole
+                if (roleArn != null && !roleArn.trim().isEmpty()) {
+                    System.out.println("[AwsSnsService] Using AssumeRole with role: " + roleArn);
+                    
+                    // Create STS client with default credentials (your IAM user)
+                    StsClient stsClient = StsClient.builder()
+                        .region(Region.of(awsRegion))
+                        .credentialsProvider(DefaultCredentialsProvider.create())
+                        .build();
+                    
+                    // Create AssumeRole request
+                    AssumeRoleRequest assumeRoleRequest = AssumeRoleRequest.builder()
+                        .roleArn(roleArn)
+                        .roleSessionName(roleSessionName)
+                        .durationSeconds(3600) // 1 hour
+                        .build();
+                    
+                    // Create credentials provider that assumes the role
+                    credentialsProvider = StsAssumeRoleCredentialsProvider.builder()
+                        .stsClient(stsClient)
+                        .refreshRequest(assumeRoleRequest)
+                        .build();
+                    
+                } else {
+                    System.out.println("[AwsSnsService] Using default credentials (no role assumption)");
+                    credentialsProvider = DefaultCredentialsProvider.create();
+                }
+                
                 snsClient = SnsClient.builder()
-                    .region(Region.AP_SOUTHEAST_2) // Sydney
-                    .credentialsProvider(DefaultCredentialsProvider.create())
+                    .region(Region.of(awsRegion))
+                    .credentialsProvider(credentialsProvider)
                     .build();
+                    
+                System.out.println("[AwsSnsService] SNS client created successfully");
+                
             } catch (Exception e) {
                 System.err.println("[AwsSnsService] Failed to create SNS client: " + e.getMessage());
+                e.printStackTrace();
                 return null;
             }
         }
@@ -55,21 +107,26 @@ public class AwsSnsService {
             return false; // AWS not configured
         }
         
+        if (emailTopicArn == null || emailTopicArn.trim().isEmpty()) {
+            System.err.println("[AwsSnsService] Email topic ARN not configured. Set aws.sns.email.topic.arn in application.properties");
+            return false;
+        }
+        
         try {
-            // For email, we need to use SNS with email subscription
-            // This is a simplified version - in production you'd use SES or configured SNS topics
+            // Publish to SNS topic (email subscribers will receive it)
             PublishRequest request = PublishRequest.builder()
                 .message(body)
                 .subject(subject)
-                .topicArn("arn:aws:sns:ap-southeast-2:YOUR_ACCOUNT:YOUR_TOPIC") // Would be configured
+                .topicArn(emailTopicArn)
                 .build();
             
             PublishResponse response = client.publish(request);
-            System.out.println("[AwsSnsService] Email sent via AWS SNS. MessageId: " + response.messageId());
+            System.out.println("[AwsSnsService] ✅ Email sent via AWS SNS. MessageId: " + response.messageId());
             return true;
             
         } catch (Exception e) {
-            System.err.println("[AwsSnsService] Failed to send email: " + e.getMessage());
+            System.err.println("[AwsSnsService] ❌ Failed to send email: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
@@ -91,11 +148,12 @@ public class AwsSnsService {
                 .build();
             
             PublishResponse response = client.publish(request);
-            System.out.println("[AwsSnsService] SMS sent via AWS SNS. MessageId: " + response.messageId());
+            System.out.println("[AwsSnsService] ✅ SMS sent via AWS SNS. MessageId: " + response.messageId());
             return true;
             
         } catch (Exception e) {
-            System.err.println("[AwsSnsService] Failed to send SMS: " + e.getMessage());
+            System.err.println("[AwsSnsService] ❌ Failed to send SMS: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }

@@ -186,4 +186,43 @@ public class NotificationService {
         
         System.out.println("[NotificationService] Logged " + type + " notification: " + status);
     }
+    
+    /**
+     * Send test email notification
+     */
+    public void sendTestEmail(String email) {
+        System.out.println("[NotificationService] Sending test email to: " + email);
+        
+        String subject = "Test Email from Sang's and Sherm's Station";
+        String body = "This is a test email notification.\n\n" +
+                     "If you're receiving this, your email notifications are configured correctly!\n\n" +
+                     "Sent at: " + LocalDateTime.now();
+        
+        boolean success = emailProvider.sendEmail(email, subject, body);
+        
+        if (!success) {
+            throw new RuntimeException("Failed to send test email");
+        }
+        
+        System.out.println("[NotificationService] ✅ Test email sent successfully");
+    }
+    
+    /**
+     * Send test SMS notification
+     */
+    public void sendTestSms(String phone) {
+        System.out.println("[NotificationService] Sending test SMS to: " + phone);
+        
+        String message = "Test SMS from Sang's and Sherm's Station. " +
+                        "Your SMS notifications are configured correctly! " +
+                        "Sent at " + LocalDateTime.now().toLocalTime();
+        
+        boolean success = smsProvider.sendSms(phone, message);
+        
+        if (!success) {
+            throw new RuntimeException("Failed to send test SMS");
+        }
+        
+        System.out.println("[NotificationService] ✅ Test SMS sent successfully (~$0.08 AUD charged)");
+    }
 }

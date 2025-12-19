@@ -24,7 +24,19 @@ public class SmsNotificationProvider {
     public boolean sendNotification(Event event, String timing, String recipient) {
         try {
             String message = formatMessage(event, timing);
+            return sendSms(recipient, message);
             
+        } catch (Exception e) {
+            System.err.println("[SmsNotificationProvider] Error sending SMS: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Send a simple SMS (for testing or direct sending)
+     */
+    public boolean sendSms(String recipient, String message) {
+        try {
             // Try AWS SNS first if configured
             if (awsSnsService.isAvailable()) {
                 System.out.println("[SmsNotificationProvider] Sending via AWS SNS...");

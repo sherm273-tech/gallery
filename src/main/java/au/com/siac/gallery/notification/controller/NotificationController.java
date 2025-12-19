@@ -74,6 +74,44 @@ public class NotificationController {
     }
     
     /**
+     * Send test email notification
+     */
+    @PostMapping("/test/email")
+    public ResponseEntity<Map<String, String>> sendTestEmail(@RequestParam String email) {
+        Map<String, String> response = new HashMap<>();
+        
+        try {
+            notificationService.sendTestEmail(email);
+            response.put("status", "success");
+            response.put("message", "Test email sent successfully to: " + email);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("status", "error");
+            response.put("message", "Failed to send test email: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+    
+    /**
+     * Send test SMS notification
+     */
+    @PostMapping("/test/sms")
+    public ResponseEntity<Map<String, String>> sendTestSms(@RequestParam String phone) {
+        Map<String, String> response = new HashMap<>();
+        
+        try {
+            notificationService.sendTestSms(phone);
+            response.put("status", "success");
+            response.put("message", "Test SMS sent successfully to: " + phone);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("status", "error");
+            response.put("message", "Failed to send test SMS: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+    
+    /**
      * Get notification settings
      */
     @GetMapping("/settings")

@@ -29,6 +29,7 @@ dependencies {
 	// AWS SDK for SNS (Email and SMS notifications - OPTIONAL)
 	implementation platform('software.amazon.awssdk:bom:2.29.29')
 	implementation 'software.amazon.awssdk:sns'
+	implementation 'software.amazon.awssdk:sts'
 	implementation 'software.amazon.awssdk:auth'
 	
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'

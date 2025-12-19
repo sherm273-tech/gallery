@@ -197,9 +197,12 @@ public class ImageController {
             
             // If all images have been shown, reset and start new cycle
             if (imageQueue.isEmpty()) {
+                System.out.println("🔄 CYCLE COMPLETE - All " + shownImages.size() + " images shown once. Starting new cycle.");
                 shownImages.clear();
                 imageQueue = new ArrayList<>(allImages);
                 response.put("cycleComplete", true);
+            } else {
+                System.out.println("⚠️ Queue rebuilt: " + imageQueue.size() + " remaining, " + shownImages.size() + " already shown");
             }
             
             session.setAttribute(SESSION_IMAGE_QUEUE, imageQueue);
@@ -215,17 +218,32 @@ public class ImageController {
 
         // Get next image from queue
         String nextImage = imageQueue.remove(0);
+        
+        // VERIFICATION: Check if image was already shown (should NEVER happen)
+        if (shownImages.contains(nextImage)) {
+            System.err.println("❌ ERROR: Duplicate image detected!");
+            System.err.println("   Image: " + nextImage);
+            System.err.println("   Already shown: " + shownImages.size() + " images");
+            System.err.println("   Queue size: " + imageQueue.size());
+        }
+        
         shownImages.add(nextImage);
 
         // Update session
         session.setAttribute(SESSION_IMAGE_QUEUE, imageQueue);
         session.setAttribute(SESSION_SHOWN_IMAGES, shownImages);
+        
+        // Log progress every 10 images
+        int totalImages = allImages != null ? allImages.size() : 0;
+        if (totalImages > 0 && shownImages.size() % 10 == 0) {
+            System.out.println("📊 Slideshow progress: " + shownImages.size() + "/" + totalImages + " images shown");
+        }
 
         response.put("image", nextImage);
         response.put("hasMore", !imageQueue.isEmpty());
         response.put("remaining", imageQueue.size());
         response.put("totalShown", shownImages.size());
-        response.put("totalImages", allImages != null ? allImages.size() : 0);
+        response.put("totalImages", totalImages);
         response.put("cycleComplete", false);
 
         return response;
