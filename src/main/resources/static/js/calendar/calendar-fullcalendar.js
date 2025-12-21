@@ -44,29 +44,33 @@ const CalendarFC = {
         
         // Convert your events to FullCalendar format
         const fcEvents = events.filter(e => !e.completed).map(event => {
-            const startDate = event.eventDate;
-            // Only use endDate if it exists and is different from startDate
-            const endDate = event.eventEndDate && event.eventEndDate !== event.eventDate ? event.eventEndDate : null;
+            // eventStartDatetime and eventEndDatetime are ISO strings from backend
+            const startDT = event.eventStartDatetime;
+            const endDT = event.eventEndDatetime;
             
-            // For multi-day events, FullCalendar needs end date to be the day AFTER the last day
-            let fcEndDate = null;
-            if (endDate) {
-                const endDateObj = new Date(endDate);
-                endDateObj.setDate(endDateObj.getDate() + 1);
-                fcEndDate = endDateObj.toISOString().split('T')[0];
+            // Check if this is an all-day event (time is 00:00:00)
+            const startDate = new Date(startDT);
+            const isAllDay = startDate.getHours() === 0 && startDate.getMinutes() === 0 && startDate.getSeconds() === 0;
+            
+            // For multi-day all-day events, FullCalendar needs end date to be the day AFTER
+            let fcEnd = endDT;
+            if (isAllDay && endDT && startDT !== endDT) {
+                const endDate = new Date(endDT);
+                endDate.setDate(endDate.getDate() + 1);
+                fcEnd = endDate.toISOString();
             }
             
             return {
                 id: event.id,
                 title: event.title,
-                start: event.eventTime ? `${startDate}T${event.eventTime}` : startDate,
-                end: fcEndDate,  // Only set if multi-day event
-                allDay: !event.eventTime,
+                start: startDT,
+                end: fcEnd || startDT,
+                allDay: isAllDay,
                 extendedProps: {
                     description: event.description,
                     eventType: event.eventType,
                     completed: event.completed,
-                    originalEndDate: endDate || startDate,
+                    originalEndDatetime: endDT,
                     hasSlideshowConfig: event.hasSlideshowConfig
                 },
                 backgroundColor: this.getEventColor(event.eventType),

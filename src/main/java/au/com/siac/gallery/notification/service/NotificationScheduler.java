@@ -64,12 +64,11 @@ public class NotificationScheduler {
             return;
         }
         
-        LocalDate eventDate = event.getEventDate();
-        LocalTime eventTime = event.getEventTime();
+        LocalDateTime eventDateTime = event.getEventStartDatetime();
         LocalDateTime now = LocalDateTime.now();
         
         for (String timing : timings) {
-            if (shouldSendNotification(timing, eventDate, eventTime, now)) {
+            if (shouldSendNotification(timing, eventDateTime, now)) {
                 System.out.println("[NotificationScheduler] Sending " + timing + " notification for: " + event.getTitle());
                 notificationService.sendNotification(event, timing);
             }
@@ -79,9 +78,10 @@ public class NotificationScheduler {
     /**
      * Determine if a notification should be sent based on timing
      */
-    private boolean shouldSendNotification(String timing, LocalDate eventDate, LocalTime eventTime, LocalDateTime now) {
+    private boolean shouldSendNotification(String timing, LocalDateTime eventDateTime, LocalDateTime now) {
         LocalDate today = now.toLocalDate();
         LocalTime currentTime = now.toLocalTime();
+        LocalDate eventDate = eventDateTime.toLocalDate();
         
         switch (timing) {
             case "1_week_before":
@@ -112,10 +112,7 @@ public class NotificationScheduler {
                        currentTime.getMinute() == 0;
                 
             case "1_hour_before":
-                // Send 1 hour before event time (only if event has a time)
-                if (eventTime == null) return false;
-                
-                LocalDateTime eventDateTime = LocalDateTime.of(eventDate, eventTime);
+                // Send 1 hour before event time
                 LocalDateTime oneHourBefore = eventDateTime.minusHours(1);
                 
                 // Check if we're within the same minute as 1 hour before
@@ -124,11 +121,8 @@ public class NotificationScheduler {
                        now.getMinute() == oneHourBefore.getMinute();
                 
             case "30_mins_before":
-                // Send 30 minutes before event time (only if event has a time)
-                if (eventTime == null) return false;
-                
-                LocalDateTime eventDateTime30 = LocalDateTime.of(eventDate, eventTime);
-                LocalDateTime thirtyMinsBefore = eventDateTime30.minusMinutes(30);
+                // Send 30 minutes before event time
+                LocalDateTime thirtyMinsBefore = eventDateTime.minusMinutes(30);
                 
                 // Check if we're within the same minute as 30 mins before
                 return now.toLocalDate().equals(thirtyMinsBefore.toLocalDate()) &&

@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,10 +39,10 @@ public class EventService {
     }
     
     /**
-     * Get all events ordered by date and time
+     * Get all events ordered by start datetime
      */
     public List<Event> getAllEvents() {
-        List<Event> events = eventRepository.findAllByOrderByEventDateAscEventTimeAsc();
+        List<Event> events = eventRepository.findAllByOrderByEventStartDatetimeAsc();
         populateSlideshowConfigs(events);
         return events;
     }
@@ -59,17 +61,17 @@ public class EventService {
      */
     public List<Event> getTodayEvents() {
         LocalDate today = LocalDate.now();
-        List<Event> events = eventRepository.findByEventDateOrderByEventTimeAsc(today);
+        List<Event> events = eventRepository.findByEventDate(today);
         populateSlideshowConfigs(events);
         return events;
     }
     
     /**
-     * Get upcoming events (today and future, not completed)
+     * Get upcoming events (from now onwards, not completed)
      */
     public List<Event> getUpcomingEvents() {
-        LocalDate today = LocalDate.now();
-        List<Event> events = eventRepository.findUpcomingEvents(today);
+        LocalDateTime now = LocalDateTime.now();
+        List<Event> events = eventRepository.findUpcomingEvents(now);
         populateSlideshowConfigs(events);
         return events;
     }
@@ -78,9 +80,9 @@ public class EventService {
      * Get events for this week
      */
     public List<Event> getThisWeekEvents() {
-        LocalDate today = LocalDate.now();
-        LocalDate endOfWeek = today.plusDays(7);
-        List<Event> events = eventRepository.findByEventDateBetweenOrderByEventDateAscEventTimeAsc(today, endOfWeek);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime endOfWeek = now.plusDays(7);
+        List<Event> events = eventRepository.findByEventStartDatetimeBetween(now, endOfWeek);
         populateSlideshowConfigs(events);
         return events;
     }
@@ -89,9 +91,9 @@ public class EventService {
      * Get events for this month
      */
     public List<Event> getThisMonthEvents() {
-        LocalDate today = LocalDate.now();
-        LocalDate endOfMonth = today.withDayOfMonth(today.lengthOfMonth());
-        List<Event> events = eventRepository.findByEventDateBetweenOrderByEventDateAscEventTimeAsc(today, endOfMonth);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime endOfMonth = now.toLocalDate().withDayOfMonth(now.toLocalDate().lengthOfMonth()).atTime(23, 59, 59);
+        List<Event> events = eventRepository.findByEventStartDatetimeBetween(now, endOfMonth);
         populateSlideshowConfigs(events);
         return events;
     }
@@ -100,7 +102,7 @@ public class EventService {
      * Get events by type
      */
     public List<Event> getEventsByType(String eventType) {
-        List<Event> events = eventRepository.findByEventTypeOrderByEventDateAscEventTimeAsc(eventType);
+        List<Event> events = eventRepository.findByEventTypeOrderByEventStartDatetimeAsc(eventType);
         populateSlideshowConfigs(events);
         return events;
     }
@@ -109,7 +111,7 @@ public class EventService {
      * Get completed events
      */
     public List<Event> getCompletedEvents() {
-        List<Event> events = eventRepository.findByCompletedOrderByEventDateDesc(true);
+        List<Event> events = eventRepository.findByCompletedOrderByEventStartDatetimeDesc(true);
         populateSlideshowConfigs(events);
         return events;
     }
@@ -118,7 +120,9 @@ public class EventService {
      * Get events in date range
      */
     public List<Event> getEventsByDateRange(LocalDate startDate, LocalDate endDate) {
-        List<Event> events = eventRepository.findByEventDateBetweenOrderByEventDateAscEventTimeAsc(startDate, endDate);
+        LocalDateTime startDateTime = startDate.atStartOfDay();
+        LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+        List<Event> events = eventRepository.findByEventStartDatetimeBetween(startDateTime, endDateTime);
         populateSlideshowConfigs(events);
         return events;
     }
@@ -147,9 +151,9 @@ public class EventService {
         if (event.getCompleted() == null) {
             event.setCompleted(false);
         }
-        // If eventEndDate is null, default to eventDate (single-day event)
-        if (event.getEventEndDate() == null) {
-            event.setEventEndDate(event.getEventDate());
+        // If eventEndDatetime is null, default to eventStartDatetime (single-point event)
+        if (event.getEventEndDatetime() == null) {
+            event.setEventEndDatetime(event.getEventStartDatetime());
         }
         
         return eventRepository.save(event);
@@ -165,14 +169,14 @@ public class EventService {
         
         existing.setTitle(updatedEvent.getTitle());
         existing.setDescription(updatedEvent.getDescription());
-        existing.setEventDate(updatedEvent.getEventDate());
-        existing.setEventTime(updatedEvent.getEventTime());
+        existing.setEventStartDatetime(updatedEvent.getEventStartDatetime());
         existing.setEventType(updatedEvent.getEventType());
-        // If eventEndDate is null, default to eventDate
-        if (updatedEvent.getEventEndDate() != null) {
-            existing.setEventEndDate(updatedEvent.getEventEndDate());
+        
+        // If eventEndDatetime is null, default to eventStartDatetime
+        if (updatedEvent.getEventEndDatetime() != null) {
+            existing.setEventEndDatetime(updatedEvent.getEventEndDatetime());
         } else {
-            existing.setEventEndDate(updatedEvent.getEventDate());
+            existing.setEventEndDatetime(updatedEvent.getEventStartDatetime());
         }
         
         if (updatedEvent.getRecurring() != null) {
@@ -239,16 +243,17 @@ public class EventService {
      * Get event statistics
      */
     public EventStatistics getStatistics() {
-        LocalDate today = LocalDate.now();
-        LocalDate weekFromNow = today.plusDays(7);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime weekFromNow = now.plusDays(7);
+        LocalDate today = now.toLocalDate();
         
         long total = eventRepository.count();
-        long upcoming = eventRepository.countUpcomingEvents(today);
-        long completed = eventRepository.findByCompletedOrderByEventDateDesc(true).size();
-        long todayCount = eventRepository.findByEventDateOrderByEventTimeAsc(today).stream()
+        long upcoming = eventRepository.countUpcomingEvents(now);
+        long completed = eventRepository.findByCompletedOrderByEventStartDatetimeDesc(true).size();
+        long todayCount = eventRepository.findByEventDate(today).stream()
                 .filter(e -> e != null && !e.getCompleted())
                 .count();
-        long weekCount = eventRepository.findByEventDateBetweenOrderByEventDateAscEventTimeAsc(today, weekFromNow).stream()
+        long weekCount = eventRepository.findByEventStartDatetimeBetween(now, weekFromNow).stream()
                 .filter(e -> e != null && !e.getCompleted())
                 .count();
         

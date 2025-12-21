@@ -135,14 +135,18 @@ const CalendarManager = {
         switch(this.currentFilter) {
             case 'today':
                 const todayStr = today.toISOString().split('T')[0];
-                filteredEvents = filteredEvents.filter(e => e.eventDate === todayStr);
+                filteredEvents = filteredEvents.filter(e => {
+                    const eventDate = new Date(e.eventStartDatetime);
+                    const eventDateStr = eventDate.toISOString().split('T')[0];
+                    return eventDateStr === todayStr;
+                });
                 break;
                 
             case 'upcoming':
                 const weekFromNow = new Date(today);
                 weekFromNow.setDate(weekFromNow.getDate() + 7);
                 filteredEvents = filteredEvents.filter(e => {
-                    const eventDate = new Date(e.eventDate);
+                    const eventDate = new Date(e.eventStartDatetime);
                     return eventDate >= today && eventDate <= weekFromNow && !e.completed;
                 });
                 break;
@@ -218,7 +222,7 @@ const CalendarManager = {
         }
         
         // Filter out null events
-        events = events.filter(e => e != null && e.eventDate != null);
+        events = events.filter(e => e != null && e.eventStartDatetime != null);
         
         if (events.length === 0) {
             this.eventsList.innerHTML = `
@@ -229,21 +233,11 @@ const CalendarManager = {
             return;
         }
         
-        // Sort events by date ASCENDING (next event first, then future events)
+        // Sort events by start datetime ASCENDING (next event first)
         events.sort((a, b) => {
-            const dateA = new Date(a.eventDate);
-            const dateB = new Date(b.eventDate);
-            const dateCompare = dateA - dateB;
-            
-            // If same date, sort by time
-            if (dateCompare === 0) {
-                if (a.eventTime && b.eventTime) {
-                    return a.eventTime.localeCompare(b.eventTime);
-                }
-                if (a.eventTime) return -1;
-                if (b.eventTime) return 1;
-            }
-            return dateCompare;
+            const dateA = new Date(a.eventStartDatetime);
+            const dateB = new Date(b.eventStartDatetime);
+            return dateA - dateB;
         });
         
         // Display each event
@@ -260,41 +254,40 @@ const CalendarManager = {
             card.classList.add('completed');
         }
         
-        const eventDate = new Date(event.eventDate);
-        const eventEndDate = event.eventEndDate ? new Date(event.eventEndDate) : eventDate;
+        const eventStartDT = new Date(event.eventStartDatetime);
+        const eventEndDT = event.eventEndDatetime ? new Date(event.eventEndDatetime) : eventStartDT;
         
-        // Check if multi-day event
-        const isMultiDay = event.eventEndDate && event.eventEndDate !== event.eventDate;
+        // Check if multi-day event (different dates)
+        const isSameDay = eventStartDT.toDateString() === eventEndDT.toDateString();
+        const isMultiDay = !isSameDay;
         
+        // Format date and time
         let dateTimeStr;
         if (isMultiDay) {
-            // Show date range for multi-day events
-            const startDateStr = eventDate.toLocaleDateString('en-AU', { 
+            // Multi-day event: show date range
+            const startDateStr = eventStartDT.toLocaleDateString('en-AU', { 
                 weekday: 'short', 
                 month: 'short', 
                 day: 'numeric' 
             });
-            const endDateStr = eventEndDate.toLocaleDateString('en-AU', { 
+            const endDateStr = eventEndDT.toLocaleDateString('en-AU', { 
                 weekday: 'short', 
                 month: 'short', 
                 day: 'numeric',
                 year: 'numeric'
             });
-            dateTimeStr = `${startDateStr} - ${endDateStr}`;
-            if (event.eventTime) {
-                dateTimeStr += ` • ${event.eventTime}`;
-            }
+            const startTimeStr = eventStartDT.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
+            dateTimeStr = `${startDateStr} ${startTimeStr} - ${endDateStr}`;
         } else {
-            // Single day event
-            const formattedDate = eventDate.toLocaleDateString('en-AU', { 
+            // Single day event: show date and time
+            const dateStr = eventStartDT.toLocaleDateString('en-AU', { 
                 weekday: 'short', 
                 year: 'numeric', 
                 month: 'short', 
                 day: 'numeric' 
             });
-            dateTimeStr = event.eventTime ? 
-                `${formattedDate} • ${event.eventTime}` : 
-                formattedDate;
+            const timeStr = eventStartDT.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
+            dateTimeStr = `${dateStr} • ${timeStr}`;
         }
         
         const descStr = event.description ? 

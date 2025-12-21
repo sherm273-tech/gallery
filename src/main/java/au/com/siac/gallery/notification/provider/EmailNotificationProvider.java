@@ -5,6 +5,7 @@ import au.com.siac.gallery.notification.aws.AwsSnsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
@@ -78,18 +79,17 @@ public class EmailNotificationProvider {
      */
     private String formatBody(Event event, String timing) {
         DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy");
-        String dateStr = event.getEventDate().format(dateFormat);
+        DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("h:mm a");
+        
+        LocalDateTime eventDateTime = event.getEventStartDatetime();
+        String dateStr = eventDateTime.format(dateFormat);
+        String timeStr = eventDateTime.format(timeFormat);
         
         StringBuilder body = new StringBuilder();
         body.append("Hello,\n\n");
         body.append("This is a reminder about your upcoming event:\n\n");
         body.append("Event: ").append(event.getTitle()).append("\n");
-        body.append("Date: ").append(dateStr);
-        
-        if (event.getEventTime() != null) {
-            body.append(" at ").append(event.getEventTime());
-        }
-        body.append("\n");
+        body.append("Date: ").append(dateStr).append(" at ").append(timeStr).append("\n");
         
         if (event.getDescription() != null && !event.getDescription().isEmpty()) {
             body.append("Details: ").append(event.getDescription()).append("\n");

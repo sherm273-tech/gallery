@@ -1,8 +1,6 @@
 package au.com.siac.gallery.events.entity;
 
 import jakarta.persistence.*;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.LocalDateTime;
 
 @Entity
@@ -19,14 +17,11 @@ public class Event {
     @Column(columnDefinition = "TEXT")
     private String description;
     
-    @Column(nullable = false, name = "event_date")
-    private LocalDate eventDate;
+    @Column(nullable = false, name = "event_start_datetime")
+    private LocalDateTime eventStartDatetime;
     
-    @Column(name = "event_end_date")
-    private LocalDate eventEndDate;
-    
-    @Column(name = "event_time")
-    private LocalTime eventTime;
+    @Column(name = "event_end_datetime")
+    private LocalDateTime eventEndDatetime;
     
     @Column(nullable = false, length = 50, name = "event_type")
     private String eventType;  // 'appointment', 'birthday', 'bill', 'reminder', 'holiday', 'other'
@@ -80,11 +75,10 @@ public class Event {
     public Event() {
     }
     
-    public Event(String title, String description, LocalDate eventDate, LocalTime eventTime, String eventType) {
+    public Event(String title, String description, LocalDateTime eventStartDatetime, String eventType) {
         this.title = title;
         this.description = description;
-        this.eventDate = eventDate;
-        this.eventTime = eventTime;
+        this.eventStartDatetime = eventStartDatetime;
         this.eventType = eventType;
         this.recurring = false;
         this.notificationsEnabled = false;
@@ -119,28 +113,20 @@ public class Event {
         this.description = description;
     }
     
-    public LocalDate getEventDate() {
-        return eventDate;
+    public LocalDateTime getEventStartDatetime() {
+        return eventStartDatetime;
     }
     
-    public void setEventDate(LocalDate eventDate) {
-        this.eventDate = eventDate;
-    }    
-    public LocalDate getEventEndDate() {
-        return eventEndDate;
+    public void setEventStartDatetime(LocalDateTime eventStartDatetime) {
+        this.eventStartDatetime = eventStartDatetime;
     }
     
-    public void setEventEndDate(LocalDate eventEndDate) {
-        this.eventEndDate = eventEndDate;
+    public LocalDateTime getEventEndDatetime() {
+        return eventEndDatetime;
     }
     
-    
-    public LocalTime getEventTime() {
-        return eventTime;
-    }
-    
-    public void setEventTime(LocalTime eventTime) {
-        this.eventTime = eventTime;
+    public void setEventEndDatetime(LocalDateTime eventEndDatetime) {
+        this.eventEndDatetime = eventEndDatetime;
     }
     
     public String getEventType() {

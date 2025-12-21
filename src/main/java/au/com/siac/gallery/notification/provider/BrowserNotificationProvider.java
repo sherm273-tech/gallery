@@ -68,12 +68,13 @@ public class BrowserNotificationProvider {
      */
     private String formatBody(Event event) {
         DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("EEE, MMM d");
-        String dateStr = event.getEventDate().format(dateFormat);
+        DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("h:mm a");
         
-        if (event.getEventTime() != null) {
-            return dateStr + " at " + event.getEventTime();
-        }
-        return dateStr;
+        LocalDateTime eventDateTime = event.getEventStartDatetime();
+        String dateStr = eventDateTime.format(dateFormat);
+        String timeStr = eventDateTime.format(timeFormat);
+        
+        return dateStr + " at " + timeStr;
     }
     
     /**

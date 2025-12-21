@@ -47,9 +47,9 @@ const CalendarForm = {
     },
     
     setupDateTimePickers() {
-        // Auto-open date picker when clicking date fields
-        const dateFields = ['eventDate', 'eventEndDate'];
-        dateFields.forEach(fieldId => {
+        // Auto-open datetime picker when clicking datetime-local fields
+        const datetimeFields = ['eventStartDatetime', 'eventEndDatetime'];
+        datetimeFields.forEach(fieldId => {
             const field = document.getElementById(fieldId);
             if (field) {
                 field.addEventListener('click', function() {
@@ -57,14 +57,6 @@ const CalendarForm = {
                 });
             }
         });
-        
-        // Auto-open time picker when clicking time field
-        const timeField = document.getElementById('eventTime');
-        if (timeField) {
-            timeField.addEventListener('click', function() {
-                this.showPicker();
-            });
-        }
     },
     
     openForm() {
@@ -72,11 +64,15 @@ const CalendarForm = {
         this.currentEditId = null;
         this.updateFormTitle('Add Event');
         
-        // Set default date to today
-        const eventDateInput = document.getElementById('eventDate');
-        if (eventDateInput) {
-            const today = new Date().toISOString().split('T')[0];
-            eventDateInput.value = today;
+        // Set default start datetime to current time (rounded to nearest 15 minutes)
+        const eventStartInput = document.getElementById('eventStartDatetime');
+        if (eventStartInput) {
+            const now = new Date();
+            now.setMinutes(Math.ceil(now.getMinutes() / 15) * 15);
+            now.setSeconds(0);
+            now.setMilliseconds(0);
+            // Format: YYYY-MM-DDTHH:MM
+            eventStartInput.value = now.toISOString().slice(0, 16);
         }
 
         // Setup slideshow config (don't await - let it load in background)
@@ -122,9 +118,18 @@ const CalendarForm = {
         // Populate form with event data
         document.getElementById('eventTitle').value = event.title || '';
         document.getElementById('eventDescription').value = event.description || '';
-        document.getElementById('eventDate').value = event.eventDate || '';
-        document.getElementById('eventEndDate').value = event.eventEndDate || '';
-        document.getElementById('eventTime').value = event.eventTime || '';
+        
+        // Convert backend datetime to datetime-local format (YYYY-MM-DDTHH:MM)
+        if (event.eventStartDatetime) {
+            const startDT = new Date(event.eventStartDatetime);
+            document.getElementById('eventStartDatetime').value = this.formatDatetimeLocal(startDT);
+        }
+        
+        if (event.eventEndDatetime) {
+            const endDT = new Date(event.eventEndDatetime);
+            document.getElementById('eventEndDatetime').value = this.formatDatetimeLocal(endDT);
+        }
+        
         document.getElementById('eventType').value = event.eventType || 'other';
 
         // Setup slideshow config (don't await - let it load in background)
@@ -174,8 +179,8 @@ const CalendarForm = {
         e.preventDefault();
         console.log('Form submitted!');
         
-        const startDate = document.getElementById('eventDate').value;
-        const endDate = document.getElementById('eventEndDate').value;
+        const startDatetime = document.getElementById('eventStartDatetime').value;
+        const endDatetime = document.getElementById('eventEndDatetime').value;
         
         // Get notification data
         const notificationData = window.EventNotificationForm ? 
@@ -185,9 +190,8 @@ const CalendarForm = {
         const formData = {
             title: document.getElementById('eventTitle').value,
             description: document.getElementById('eventDescription').value,
-            eventDate: startDate,
-            eventEndDate: endDate || null,  // Send null if empty, backend will handle default
-            eventTime: document.getElementById('eventTime').value,
+            eventStartDatetime: startDatetime,
+            eventEndDatetime: endDatetime || null,  // Send null if empty, backend will handle default
             eventType: document.getElementById('eventType').value,
             recurring: false,
             completed: false,
@@ -244,6 +248,18 @@ const CalendarForm = {
             console.error('Error saving event:', error);
             alert('Error saving event. Please try again.');
         }
+    },
+    
+    /**
+     * Format a Date object to datetime-local input format (YYYY-MM-DDTHH:MM)
+     */
+    formatDatetimeLocal(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
     }
 };
 

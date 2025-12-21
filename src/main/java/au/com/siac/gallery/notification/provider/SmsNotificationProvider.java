@@ -5,6 +5,7 @@ import au.com.siac.gallery.notification.aws.AwsSnsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
@@ -70,18 +71,16 @@ public class SmsNotificationProvider {
      */
     private String formatMessage(Event event, String timing) {
         DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("MMM d");
-        String dateStr = event.getEventDate().format(dateFormat);
+        DateTimeFormatter timeFormat = DateTimeFormatter.ofPattern("h:mm a");
+        
+        LocalDateTime eventDateTime = event.getEventStartDatetime();
+        String dateStr = eventDateTime.format(dateFormat);
+        String timeStr = eventDateTime.format(timeFormat);
         
         StringBuilder message = new StringBuilder();
         message.append("Reminder: ").append(event.getTitle());
         message.append(" - ");
-        
-        if (event.getEventTime() != null) {
-            message.append(dateStr).append(" at ").append(event.getEventTime());
-        } else {
-            message.append(dateStr);
-        }
-        
+        message.append(dateStr).append(" at ").append(timeStr);
         message.append(" (").append(formatTiming(timing)).append(")");
         
         // Truncate if too long (SMS limit is 160 chars)

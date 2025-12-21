@@ -6,52 +6,54 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long> {
     
     /**
-     * Find all events ordered by date and time
+     * Find all events ordered by start datetime
      */
-    List<Event> findAllByOrderByEventDateAscEventTimeAsc();
+    List<Event> findAllByOrderByEventStartDatetimeAsc();
     
     /**
-     * Find events by date
+     * Find events by date (for a specific day - between start and end of that day)
      */
-    List<Event> findByEventDateOrderByEventTimeAsc(LocalDate date);
+    @Query("SELECT e FROM Event e WHERE DATE(e.eventStartDatetime) = :date ORDER BY e.eventStartDatetime ASC")
+    List<Event> findByEventDate(@Param("date") java.time.LocalDate date);
     
     /**
-     * Find events between date range
+     * Find events between datetime range
      */
-    List<Event> findByEventDateBetweenOrderByEventDateAscEventTimeAsc(LocalDate startDate, LocalDate endDate);
+    @Query("SELECT e FROM Event e WHERE e.eventStartDatetime >= :startDateTime AND e.eventStartDatetime <= :endDateTime ORDER BY e.eventStartDatetime ASC")
+    List<Event> findByEventStartDatetimeBetween(@Param("startDateTime") LocalDateTime startDateTime, @Param("endDateTime") LocalDateTime endDateTime);
     
     /**
-     * Find events on or after a date
+     * Find events on or after a datetime
      */
-    List<Event> findByEventDateGreaterThanEqualOrderByEventDateAscEventTimeAsc(LocalDate date);
+    List<Event> findByEventStartDatetimeGreaterThanEqualOrderByEventStartDatetimeAsc(LocalDateTime dateTime);
     
     /**
-     * Find upcoming incomplete events (today onwards)
+     * Find upcoming incomplete events (from now onwards)
      */
-    @Query("SELECT e FROM Event e WHERE e.eventDate >= :today AND e.completed = false ORDER BY e.eventDate ASC, e.eventTime ASC")
-    List<Event> findUpcomingEvents(@Param("today") LocalDate today);
+    @Query("SELECT e FROM Event e WHERE e.eventStartDatetime >= :now AND e.completed = false ORDER BY e.eventStartDatetime ASC")
+    List<Event> findUpcomingEvents(@Param("now") LocalDateTime now);
     
     /**
      * Find events by type
      */
-    List<Event> findByEventTypeOrderByEventDateAscEventTimeAsc(String eventType);
+    List<Event> findByEventTypeOrderByEventStartDatetimeAsc(String eventType);
     
     /**
      * Find completed events
      */
-    List<Event> findByCompletedOrderByEventDateDesc(Boolean completed);
+    List<Event> findByCompletedOrderByEventStartDatetimeDesc(Boolean completed);
     
     /**
      * Find recurring events
      */
-    List<Event> findByRecurringOrderByEventDateAscEventTimeAsc(Boolean recurring);
+    List<Event> findByRecurringOrderByEventStartDatetimeAsc(Boolean recurring);
     
     /**
      * Count total events
@@ -59,8 +61,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     long count();
     
     /**
-     * Count upcoming events (incomplete and today or later)
+     * Count upcoming events (incomplete and from now onwards)
      */
-    @Query("SELECT COUNT(e) FROM Event e WHERE e.eventDate >= :today AND e.completed = false")
-    long countUpcomingEvents(@Param("today") LocalDate today);
+    @Query("SELECT COUNT(e) FROM Event e WHERE e.eventStartDatetime >= :now AND e.completed = false")
+    long countUpcomingEvents(@Param("now") LocalDateTime now);
 }
