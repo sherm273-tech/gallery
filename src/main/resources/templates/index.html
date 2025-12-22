@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="/css/location-weather-widget.css">
     <link rel="stylesheet" href="/css/calendar.css?v=11.0">
     <link rel="stylesheet" href="/css/fullcalendar-custom.css?v=13.0">
+    <link rel="stylesheet" href="/css/memories.css">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -319,6 +320,9 @@
             </form>
         </div>
     </div>
+
+    <!-- Memories Modal -->
+    <div th:replace="~{fragments/memories/memories-modal :: memories-modal}"></div>
 
     <!-- Controls Panel -->
     <div th:replace="~{fragments/slideshow/controls-panel :: controls-panel}"></div>

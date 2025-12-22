@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <!-- Memories Modal Fragment -->
+    <div th:fragment="memories-modal">
+        <!-- Memories Full View Modal -->
+        <div id="memoriesModal" class="memories-modal" style="display: none;">
+            <div class="memories-modal-content">
+                <div class="memories-modal-header">
+                    <h2 class="memories-modal-title">📅 On This Day</h2>
+                    <div class="memories-modal-actions">
+                        <button id="closeMemoriesBtn" class="memories-close-btn">✕</button>
+                    </div>
+                </div>
+                <div id="memoriesGallery" class="memories-gallery">
+                    <!-- Dynamically populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Lightbox Modal for Full Image View -->
+        <div id="memoriesLightbox" class="memories-lightbox" style="display: none;">
+            <button class="lightbox-close" id="closeLightboxBtn">✕</button>
+            <button class="lightbox-prev" id="lightboxPrevBtn">‹</button>
+            <button class="lightbox-next" id="lightboxNextBtn">›</button>
+            <button class="lightbox-play" id="lightboxPlayBtn" title="Auto-play slideshow">▶</button>
+            
+            <div class="lightbox-content">
+                <img id="lightboxImage" class="lightbox-image" src="" alt="Memory">
+                <div class="lightbox-info">
+                    <div class="lightbox-year" id="lightboxYear"></div>
+                    <div class="lightbox-meta" id="lightboxMeta"></div>
+                    <div class="lightbox-counter" id="lightboxCounter"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

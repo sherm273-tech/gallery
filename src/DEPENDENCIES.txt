@@ -1,0 +1,23 @@
+REQUIRED MAVEN DEPENDENCY FOR MEMORIES FEATURE
+================================================
+
+Add this dependency to your pom.xml file:
+
+<dependency>
+    <groupId>com.drewnoakes</groupId>
+    <artifactId>metadata-extractor</artifactId>
+    <version>2.19.0</version>
+</dependency>
+
+This library is used to extract EXIF metadata from JPEG photos (camera model, capture date, etc.)
+
+INSTALLATION INSTRUCTIONS:
+1. Add the above dependency to your pom.xml <dependencies> section
+2. Run: mvn clean install
+3. Restart your Spring Boot application
+
+The metadata-extractor library is compatible with:
+- Canon cameras
+- Samsung phones
+- iPhones
+- Any camera that writes standard EXIF data

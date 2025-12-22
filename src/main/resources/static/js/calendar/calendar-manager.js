@@ -415,19 +415,41 @@ const CalendarManager = {
     },
     
     filterByDate(date) {
-        console.log('Filtering events for date:', date);
+        console.log('[CalendarManager] Filtering events for date:', date);
         const dateStr = date.toISOString().split('T')[0];
+        console.log('[CalendarManager] Date string:', dateStr);
+        console.log('[CalendarManager] Total events:', this.allEvents.length);
+        
+        // Log all event dates for debugging
+        this.allEvents.forEach((event, idx) => {
+            console.log(`[CalendarManager] Event ${idx}: "${event.title}"`);
+            console.log(`  Full event object:`, event);
+            console.log(`  eventDate: "${event.eventDate}" | eventEndDate: "${event.eventEndDate}" | completed: ${event.completed}`);
+            console.log(`  eventStartDatetime: "${event.eventStartDatetime}" | eventEndDatetime: "${event.eventEndDatetime}"`);
+        });
         
         const eventsOnDate = this.allEvents.filter(event => {
-            if (event.completed) return false;
+            if (event.completed) {
+                console.log(`[CalendarManager] Skipping completed event: ${event.title}`);
+                return false;
+            }
             
-            // Check if the clicked date falls within the event's date range
-            const eventStartDate = event.eventDate;
-            const eventEndDate = event.eventEndDate || event.eventDate;
+            // Extract date from datetime fields
+            const eventStartDate = event.eventStartDatetime ? event.eventStartDatetime.split('T')[0] : null;
+            const eventEndDate = event.eventEndDatetime ? event.eventEndDatetime.split('T')[0] : eventStartDate;
+            
+            if (!eventStartDate) {
+                console.log(`[CalendarManager] Skipping event with no date: ${event.title}`);
+                return false;
+            }
             
             // Date falls within range if it's >= start and <= end
-            return dateStr >= eventStartDate && dateStr <= eventEndDate;
+            const matches = dateStr >= eventStartDate && dateStr <= eventEndDate;
+            console.log(`[CalendarManager] Checking "${event.title}": ${dateStr} >= ${eventStartDate} && ${dateStr} <= ${eventEndDate} = ${matches}`);
+            return matches;
         });
+        
+        console.log('[CalendarManager] Found', eventsOnDate.length, 'events on date');
         
         if (eventsOnDate.length > 0) {
             const formattedDate = date.toLocaleDateString('en-AU', {

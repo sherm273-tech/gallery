@@ -277,9 +277,9 @@ const EventSlideshowPlayer = {
         console.log('[EventSlideshowPlayer] Starting music with', playlist.length, 'tracks');
         
         // Use MusicPlayer if available
-        if (window.MusicPlayer && typeof MusicPlayer.loadPlaylist === 'function') {
-            MusicPlayer.loadPlaylist(playlist);
-            MusicPlayer.play();
+        if (window.MusicPlayer && typeof MusicPlayer.setPlaylist === 'function') {
+            MusicPlayer.setPlaylist(playlist);
+            MusicPlayer.start();
         } else {
             // Fallback: play first track directly
             if (playlist.length > 0) {

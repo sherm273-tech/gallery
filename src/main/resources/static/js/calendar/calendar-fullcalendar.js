@@ -15,6 +15,24 @@ const CalendarFC = {
                 center: 'title',
                 right: 'dayGridMonth,dayGridWeek'
             },
+            customButtons: {
+                today: {
+                    text: 'today',
+                    click: () => {
+                        // Go to today's date
+                        this.calendar.today();
+                        
+                        // Load events for today
+                        setTimeout(() => {
+                            const today = new Date();
+                            console.log('[CalendarFC] Today button clicked, loading events for:', today);
+                            if (window.CalendarManager) {
+                                CalendarManager.filterByDate(today);
+                            }
+                        }, 100);
+                    }
+                }
+            },
             events: [],
             eventClick: this.handleEventClick.bind(this),
             dateClick: this.handleDateClick.bind(this),
@@ -33,10 +51,28 @@ const CalendarFC = {
             eventDidMount: (info) => {
                 // Add indicators after each event is mounted
                 setTimeout(() => this.addSlideshowIndicators(), 10);
+            },
+            // ADDED: Dispatch event when calendar view changes (month navigation)
+            datesSet: (dateInfo) => {
+                const currentDate = dateInfo.view.currentStart;
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth() + 1; // JS months are 0-indexed
+                
+                console.log('[CalendarFC] Month changed:', year, month);
+                
+                // Dispatch custom event for calendar-memories.js to listen to
+                document.dispatchEvent(new CustomEvent('calendarMonthChanged', {
+                    detail: { year: year, month: month }
+                }));
             }
         });
         
         this.calendar.render();
+        
+        // ADDED: Dispatch calendarRendered event after initial render
+        setTimeout(() => {
+            document.dispatchEvent(new CustomEvent('calendarRendered'));
+        }, 100);
     },
     
     loadEvents(events) {
@@ -149,12 +185,16 @@ const CalendarFC = {
     },
     
     handleDateClick(info) {
-        console.log('Date clicked:', info.dateStr);
+        console.log('[CalendarFC] Date clicked:', info.dateStr);
+        console.log('[CalendarFC] Full date info:', info);
         
         // Filter events by date in sidebar
         if (window.CalendarManager) {
             const date = new Date(info.dateStr);
+            console.log('[CalendarFC] Calling filterByDate with:', date);
             CalendarManager.filterByDate(date);
+        } else {
+            console.error('[CalendarFC] CalendarManager not available!');
         }
     },
     
