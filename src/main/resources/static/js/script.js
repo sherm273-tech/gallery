@@ -18,6 +18,7 @@ const startFolderSelect = document.getElementById("startFolderSelect");
 const randomizeCheckbox = document.getElementById("randomizeCheckbox");
 const shuffleAllCheckbox = document.getElementById("shuffleAllCheckbox");
 const randomizeMusicCheckbox = document.getElementById("randomizeMusicCheckbox");
+const muteMusicDuringVideoCheckbox = document.getElementById("muteMusicDuringVideoCheckbox");
 const speedSelect = document.getElementById("speedSelect");
 const controls = document.getElementById("controls");
 const controlsTitle = document.getElementById("controlsTitle");
@@ -190,8 +191,44 @@ closeCalendarBtn.addEventListener('click', () => {
     calendarMirrorOverlay.classList.add('hidden');
     initialMenu.classList.remove('hidden');
     window.currentMode = null;
-    releaseWakeLock();
+    
 });
+
+// Videos Library Button
+const videosLibraryBtn = document.getElementById('videosLibraryBtn');
+const videosOverlay = document.getElementById('videosOverlay');
+const closeVideosBtn = document.getElementById('closeVideosBtn');
+const videosMirrorOverlay = document.getElementById('videosMirrorOverlay');
+
+videosLibraryBtn.addEventListener('click', async () => {
+    window.currentMode = 'videos';
+    initialMenu.classList.add('hidden');
+    videosOverlay.style.display = 'flex';
+    videosMirrorOverlay.classList.remove('hidden');
+    
+    // Initialize/re-initialize video library components
+    if (typeof VideoLibrary !== 'undefined') {
+        console.log('Initializing video library...');
+        VideoLibrary.init();  // Re-init to attach event listeners
+    }
+    if (typeof VideoPlaylists !== 'undefined') {
+        console.log('Initializing playlists...');
+        VideoPlaylists.init();  // Re-init to attach event listeners
+    }
+    if (typeof VideoStats !== 'undefined') {
+        console.log('Loading statistics...');
+        VideoStats.loadStatistics();
+    }
+});
+
+closeVideosBtn.addEventListener('click', () => {
+    videosOverlay.style.display = 'none';
+    videosMirrorOverlay.classList.add('hidden');
+    initialMenu.classList.remove('hidden');
+    window.currentMode = null;
+    
+});
+
 
 // Settings Button
 settingsBtn.addEventListener('click', () => {
@@ -1923,3 +1960,11 @@ document.addEventListener('fullscreenchange', () => {
         }
     }
 });
+
+// Phase 2: Video music control checkbox
+if (muteMusicDuringVideoCheckbox && window.SlideshowVideoSupport) {
+    muteMusicDuringVideoCheckbox.addEventListener('change', function() {
+        window.SlideshowVideoSupport.setMuteMusicDuringVideo(this.checked);
+        console.log('[Script] Mute music during video:', this.checked);
+    });
+}

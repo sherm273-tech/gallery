@@ -115,10 +115,21 @@ body.slideshow-active #slideshow {
     font-weight: 600;
     margin-top: 30px;
     margin-bottom: 15px;
+    display: inline-flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.menu-header h1 .title-text {
     background: linear-gradient(135deg, #4a9eff 0%, #357abd 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+
+.menu-header h1 .home-emoji {
+    font-size: 56px;
+    /* Emoji keeps its natural color */
 }
 
 

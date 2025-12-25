@@ -47,10 +47,17 @@ public class MemoriesService {
     private float thumbnailQuality;
     
     private final PhotoMetadataRepository photoMetadataRepository;
+    private final au.com.siac.gallery.video.util.VideoThumbnailGenerator videoThumbnailGenerator;
+    private final au.com.siac.gallery.video.util.VideoMetadataExtractor videoMetadataExtractor;
     
-    public MemoriesService(PhotoMetadataRepository photoMetadataRepository) {
+    public MemoriesService(PhotoMetadataRepository photoMetadataRepository,
+                          au.com.siac.gallery.video.util.VideoThumbnailGenerator videoThumbnailGenerator,
+                          au.com.siac.gallery.video.util.VideoMetadataExtractor videoMetadataExtractor) {
         this.photoMetadataRepository = photoMetadataRepository;
+        this.videoThumbnailGenerator = videoThumbnailGenerator;
+        this.videoMetadataExtractor = videoMetadataExtractor;
     }
+    
     
     /**
      * Get photos from today's date in previous years
@@ -109,10 +116,10 @@ public class MemoriesService {
      * Index a single photo file
      */
     public PhotoMetadata indexPhoto(String relativePath) {
-        Path photoPath = Paths.get(imageFolder, relativePath);
+        Path mediaPath = Paths.get(imageFolder, relativePath);
         
-        if (!Files.exists(photoPath)) {
-            logger.warn("Photo not found: {}", photoPath);
+        if (!Files.exists(mediaPath)) {
+            logger.warn("Media file not found: {}", mediaPath);
             return null;
         }
         
@@ -122,6 +129,26 @@ public class MemoriesService {
             return existing.get();
         }
         
+        // Determine if this is a video or image
+        boolean isVideo = videoMetadataExtractor.isVideoFile(relativePath);
+        
+        PhotoMetadata metadata;
+        
+        if (isVideo) {
+            // Handle video file
+            metadata = indexVideoFile(mediaPath, relativePath);
+        } else {
+            // Handle image file (existing logic)
+            metadata = indexImageFile(mediaPath, relativePath);
+        }
+        
+        return metadata != null ? photoMetadataRepository.save(metadata) : null;
+    }
+    
+    /**
+     * Index an image file (existing logic extracted to separate method)
+     */
+    private PhotoMetadata indexImageFile(Path photoPath, String relativePath) {
         LocalDate captureDate = extractPhotoDate(photoPath);
         if (captureDate == null) {
             logger.warn("Could not determine date for: {}", relativePath);
@@ -130,6 +157,7 @@ public class MemoriesService {
         
         String dateSource = determineDateSource(photoPath);
         PhotoMetadata metadata = new PhotoMetadata(relativePath, captureDate, dateSource);
+        metadata.setMediaType("IMAGE");
         
         // Generate thumbnail
         try {
@@ -155,7 +183,59 @@ public class MemoriesService {
             // File size is optional
         }
         
-        return photoMetadataRepository.save(metadata);
+        return metadata;
+    }
+    
+    /**
+     * Index a video file (new method for Phase 1)
+     */
+    private PhotoMetadata indexVideoFile(Path videoPath, String relativePath) {
+        // Extract video metadata
+        Map<String, Object> videoMeta = videoMetadataExtractor.extractMetadata(videoPath);
+        
+        LocalDate captureDate = (LocalDate) videoMeta.get("captureDate");
+        if (captureDate == null) {
+            logger.warn("Could not determine date for video: {}", relativePath);
+            return null;
+        }
+        
+        String dateSource = (String) videoMeta.get("dateSource");
+        PhotoMetadata metadata = new PhotoMetadata(relativePath, captureDate, dateSource);
+        metadata.setMediaType("VIDEO");
+        
+        // Set video-specific fields
+        Integer duration = (Integer) videoMeta.get("duration");
+        if (duration != null) {
+            metadata.setVideoDuration(duration);
+        }
+        
+        String resolution = (String) videoMeta.get("resolution");
+        if (resolution != null) {
+            metadata.setVideoResolution(resolution);
+        }
+        
+        // Generate video thumbnail
+        try {
+            String thumbnailRelativePath = ".thumbnails/" + relativePath + ".jpg";
+            Path thumbnailPath = Paths.get(imageFolder, thumbnailRelativePath);
+            
+            if (videoThumbnailGenerator.generateVideoThumbnail(videoPath, thumbnailPath)) {
+                metadata.setThumbnailPath(thumbnailRelativePath);
+            }
+        } catch (Exception e) {
+            logger.warn("Could not generate video thumbnail for: {}", relativePath, e);
+            // Continue without thumbnail
+        }
+        
+        // Get file size
+        Long fileSize = (Long) videoMeta.get("fileSize");
+        if (fileSize != null) {
+            metadata.setFileSize(fileSize);
+        }
+        
+        logger.info("Indexed video: {} ({}s, {})", relativePath, duration, resolution);
+        
+        return metadata;
     }
     
     /**
@@ -171,6 +251,12 @@ public class MemoriesService {
             List<Path> imageFiles = paths
                 .filter(Files::isRegularFile)
                 .filter(this::isImageFile)
+                .filter(path -> {
+                    // Exclude thumbnails folder
+                    String pathStr = path.toString();
+                    return !pathStr.contains(File.separator + ".thumbnails" + File.separator) &&
+                           !pathStr.contains(File.separator + "thumbnails" + File.separator);
+                })
                 .collect(Collectors.toList());
             
             logger.info("Found {} image files to index", imageFiles.size());
@@ -181,6 +267,7 @@ public class MemoriesService {
                         .toString()
                         .replace("\\", "/");
                     
+                    // Skip if already indexed
                     if (photoMetadataRepository.existsByFilePath(relativePath)) {
                         skipped++;
                         continue;
@@ -319,7 +406,8 @@ public class MemoriesService {
         if (filename.startsWith("._")) {
             return false;
         }
-        return filename.matches(".*\\.(png|jpg|jpeg|gif|webp)$");
+        // Accept both images and videos
+        return filename.matches(".*\\.(png|jpg|jpeg|gif|webp|mp4|mov|avi|mkv|webm|m4v|wmv)$");
     }
     
     /**
@@ -329,11 +417,19 @@ public class MemoriesService {
         Map<String, Object> map = new HashMap<>();
         map.put("id", metadata.getId());
         map.put("filePath", metadata.getFilePath());
-        map.put("thumbnailPath", metadata.getThumbnailPath()); // Add thumbnail path
+        map.put("thumbnailPath", metadata.getThumbnailPath());
         map.put("captureDate", metadata.getCaptureDate().toString());
         map.put("year", metadata.getYear());
         map.put("dateSource", metadata.getDateSource());
         map.put("cameraModel", metadata.getCameraModel());
+        
+        // Add video-specific fields
+        map.put("mediaType", metadata.getMediaType());
+        map.put("isVideo", metadata.isVideo());
+        if (metadata.isVideo()) {
+            map.put("videoDuration", metadata.getVideoDuration());
+            map.put("videoResolution", metadata.getVideoResolution());
+        }
         
         // Calculate years ago
         int yearsAgo = LocalDate.now().getYear() - metadata.getYear();

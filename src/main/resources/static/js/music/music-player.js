@@ -253,8 +253,13 @@ const MusicPlayer = (() => {
      */
     function play() {
         if (playlist.length === 0) {
-            console.warn('⚠️ No tracks in playlist');
-            return;
+            // Check if there's a track loaded directly (not from playlist)
+            if (!audioPlayer.src || audioPlayer.src === '') {
+                console.warn('⚠️ No tracks in playlist');
+                return;
+            }
+            // Track is loaded, just resume playback
+            console.log('▶️ Resuming track (not from playlist)');
         }
         
         if (audioPlayer.paused) {

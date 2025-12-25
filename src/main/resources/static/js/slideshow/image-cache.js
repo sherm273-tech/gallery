@@ -75,9 +75,22 @@ const ImageCache = (() => {
             return [];
         }
         
-        console.log(`📥 Preloading ${imagePaths.length} images...`);
         
-        const promises = imagePaths.map(path => 
+        // Filter out video files - they don't need image preloading
+        const videoExtensions = /\.(mp4|mov|avi|mkv|webm|m4v|wmv)$/i;
+        const imagePathsOnly = imagePaths.filter(path => !videoExtensions.test(path));
+        
+        if (imagePathsOnly.length === 0) {
+            console.log('📥 No images to preload (all videos)');
+            return [];
+        }
+        
+        const videoCount = imagePaths.length - imagePathsOnly.length;
+        const imageText = imagePathsOnly.length === 1 ? 'image' : 'images';
+        const videoText = videoCount === 1 ? 'video' : 'videos';
+        console.log(`📥 Preloading ${imagePathsOnly.length} ${imageText} (${videoCount} ${videoText} skipped)...`);
+        
+        const promises = imagePathsOnly.map(path => 
             preloadSingleImage(path).catch(err => {
                 console.warn('Skipped image:', path);
                 return null;
@@ -85,7 +98,7 @@ const ImageCache = (() => {
         );
         
         const results = await Promise.all(promises);
-        console.log(`✅ Preloaded ${results.filter(r => r !== null).length}/${imagePaths.length} images`);
+        console.log(`✅ Preloaded ${results.filter(r => r !== null).length}/${imagePathsOnly.length} images`);
         
         return results.filter(r => r !== null);
     }

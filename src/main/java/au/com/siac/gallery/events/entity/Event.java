@@ -60,6 +60,10 @@ public class Event {
     @Transient
     private Boolean hasSlideshowConfig = false;
     
+    // Slideshow video settings
+    @Column(nullable = false, name = "mute_music_during_video")
+    private Boolean muteMusicDuringVideo = true;
+    
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -223,5 +227,13 @@ public class Event {
     
     public void setHasSlideshowConfig(Boolean hasSlideshowConfig) {
         this.hasSlideshowConfig = hasSlideshowConfig;
+    }
+    
+    public Boolean getMuteMusicDuringVideo() {
+        return muteMusicDuringVideo;
+    }
+    
+    public void setMuteMusicDuringVideo(Boolean muteMusicDuringVideo) {
+        this.muteMusicDuringVideo = muteMusicDuringVideo;
     }
 }

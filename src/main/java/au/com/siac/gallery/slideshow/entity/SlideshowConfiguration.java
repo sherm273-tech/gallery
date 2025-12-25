@@ -35,6 +35,9 @@ public class SlideshowConfiguration {
     @Column(name = "display_duration")
     private Integer displayDuration = 5000;  // milliseconds
     
+    @Column(name = "mute_music_during_video")
+    private Boolean muteMusicDuringVideo = true;
+    
     @Column(name = "created_at")
     private LocalDateTime createdAt;
     
@@ -135,6 +138,14 @@ public class SlideshowConfiguration {
     
     public void setDisplayDuration(Integer displayDuration) {
         this.displayDuration = displayDuration;
+    }
+    
+    public Boolean getMuteMusicDuringVideo() {
+        return muteMusicDuringVideo;
+    }
+    
+    public void setMuteMusicDuringVideo(Boolean muteMusicDuringVideo) {
+        this.muteMusicDuringVideo = muteMusicDuringVideo;
     }
     
     public LocalDateTime getCreatedAt() {

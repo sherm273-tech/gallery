@@ -1,0 +1,165 @@
+/* Settings Tabs Styling */
+
+.settings-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 0;
+}
+
+.settings-tab {
+    background: #f0f0f0;
+    border: 1px solid #d0d0d0;
+    color: #666;
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.settings-tab:hover {
+    background: #e0e0e0;
+    color: #333;
+    border-color: #c0c0c0;
+}
+
+.settings-tab.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+    border-bottom: 3px solid #667eea;
+}
+
+/* Tab Content */
+.settings-tab-content {
+    display: none;
+}
+
+.settings-tab-content.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Indexing Controls */
+.indexing-controls {
+    margin-top: 20px;
+}
+
+.index-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+    width: 100%;
+    max-width: 400px;
+}
+
+.index-btn:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(16, 185, 129, 0.4);
+}
+
+.index-btn:disabled {
+    background: #6b7280;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.6;
+}
+
+.indexing-status {
+    margin-top: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    min-height: 50px;
+    color: #333;
+}
+
+.indexing-status h3 {
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.indexing-progress {
+    margin-top: 15px;
+    color: #333;
+}
+
+/* Gallery Stats */
+.gallery-stats {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.stat-item:last-child {
+    border-bottom: none;
+}
+
+.stat-label {
+    color: #666;
+    font-weight: 500;
+    font-size: 15px;
+}
+
+.stat-value {
+    color: #10b981;
+    font-weight: 700;
+    font-size: 20px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .settings-tabs {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .settings-tab {
+        border-radius: 8px;
+        text-align: center;
+    }
+    
+    .settings-tab.active {
+        border-bottom: none;
+        border-left: 4px solid #667eea;
+    }
+    
+    .index-btn {
+        width: 100%;
+        max-width: none;
+    }
+}

@@ -33,4 +33,10 @@ public interface PhotoMetadataRepository extends JpaRepository<PhotoMetadata, Lo
      * Check if file path exists
      */
     boolean existsByFilePath(String filePath);
+    
+    /**
+     * Find all photos/videos by media type
+     * Used by VideoService to get all videos
+     */
+    List<PhotoMetadata> findByMediaType(String mediaType);
 }

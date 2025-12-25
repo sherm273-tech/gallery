@@ -58,7 +58,7 @@ const MemoriesModule = (function() {
     function updateMemoriesWidget() {
         const widget = document.getElementById('memoriesWidget');
         if (!widget) {
-            console.log('Memories widget not found');
+            // Memories widget not on this page
             return;
         }
         
@@ -312,15 +312,37 @@ const MemoriesModule = (function() {
         const card = document.createElement('div');
         card.className = 'memory-photo-card';
         
+        // Add video class if this is a video
+        if (memory.isVideo) {
+            card.classList.add('memory-video-card');
+        }
+        
         const img = document.createElement('img');
         // Use thumbnail for grid display (faster loading)
         const imagePath = memory.thumbnailPath || memory.filePath;
         img.src = `/images/${imagePath}`;
-        img.alt = `Memory from ${memory.year}`;
+        img.alt = memory.isVideo ? `Video from ${memory.year}` : `Memory from ${memory.year}`;
         img.className = 'memory-photo-img';
         
         const overlay = document.createElement('div');
         overlay.className = 'memory-photo-overlay';
+        
+        // Add video indicator if this is a video
+        if (memory.isVideo) {
+            const videoIndicator = document.createElement('div');
+            videoIndicator.className = 'memory-video-indicator';
+            // Play button triangle is created with CSS ::before
+            
+            if (memory.videoDuration) {
+                const duration = formatDuration(memory.videoDuration);
+                const durationBadge = document.createElement('div');
+                durationBadge.className = 'memory-video-duration';
+                durationBadge.textContent = duration;
+                overlay.appendChild(durationBadge);
+            }
+            
+            overlay.appendChild(videoIndicator);
+        }
         
         const info = document.createElement('div');
         info.className = 'memory-photo-info';
@@ -343,12 +365,38 @@ const MemoriesModule = (function() {
         card.appendChild(img);
         card.appendChild(overlay);
         
-        // Click to view full size
+        // Click to view full size in lightbox (both videos and images)
         card.addEventListener('click', () => {
             viewMemoryFullSize(memory);
         });
         
         return card;
+    }
+    
+    /**
+     * Format video duration (seconds) to MM:SS
+     */
+    function formatDuration(seconds) {
+        if (!seconds) return '0:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+    
+    /**
+     * Open video player for a video memory
+     */
+    function openVideoPlayer(memory) {
+        if (!window.VideoPlayer) {
+            console.error('[MemoriesModule] VideoPlayer not available');
+            alert('Video player is not loaded. Please refresh the page.');
+            return;
+        }
+        
+        const videoPath = `/api/videos/${memory.filePath}`;
+        const fileName = memory.filePath.split('/').pop();
+        
+        window.VideoPlayer.openVideo(videoPath, fileName);
     }
     
     /**
@@ -392,6 +440,13 @@ const MemoriesModule = (function() {
             lightbox.style.display = 'none';
         }
         
+        // Stop and reset video if playing
+        const video = document.getElementById('lightboxVideo');
+        if (video) {
+            video.pause();
+            video.currentTime = 0;
+        }
+        
         // Stop auto-play if running
         stopAutoPlay();
         
@@ -422,17 +477,70 @@ const MemoriesModule = (function() {
             playBtn.classList.add('playing');
         }
         
-        autoPlayInterval = setInterval(() => {
-            if (currentLightboxIndex < allMemoriesFlattened.length - 1) {
-                showNextImage();
-            } else {
-                // Loop back to start
-                currentLightboxIndex = -1;
-                showNextImage();
-            }
-        }, AUTO_PLAY_INTERVAL);
+        // Check if current item is a video
+        const currentMemory = allMemoriesFlattened[currentLightboxIndex];
+        if (currentMemory && currentMemory.mediaType === 'VIDEO') {
+            // For videos, wait for video to end
+            setupVideoAutoAdvance();
+        } else {
+            // For images, use timer
+            scheduleNextImage();
+        }
         
         console.log('[MemoriesModule] Auto-play started');
+    }
+    
+    /**
+     * Schedule next image advance (for images in auto-play)
+     */
+    function scheduleNextImage() {
+        if (autoPlayInterval) {
+            clearTimeout(autoPlayInterval);
+        }
+        
+        autoPlayInterval = setTimeout(() => {
+            if (isAutoPlaying) {
+                if (currentLightboxIndex < allMemoriesFlattened.length - 1) {
+                    showNextImage();
+                } else {
+                    // Loop back to start
+                    currentLightboxIndex = -1;
+                    showNextImage();
+                }
+            }
+        }, AUTO_PLAY_INTERVAL);
+    }
+    
+    /**
+     * Setup video to auto-advance when it ends
+     */
+    function setupVideoAutoAdvance() {
+        const video = document.getElementById('lightboxVideo');
+        if (!video) return;
+        
+        // Remove old listener if exists
+        video.removeEventListener('ended', handleVideoEnded);
+        
+        // Add new listener
+        video.addEventListener('ended', handleVideoEnded);
+    }
+    
+    /**
+     * Handle video ended during auto-play
+     */
+    function handleVideoEnded() {
+        if (isAutoPlaying) {
+            // Small delay before advancing
+            setTimeout(() => {
+                if (currentLightboxIndex < allMemoriesFlattened.length - 1) {
+                    showNextImage();
+                } else {
+                    // Loop back to start
+                    currentLightboxIndex = -1;
+                    showNextImage();
+                }
+            }, 500);
+        }
     }
     
     /**
@@ -448,7 +556,7 @@ const MemoriesModule = (function() {
         }
         
         if (autoPlayInterval) {
-            clearInterval(autoPlayInterval);
+            clearTimeout(autoPlayInterval);
             autoPlayInterval = null;
         }
         
@@ -482,6 +590,16 @@ const MemoriesModule = (function() {
             currentLightboxIndex = 0;
             updateLightboxImage();
         }
+        
+        // If auto-playing, schedule next advance
+        if (isAutoPlaying) {
+            const currentMemory = allMemoriesFlattened[currentLightboxIndex];
+            if (currentMemory && currentMemory.mediaType === 'VIDEO') {
+                setupVideoAutoAdvance();
+            } else {
+                scheduleNextImage();
+            }
+        }
     }
     
     /**
@@ -492,15 +610,40 @@ const MemoriesModule = (function() {
         if (!memory) return;
         
         const img = document.getElementById('lightboxImage');
+        const video = document.getElementById('lightboxVideo');
         const year = document.getElementById('lightboxYear');
         const meta = document.getElementById('lightboxMeta');
         const counter = document.getElementById('lightboxCounter');
         const prevBtn = document.getElementById('lightboxPrevBtn');
         const nextBtn = document.getElementById('lightboxNextBtn');
         
-        if (img) {
-            img.src = `/images/${memory.filePath}`;
-            img.alt = `Memory from ${memory.year}`;
+        // Determine if this is a video or image
+        const isVideo = memory.mediaType === 'VIDEO';
+        
+        if (isVideo) {
+            // Show video, hide image
+            if (img) img.style.display = 'none';
+            if (video) {
+                video.style.display = 'block';
+                const videoSource = video.querySelector('source');
+                if (videoSource) {
+                    videoSource.src = `/api/videos/${memory.filePath}`;
+                    video.load();
+                    // Auto-play videos in lightbox
+                    video.play().catch(err => console.log('Video autoplay prevented:', err));
+                }
+            }
+        } else {
+            // Show image, hide video
+            if (video) {
+                video.pause();
+                video.style.display = 'none';
+            }
+            if (img) {
+                img.style.display = 'block';
+                img.src = `/images/${memory.filePath}`;
+                img.alt = `Memory from ${memory.year}`;
+            }
         }
         
         if (year) {
@@ -509,9 +652,17 @@ const MemoriesModule = (function() {
         
         if (meta) {
             let metaText = '';
-            if (memory.cameraModel) {
+            
+            // Add media type indicator
+            if (isVideo) {
+                metaText += '🎬 Video';
+                if (memory.videoDuration) {
+                    metaText += ` • ${formatDuration(memory.videoDuration)}`;
+                }
+            } else if (memory.cameraModel) {
                 metaText += `📷 ${memory.cameraModel}`;
             }
+            
             if (memory.dateSource) {
                 if (metaText) metaText += ' • ';
                 metaText += `Source: ${memory.dateSource}`;

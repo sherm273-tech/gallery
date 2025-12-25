@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <!-- Memories Widget Fragment -->
+    <div th:fragment="memories-widget">
+        <!-- Memories Widget (On This Day) -->
+        <div id="memoriesWidget" class="memories-widget" style="display: none;">
+            <div class="memories-widget-header">
+                <div class="memories-widget-icon">📅</div>
+                <div class="memories-widget-title">
+                    <h3>On This Day</h3>
+                    <p class="memories-count">Loading...</p>
+                </div>
+            </div>
+            <div class="memories-widget-preview">
+                <img id="memoryPreviewImg" src="" alt="Memory" class="memory-preview-image">
+                <div class="memory-preview-overlay">
+                    <span id="memoryYearsAgo" class="memory-years-ago"></span>
+                </div>
+            </div>
+            <div class="memories-widget-action">
+                <span class="memories-view-all">Tap to view all →</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

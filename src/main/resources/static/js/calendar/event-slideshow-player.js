@@ -42,6 +42,13 @@ const EventSlideshowPlayer = {
                 randomizeMusic: config.randomizeMusic || false
             };
             
+            // Set video music muting preference for this event
+            if (window.SlideshowVideoSupport && typeof window.SlideshowVideoSupport.setMuteMusicDuringVideo === 'function') {
+                const muteMusicDuringVideo = config.muteMusicDuringVideo !== false; // Default to true
+                window.SlideshowVideoSupport.setMuteMusicDuringVideo(muteMusicDuringVideo);
+                console.log('[EventSlideshowPlayer] Set mute music during video:', muteMusicDuringVideo);
+            }
+            
             console.log('[EventSlideshowPlayer] Starting slideshow with settings:', { slideshowSettings, musicSettings });
             
             // Close calendar overlay

@@ -6,6 +6,8 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.servlet.HandlerMapping;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -83,6 +85,7 @@ public class ImageController {
             List<Path> foldersWithDirectImages = paths
                     .filter(Files::isDirectory)
                     .filter(p -> !p.equals(folderPath))
+                    .filter(this::isNotThumbnailFolder)  // Exclude .thumbnails folder
                     .filter(this::hasImagesDirectly)
                     .collect(Collectors.toList());
             
@@ -118,7 +121,7 @@ public class ImageController {
                             return false;
                         }
                         String filenameLower = filename.toLowerCase();
-                        return filenameLower.matches(".*\\.(png|jpg|jpeg|gif|webp)$");
+                        return filenameLower.matches(".*\\.(png|jpg|jpeg|gif|webp|mp4|mov|avi|mkv|webm|m4v|wmv)$");
                     })
                     .collect(Collectors.toList());
             
@@ -249,6 +252,40 @@ public class ImageController {
         return response;
     }
 
+    
+    /**
+     * Peek at upcoming images without consuming them from queue
+     * Used for preloading images in background
+     */
+    @PostMapping("/api/images/peek")
+    @ResponseBody
+    public List<String> peekImages(@RequestBody Map<String, Object> request, HttpSession session) {
+        @SuppressWarnings("unchecked")
+        List<String> imageQueue = (List<String>) session.getAttribute(SESSION_IMAGE_QUEUE);
+        
+        if (imageQueue == null || imageQueue.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        // Get count from request, default to 10
+        int count = 10;
+        if (request.containsKey("count")) {
+            Object countObj = request.get("count");
+            if (countObj instanceof Integer) {
+                count = (Integer) countObj;
+            } else if (countObj instanceof String) {
+                try {
+                    count = Integer.parseInt((String) countObj);
+                } catch (NumberFormatException e) {
+                    count = 10;
+                }
+            }
+        }
+        
+        // Return next N images without removing from queue
+        int returnCount = Math.min(count, imageQueue.size());
+        return new ArrayList<>(imageQueue.subList(0, returnCount));
+    }
     @PostMapping("/api/images/reset")
     @ResponseBody
     public Map<String, String> resetImageSession(HttpSession session) {
@@ -274,9 +311,10 @@ public class ImageController {
         List<Path> allImages;
         try (Stream<Path> paths = Files.walk(folderPath)) {
             allImages = paths
+                    .filter(this::isNotThumbnailFolder)  // Exclude .thumbnails folder
                     .filter(Files::isRegularFile)
                     .filter(f -> f.getFileName().toString().toLowerCase()
-                            .matches(".*\\.(png|jpg|jpeg|gif|webp)$"))
+                            .matches(".*\\.(png|jpg|jpeg|gif|webp|mp4|mov|avi|mkv|webm|m4v|wmv)$"))
                     .collect(Collectors.toList());
         }
 
@@ -393,5 +431,16 @@ public class ImageController {
         }
 
         return new UrlResource(filePath.toUri());
+    }
+    /**
+     * Check if a path is NOT a thumbnails folder
+     * Excludes both .thumbnails and thumbnails folders at any level
+     */
+    private boolean isNotThumbnailFolder(Path path) {
+        String pathStr = path.toString();
+        return !pathStr.contains(java.io.File.separator + ".thumbnails") &&
+               !pathStr.contains(java.io.File.separator + "thumbnails" + java.io.File.separator) &&
+               !pathStr.endsWith(java.io.File.separator + "thumbnails") &&
+               !pathStr.endsWith(java.io.File.separator + ".thumbnails");
     }
 }

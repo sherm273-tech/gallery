@@ -73,15 +73,24 @@ const NotificationSettingsManager = {
             const settings = await response.json();
             console.log('[NotificationSettingsManager] Loaded settings:', settings);
             
-            // Populate form
-            document.getElementById('defaultEmail').value = settings.defaultEmail || '';
-            document.getElementById('defaultPhone').value = settings.defaultPhone || '';
-            document.getElementById('defaultBrowserEnabled').checked = settings.defaultBrowserEnabled ?? true;
-            document.getElementById('defaultEmailEnabled').checked = settings.defaultEmailEnabled ?? false;
-            document.getElementById('defaultSmsEnabled').checked = settings.defaultSmsEnabled ?? false;
-            document.getElementById('quietHoursEnabled').checked = settings.quietHoursEnabled ?? true;
-            document.getElementById('quietHoursStart').value = settings.quietHoursStart || '22:00:00';
-            document.getElementById('quietHoursEnd').value = settings.quietHoursEnd || '07:00:00';
+            // Populate form (with null checks for missing elements)
+            const defaultEmail = document.getElementById('defaultEmail');
+            const defaultPhone = document.getElementById('defaultPhone');
+            const enableBrowser = document.getElementById('enableBrowser');
+            const enableEmail = document.getElementById('enableEmail');
+            const enableSms = document.getElementById('enableSms');
+            const quietHoursEnabled = document.getElementById('quietHoursEnabled');
+            const quietHoursStart = document.getElementById('quietHoursStart');
+            const quietHoursEnd = document.getElementById('quietHoursEnd');
+            
+            if (defaultEmail) defaultEmail.value = settings.defaultEmail || '';
+            if (defaultPhone) defaultPhone.value = settings.defaultPhone || '';
+            if (enableBrowser) enableBrowser.checked = settings.defaultBrowserEnabled ?? true;
+            if (enableEmail) enableEmail.checked = settings.defaultEmailEnabled ?? false;
+            if (enableSms) enableSms.checked = settings.defaultSmsEnabled ?? false;
+            if (quietHoursEnabled) quietHoursEnabled.checked = settings.quietHoursEnabled ?? true;
+            if (quietHoursStart) quietHoursStart.value = settings.quietHoursStart || '22:00:00';
+            if (quietHoursEnd) quietHoursEnd.value = settings.quietHoursEnd || '07:00:00';
             
         } catch (error) {
             console.error('[NotificationSettingsManager] Error loading settings:', error);
@@ -95,9 +104,9 @@ const NotificationSettingsManager = {
         const settings = {
             defaultEmail: document.getElementById('defaultEmail').value.trim() || null,
             defaultPhone: document.getElementById('defaultPhone').value.trim() || null,
-            defaultBrowserEnabled: document.getElementById('defaultBrowserEnabled').checked,
-            defaultEmailEnabled: document.getElementById('defaultEmailEnabled').checked,
-            defaultSmsEnabled: document.getElementById('defaultSmsEnabled').checked,
+            defaultBrowserEnabled: document.getElementById('enableBrowser').checked,
+            defaultEmailEnabled: document.getElementById('enableEmail').checked,
+            defaultSmsEnabled: document.getElementById('enableSms').checked,
             quietHoursEnabled: document.getElementById('quietHoursEnabled').checked,
             quietHoursStart: document.getElementById('quietHoursStart').value,
             quietHoursEnd: document.getElementById('quietHoursEnd').value
@@ -240,19 +249,26 @@ const NotificationSettingsManager = {
             console.log('[NotificationSettingsManager] Loaded stats:', stats);
             
             // Update stats display
-            document.getElementById('statTodayNotifs').textContent = stats.todayCount || 0;
-            document.getElementById('statWeekNotifs').textContent = stats.weekCount || 0;
-            document.getElementById('statTotalSent').textContent = stats.totalSent || 0;
-            document.getElementById('statTotalFailed').textContent = stats.totalFailed || 0;
+            // Update stats display (with null checks)
+            const statTodayNotifs = document.getElementById('statTodayNotifs');
+            const statWeekNotifs = document.getElementById('statWeekNotifs');
+            const statTotalSent = document.getElementById('statTotalSent');
+            const statTotalFailed = document.getElementById('statTotalFailed');
+            const smsMonthCount = document.getElementById('smsMonthCount');
+            const smsMonthCost = document.getElementById('smsMonthCost');
+            const smsAllTimeCount = document.getElementById('smsAllTimeCount');
+            const smsAllTimeCost = document.getElementById('smsAllTimeCost');
             
-            // Update SMS cost tracking
-            document.getElementById('smsMonthCount').textContent = stats.smsSentThisMonth || 0;
-            document.getElementById('smsMonthCost').textContent = `$${(stats.monthSmsCost || 0).toFixed(2)} AUD`;
-            document.getElementById('smsAllTimeCount').textContent = stats.smsSentAllTime || 0;
-            document.getElementById('smsAllTimeCost').textContent = `$${(stats.totalSmsCost || 0).toFixed(2)} AUD`;
-            
+            if (statTodayNotifs) statTodayNotifs.textContent = stats.todayCount || 0;
+            if (statWeekNotifs) statWeekNotifs.textContent = stats.weekCount || 0;
+            if (statTotalSent) statTotalSent.textContent = stats.totalSent || 0;
+            if (statTotalFailed) statTotalFailed.textContent = stats.totalFailed || 0;
+            if (smsMonthCount) smsMonthCount.textContent = stats.smsSentThisMonth || 0;
+            if (smsMonthCost) smsMonthCost.textContent = `$${(stats.monthSmsCost || 0).toFixed(2)} AUD`;
+            if (smsAllTimeCount) smsAllTimeCount.textContent = stats.smsSentAllTime || 0;
+            if (smsAllTimeCost) smsAllTimeCost.textContent = `$${(stats.allTimeSmsCost || 0).toFixed(2)} AUD`;
         } catch (error) {
-            console.error('[NotificationSettingsManager] Error loading stats:', error);
+            console.error('[NotificationSettingsManager] Error loading statistics:', error);
         }
     },
     

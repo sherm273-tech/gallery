@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="/css/calendar.css?v=11.0">
     <link rel="stylesheet" href="/css/fullcalendar-custom.css?v=13.0">
     <link rel="stylesheet" href="/css/memories.css">
+    <link rel="stylesheet" href="/css/video-player.css">
+    <link rel="stylesheet" href="/css/videos.css">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -211,6 +213,11 @@
                                 <label for="randomizeMusicCheckboxEvent">Randomise music playback</label>
                             </div>
                             
+                            <div class="checkbox-container-mini">
+                                <input type="checkbox" id="muteMusicDuringVideoEvent" checked>
+                                <label for="muteMusicDuringVideoEvent">Mute music during videos</label>
+                            </div>
+                            
                             <div class="form-group-mini">
                                 <label for="speedSelectEvent">Image duration</label>
                                 <select id="speedSelectEvent" class="form-select-mini">
@@ -322,6 +329,9 @@
     </div>
 
     <!-- Memories Modal -->
+
+    <!-- Videos Overlay -->
+    <div th:replace="~{fragments/videos/videos-overlay :: videos-overlay}"></div>
     <div th:replace="~{fragments/memories/memories-modal :: memories-modal}"></div>
 
     <!-- Controls Panel -->

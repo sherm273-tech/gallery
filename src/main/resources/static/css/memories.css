@@ -486,24 +486,43 @@
     justify-content: center;
     align-items: center;
     z-index: 10001;
-    backdrop-filter: blur(10px);
 }
 
 .lightbox-content {
-    max-width: 90vw;
-    max-height: 90vh;
+    max-width: 98vw;
+    max-height: 98vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
+    gap: 8px;
 }
 
 .lightbox-image {
-    max-width: 100%;
-    max-height: 80vh;
+    width: auto;
+    height: auto;
+    max-width: 98vw;
+    max-height: 85vh;
+    min-width: 400px;
+    min-height: 400px;
     object-fit: contain;
     border-radius: 8px;
     box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+    /* Ensure no filters or effects on the image */
+    filter: none;
+    backdrop-filter: none;
+}
+
+.lightbox-video {
+    width: auto;
+    height: auto;
+    max-width: 98vw;
+    max-height: 85vh;
+    min-width: 400px;
+    min-height: 400px;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+    background: #000;
 }
 
 .lightbox-info {
@@ -577,19 +596,10 @@
 }
 
 .lightbox-play.playing {
-    background: rgba(102, 126, 234, 0.8);
-    border-color: rgba(102, 126, 234, 1);
-    animation: pulse 2s infinite;
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
-@keyframes pulse {
-    0%, 100% {
-        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
-    }
-    50% {
-        box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
-    }
-}
 
 .lightbox-close:hover,
 .lightbox-prev:hover:not(:disabled),
@@ -651,5 +661,103 @@
     
     .lightbox-counter {
         font-size: 14px;
+    }
+}
+
+/* ===== VIDEO SUPPORT (Phase 1) ===== */
+
+/* Video indicator on thumbnail - PROFESSIONAL PLAY BUTTON */
+.memory-video-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0.95;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Play triangle inside circle */
+.memory-video-indicator::before {
+    content: '';
+    width: 0;
+    height: 0;
+    border-left: 24px solid #333;
+    border-top: 14px solid transparent;
+    border-bottom: 14px solid transparent;
+    margin-left: 6px; /* Center the triangle */
+}
+
+/* Video duration badge */
+.memory-video-duration {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    z-index: 2;
+    pointer-events: none;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Video card hover effect - enlarge and brighten play button */
+.memory-video-card:hover .memory-video-indicator {
+    transform: translate(-50%, -50%) scale(1.2);
+    opacity: 1;
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* Add semi-transparent overlay to video thumbnails for better contrast */
+.memory-video-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 12px;
+    z-index: 1;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+/* Darken overlay on hover for more contrast */
+.memory-video-card:hover::before {
+    background: rgba(0, 0, 0, 0.25);
+}
+
+@media (max-width: 768px) {
+    .memory-video-indicator {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .memory-video-indicator::before {
+        border-left-width: 18px;
+        border-top-width: 11px;
+        border-bottom-width: 11px;
+        margin-left: 4px;
+    }
+    
+    .memory-video-duration {
+        font-size: 11px;
+        padding: 4px 8px;
+        bottom: 8px;
+        right: 8px;
     }
 }

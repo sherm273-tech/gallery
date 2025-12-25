@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <div th:fragment="controls-panel" id="controls" class="hidden">
+        <div class="controls-header">
+            <button class="back-btn" id="backToMenuBtn">← Back to Menu</button>
+            <div class="header-content">
+                <h1 id="controlsTitle">Photo Slideshow Setup</h1>
+                <p class="controls-subtitle">Configure your experience</p>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-nav" id="tabNav">
+            <button class="tab-button active" data-tab="photos">
+                <span class="tab-icon">📷</span>
+                <span class="tab-label">Photos</span>
+            </button>
+            <button class="tab-button" data-tab="music">
+                <span class="tab-icon">🎵</span>
+                <span class="tab-label">Music</span>
+            </button>
+        </div>
+
+        <!-- Photos Tab -->
+        <div class="tab-content active" id="photos-tab">
+            <div class="settings-section">
+                <h3 class="section-title">Folder Selection</h3>
+                <p class="section-description">Choose which folders to include in your slideshow. Drag to reorder.</p>
+                
+                <div class="folder-controls">
+                    <button class="control-btn secondary" id="selectAllFolders">Select All</button>
+                    <button class="control-btn secondary" id="selectNoFolders">Deselect All</button>
+                </div>
+                
+                <div class="search-container">
+                    <input type="text" id="folderSearch" class="search-input" placeholder="🔍 Search folders...">
+                </div>
+                
+                <div id="folderList" class="item-list">
+                    <p style="color: #aaa;">Loading folders...</p>
+                </div>
+                
+                <div class="error-message" id="folderError">
+                    ⚠️ Please select at least one folder
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3 class="section-title">Playback Options</h3>
+                
+                <div class="form-group">
+                    <label for="startFolderSelect">Starting folder (optional)</label>
+                    <select id="startFolderSelect" class="form-select">
+                        <option value="">None (use folder order above)</option>
+                    </select>
+                </div>
+                
+                <div class="checkbox-group">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="shuffleAllCheckbox">
+                        <label for="shuffleAllCheckbox">
+                            <strong>Shuffle all images together</strong>
+                            <span class="checkbox-help">Ignore folder organization and mix all photos</span>
+                        </label>
+                    </div>
+
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="randomizeCheckbox" checked>
+                        <label for="randomizeCheckbox">
+                            <strong>Randomize within folders</strong>
+                            <span class="checkbox-help">Shuffle photos within each folder</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="speedSelect">Image display duration</label>
+                    <select id="speedSelect" class="form-select">
+                        <option value="2000">Fast (2 seconds)</option>
+                        <option value="3000">Medium (3 seconds)</option>
+                        <option value="5000" selected>Normal (5 seconds)</option>
+                        <option value="7000">Slow (7 seconds)</option>
+                        <option value="10000">Very Slow (10 seconds)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Music Tab -->
+        <div class="tab-content" id="music-tab">
+            <div class="settings-section">
+                <h3 class="section-title">Music Selection</h3>
+                <p class="section-description">Choose background music. Drag to reorder tracks.</p>
+                
+                <div class="music-controls">
+                    <button class="control-btn secondary" id="selectAllMusic">Select All</button>
+                    <button class="control-btn secondary" id="selectNoMusic">No Music</button>
+                </div>
+                
+                <div class="checkbox-container" style="margin-bottom: 15px;">
+                    <input type="checkbox" id="randomizeMusicCheckbox">
+                    <label for="randomizeMusicCheckbox">
+                        <strong>Randomize playback order</strong>
+                        <span class="checkbox-help">Shuffle the music playlist</span>
+                    </label>
+                </div>
+                
+                <div class="search-container">
+                    <input type="text" id="musicSearch" class="search-input" placeholder="🔍 Search music...">
+                </div>
+                
+                <div id="musicList" class="item-list">
+                    <p style="color: #aaa;">Loading music...</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls-footer">
+            <button id="startButton" class="start-button">
+                <span class="button-icon">▶</span>
+                <span class="button-text" id="startButtonText">Start Slideshow</span>
+            </button>
+            
+            <div class="keyboard-shortcuts">
+                <div class="shortcuts-title">Keyboard Shortcuts</div>
+                <div class="shortcuts-list">
+                    <span class="shortcut"><kbd>Space</kbd> or <kbd>P</kbd> Pause/Play</span>
+                    <span class="shortcut"><kbd>←</kbd> <kbd>→</kbd> Previous/Next</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shared Utilities -->
+</body>
+</html>
