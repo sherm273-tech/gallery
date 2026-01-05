@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <div th:fragment="videos-overlay" class="weather-display-overlay" id="videosOverlay" style="display: none;">
+        <div class="mirror-overlay" id="videosMirrorOverlay">
+            <div class="video-library-container">
+                <!-- Header -->
+                <div class="video-library-header">
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <button class="close-calendar-btn" id="closeVideosBtn">✕ Exit</button>
+                        <h1 class="video-library-title">🎬 Video Library</h1>
+                    </div>
+                    <div id="videoLibraryStats" class="video-library-stats"></div>
+                </div>
+                
+                <!-- Toolbar -->
+                <div class="video-toolbar">
+                    <div class="toolbar-section">
+                        <button id="indexVideosBtn" class="btn-primary" style="margin-right: 20px;">🔄 Index Videos</button>
+                        <button id="filterAllVideos" class="filter-btn active">All</button>
+                        <button id="filterShort" class="filter-btn">Short (&lt;1min)</button>
+                        <button id="filterMedium" class="filter-btn">Medium (1-5min)</button>
+                        <button id="filterLong" class="filter-btn">Long (&gt;5min)</button>
+                    </div>
+                    
+                    <div class="toolbar-section">
+                        <select id="videoSortSelect" class="video-sort">
+                            <option value="date-desc">Newest First</option>
+                            <option value="date-asc">Oldest First</option>
+                            <option value="duration-desc">Longest First</option>
+                            <option value="duration-asc">Shortest First</option>
+                        </select>
+                        
+                        <div class="view-toggle">
+                            <button id="videoGridView" class="view-btn active">⊞ Grid</button>
+                            <button id="videoListView" class="view-btn">☰ List</button>
+                        </div>
+                        
+                        <button id="refreshVideos" class="btn-icon" title="Refresh">🔄</button>
+                    </div>
+                </div>
+                
+                <!-- Selection Info -->
+                <div class="toolbar-section" style="margin-bottom: 10px;">
+                    <span id="selectionInfo" style="color: #aaa;"></span>
+                    <button id="selectAllVideos" class="btn-secondary">Select All</button>
+                    <button id="clearSelection" class="btn-secondary">Clear</button>
+                    <button id="addToPlaylist" class="btn-primary" disabled>Add to Playlist</button>
+                </div>
+                
+                <!-- Video Grid -->
+                <div id="videoGrid" class="video-grid"></div>
+                
+                <!-- Playlists Section -->
+                <div class="playlists-section">
+                    <div class="playlists-header">
+                        <h2>🎬 Playlists</h2>
+                        <button id="createPlaylistBtn" class="btn-primary">+ Create Playlist</button>
+                    </div>
+                    <div id="playlistsList" class="playlists-list"></div>
+                </div>
+                
+                <!-- Statistics Dashboard -->
+                <div class="stats-dashboard">
+                    <h2 style="color: #fff; margin-bottom: 20px;">📊 Statistics</h2>
+                    <div id="statsOverview"></div>
+                    <div id="folderBreakdown" class="breakdown-section"></div>
+                    <div id="yearBreakdown" class="breakdown-section"></div>
+                    <div id="durationBreakdown" class="breakdown-section"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Playlist Dialog -->
+    <div id="createPlaylistDialog" class="video-dialog">
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <h3>Create New Playlist</h3>
+                <button class="dialog-close">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Playlist Name</label>
+                <input type="text" id="newPlaylistName" placeholder="My Playlist">
+            </div>
+            <div class="form-group">
+                <label>Description (optional)</label>
+                <textarea id="newPlaylistDescription" placeholder="Playlist description..."></textarea>
+            </div>
+            <div class="dialog-actions">
+                <button class="btn-secondary dialog-close">Cancel</button>
+                <button id="saveNewPlaylist" class="btn-primary">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Playlist Dialog -->
+    <div id="editPlaylistDialog" class="video-dialog">
+        <div class="dialog-content" style="max-width: 700px;">
+            <div class="dialog-header">
+                <h3>Edit Playlist</h3>
+                <button class="dialog-close">✕</button>
+            </div>
+            <div class="form-group">
+                <label>Playlist Name</label>
+                <input type="text" id="editPlaylistName">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="editPlaylistDescription"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Videos</label>
+                <div id="playlistVideosEditor" style="max-height: 300px; overflow-y: auto;"></div>
+            </div>
+            <div class="dialog-actions">
+                <button class="btn-secondary dialog-close">Cancel</button>
+                <button id="savePlaylistChanges" class="btn-primary">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add to Playlist Dialog -->
+    <div id="addToPlaylistDialog" class="video-dialog">
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <h3>Add to Playlist</h3>
+                <button class="dialog-close">✕</button>
+            </div>
+            <div id="playlistSelectList"></div>
+            <div class="dialog-actions">
+                <button class="btn-secondary dialog-close">Cancel</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

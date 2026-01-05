@@ -89,7 +89,6 @@ const VideoLibrary = (function() {
         if (addToPlaylistBtn && !addToPlaylistBtn._hasAddToPlaylistListener) {
             addToPlaylistBtn.addEventListener('click', showAddToPlaylistDialog);
             addToPlaylistBtn._hasAddToPlaylistListener = true;
-            console.log('[VideoLibrary] Add to Playlist button listener attached');
         }
         
         // Refresh button
@@ -218,13 +217,23 @@ const VideoLibrary = (function() {
         const fileName = video.filePath.split('/').pop();
         const isSelected = selectedVideos.has(video.filePath);
         
+        // Check if video has a generated thumbnail
+        const hasThumbnail = video.thumbnailPath && video.thumbnailPath.trim() !== '';
+        const thumbnailUrl = hasThumbnail ? `/images/${video.thumbnailPath}` : null;
+        
         return `
             <div class="video-card" data-filepath="${video.filePath}">
                 <div class="video-checkbox-container">
                     <input type="checkbox" class="video-select-checkbox" ${isSelected ? 'checked' : ''}>
                 </div>
                 <div class="video-thumbnail">
-                    <img src="/images/${video.filePath}" alt="${fileName}">
+                    ${hasThumbnail 
+                        ? `<img src="${thumbnailUrl}" alt="${fileName}" loading="lazy" onerror="this.parentElement.classList.add('thumbnail-error');">` 
+                        : `<div class="video-thumbnail-placeholder">
+                               <div class="video-icon">🎬</div>
+                               <div class="video-filename">${fileName}</div>
+                           </div>`
+                    }
                     <div class="video-play-overlay">
                         <div class="video-play-icon">▶</div>
                     </div>
@@ -323,18 +332,10 @@ const VideoLibrary = (function() {
      * Show add to playlist dialog
      */
     function showAddToPlaylistDialog() {
-        console.log('[VideoLibrary] showAddToPlaylistDialog called, selectedVideos.size:', selectedVideos.size);
-        
-        if (selectedVideos.size === 0) {
-            console.log('[VideoLibrary] No videos selected');
-            return;
-        }
+        if (selectedVideos.size === 0) return;
         
         if (window.VideoPlaylists) {
-            console.log('[VideoLibrary] Calling VideoPlaylists.showAddToPlaylistDialog');
             window.VideoPlaylists.showAddToPlaylistDialog(Array.from(selectedVideos));
-        } else {
-            console.error('[VideoLibrary] VideoPlaylists not available');
         }
     }
     

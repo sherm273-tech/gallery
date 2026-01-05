@@ -105,6 +105,7 @@ const VideoPlaylists = (function() {
      */
     function showCreatePlaylistDialog() {
         const dialog = document.getElementById('createPlaylistDialog');
+        
         if (dialog) {
             dialog.style.display = 'flex';
             document.getElementById('newPlaylistName').value = '';
@@ -271,7 +272,7 @@ const VideoPlaylists = (function() {
             const videos = await response.json();
             
             if (videos.length === 0) {
-                alert('Playlist is empty');
+                alert('This playlist is empty. Add some videos to it first!');
                 return;
             }
             
@@ -293,23 +294,13 @@ const VideoPlaylists = (function() {
      * Show add to playlist dialog
      */
     function showAddToPlaylistDialog(videoPaths) {
-        console.log('[VideoPlaylists] showAddToPlaylistDialog called with', videoPaths.length, 'videos');
-        
-        if (!videoPaths || videoPaths.length === 0) {
-            console.log('[VideoPlaylists] No video paths provided');
-            return;
-        }
+        if (!videoPaths || videoPaths.length === 0) return;
         
         const dialog = document.getElementById('addToPlaylistDialog');
-        if (!dialog) {
-            console.error('[VideoPlaylists] addToPlaylistDialog element not found');
-            return;
-        }
+        if (!dialog) return;
         
         // Store selected videos
         dialog.dataset.videos = JSON.stringify(videoPaths);
-        
-        console.log('[VideoPlaylists] Available playlists:', playlists.length);
         
         // Render playlist selection
         const container = document.getElementById('playlistSelectList');
@@ -338,7 +329,6 @@ const VideoPlaylists = (function() {
             }
         }
         
-        console.log('[VideoPlaylists] Showing dialog');
         dialog.style.display = 'flex';
     }
     
@@ -414,10 +404,12 @@ const VideoPlaylists = (function() {
     }
     
     // Public API
+    // Public API
     return {
         init,
         loadPlaylists,
         showAddToPlaylistDialog,
+        showCreatePlaylistDialog,
         editPlaylist,
         deletePlaylist,
         playPlaylist,

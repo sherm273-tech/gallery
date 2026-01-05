@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <div th:fragment="initial-menu" id="initialMenu" class="initial-menu">
+        <div class="menu-container">
+            <div class="menu-header">
+                <h1><span class="home-emoji">🏠</span><span class="title-text">Sang's and Sherm's Station</span></h1>
+                <button class="settings-icon-btn" id="settingsBtn" title="Settings">⚙️</button>
+                <p class="menu-subtitle">Choose your experience</p>
+            </div>
+            
+            <div class="menu-buttons">
+                <button class="menu-option-btn" id="photoSlideshowBtn">
+                    <span class="menu-icon">📷</span>
+                    <span class="menu-title">Photo Slideshow</span>
+                    <span class="menu-desc">Display photos with optional background music</span>
+                </button>
+                
+                <button class="menu-option-btn" id="musicOnlyBtn">
+                    <span class="menu-icon">🎵</span>
+                    <span class="menu-title">Music Player</span>
+                    <span class="menu-desc">Listen to music with playback controls</span>
+                </button>
+                
+                <button class="menu-option-btn" id="weatherDisplayBtn">
+                    <span class="menu-icon">🌤️</span>
+                    <span class="menu-title">Weather Display</span>
+                    <span class="menu-desc">Magic mirror with weather, clock & forecast</span>
+                </button>
+                
+                <button class="menu-option-btn" id="calendarDisplayBtn">
+                    <span class="menu-icon">📅</span>
+                    <span class="menu-title">Calendar & Events</span>
+                    <span class="menu-desc">View your schedule & appointments</span>
+                </button>
+                
+                <button class="menu-option-btn" id="videosLibraryBtn">
+                    <span class="menu-icon">🎬</span>
+                    <span class="menu-title">Video Library</span>
+                    <span class="menu-desc">Browse videos, create playlists & view stats</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

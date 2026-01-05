@@ -347,6 +347,7 @@ const EventSlideshowConfig = {
         document.getElementById('randomizeMusicCheckboxEvent').checked = config.randomizeMusic || false;
         document.getElementById('speedSelectEvent').value = config.displayDuration || 5000;
         document.getElementById('muteMusicDuringVideoEvent').checked = config.muteMusicDuringVideo !== false;
+        document.getElementById('excludeVideosEvent').checked = config.excludeVideos || false;
         
         // Re-render lists with selections
         this.renderFolderList();
@@ -381,6 +382,7 @@ const EventSlideshowConfig = {
         document.getElementById('randomizeMusicCheckboxEvent').checked = false;
         document.getElementById('speedSelectEvent').value = 5000;
         document.getElementById('muteMusicDuringVideoEvent').checked = true;
+        document.getElementById('excludeVideosEvent').checked = false;
         document.getElementById('startFolderSelectEvent').value = '';
         
         // Clear search inputs
@@ -409,6 +411,7 @@ const EventSlideshowConfig = {
             randomizeMusic: document.getElementById('randomizeMusicCheckboxEvent').checked,
             startFolder: document.getElementById('startFolderSelectEvent').value || null,
             muteMusicDuringVideo: document.getElementById('muteMusicDuringVideoEvent').checked,
+            excludeVideos: document.getElementById('excludeVideosEvent').checked,
             displayDuration: parseInt(document.getElementById('speedSelectEvent').value)
         };
     },

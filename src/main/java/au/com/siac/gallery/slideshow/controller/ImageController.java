@@ -40,6 +40,7 @@ public class ImageController {
         private boolean randomize;
         private boolean shuffleAll;
         private List<String> selectedFolders;
+        private boolean excludeVideos;
 
         public String getStartFolder() { return startFolder; }
         public void setStartFolder(String startFolder) { this.startFolder = startFolder; }
@@ -52,6 +53,9 @@ public class ImageController {
         
         public List<String> getSelectedFolders() { return selectedFolders; }
         public void setSelectedFolders(List<String> selectedFolders) { this.selectedFolders = selectedFolders; }
+        
+        public boolean isExcludeVideos() { return excludeVideos; }
+        public void setExcludeVideos(boolean excludeVideos) { this.excludeVideos = excludeVideos; }
 
         @Override
         public boolean equals(Object o) {
@@ -60,13 +64,14 @@ public class ImageController {
             ImageListRequest that = (ImageListRequest) o;
             return randomize == that.randomize &&
                    shuffleAll == that.shuffleAll &&
+                   excludeVideos == that.excludeVideos &&
                    Objects.equals(startFolder, that.startFolder) &&
                    Objects.equals(selectedFolders, that.selectedFolders);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(startFolder, randomize, shuffleAll, selectedFolders);
+            return Objects.hash(startFolder, randomize, shuffleAll, selectedFolders, excludeVideos);
         }
     }
 
@@ -304,18 +309,26 @@ public class ImageController {
         boolean randomize = request.isRandomize();
         boolean shuffleAll = request.isShuffleAll();
         List<String> selectedFolders = request.getSelectedFolders();
+        boolean excludeVideos = request.isExcludeVideos();
         
         Path folderPath = Paths.get(imageFolder);
 
         // Collect all image files
         List<Path> allImages;
         try (Stream<Path> paths = Files.walk(folderPath)) {
-            allImages = paths
+            Stream<Path> filteredPaths = paths
                     .filter(this::isNotThumbnailFolder)  // Exclude .thumbnails folder
                     .filter(Files::isRegularFile)
                     .filter(f -> f.getFileName().toString().toLowerCase()
-                            .matches(".*\\.(png|jpg|jpeg|gif|webp|mp4|mov|avi|mkv|webm|m4v|wmv)$"))
-                    .collect(Collectors.toList());
+                            .matches(".*\\.(png|jpg|jpeg|gif|webp|mp4|mov|avi|mkv|webm|m4v|wmv)$"));
+            
+            // Exclude videos if requested
+            if (excludeVideos) {
+                filteredPaths = filteredPaths.filter(f -> !f.getFileName().toString().toLowerCase()
+                        .matches(".*\\.(mp4|mov|avi|mkv|webm|m4v|wmv)$"));
+            }
+            
+            allImages = filteredPaths.collect(Collectors.toList());
         }
 
         // Filter by selected folders if provided

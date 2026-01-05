@@ -3,13 +3,13 @@
 <body>
     <div th:fragment="videos-overlay" class="weather-display-overlay" id="videosOverlay" style="display: none;">
         <div class="mirror-overlay" id="videosMirrorOverlay">
+            <!-- Floating Exit Button -->
+            <button class="close-calendar-btn" id="closeVideosBtn">✕ Exit</button>
+            
             <div class="video-library-container">
                 <!-- Header -->
                 <div class="video-library-header">
-                    <div style="display: flex; align-items: center; gap: 20px;">
-                        <button class="close-calendar-btn" id="closeVideosBtn">✕ Exit</button>
-                        <h1 class="video-library-title">🎬 Video Library</h1>
-                    </div>
+                    <h1 class="video-library-title">🎬 Video Library</h1>
                     <div id="videoLibraryStats" class="video-library-stats"></div>
                 </div>
                 
@@ -70,7 +70,6 @@
                 </div>
             </div>
         </div>
-    </div>
 
     <!-- Create Playlist Dialog -->
     <div id="createPlaylistDialog" class="video-dialog">
@@ -132,6 +131,7 @@
                 <button class="btn-secondary dialog-close">Cancel</button>
             </div>
         </div>
+    </div>
     </div>
 </body>
 </html>

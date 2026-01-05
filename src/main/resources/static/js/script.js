@@ -103,7 +103,7 @@ photoSlideshowBtn.addEventListener('click', () => {
     console.log('  Controls computed display:', window.getComputedStyle(controls).display);
     console.log('  Controls pointer-events:', window.getComputedStyle(controls).pointerEvents);
     
-    controlsTitle.textContent = 'Photo Slideshow Setup';
+    controlsTitle.textContent = '📷 Photo Slideshow Setup';
     startButtonText.textContent = 'Start Slideshow';
     tabNav.style.display = 'flex';
     console.log('  TabNav display set to flex');
@@ -127,7 +127,7 @@ musicOnlyBtn.addEventListener('click', () => {
     window.currentMode = 'music';
     initialMenu.classList.add('hidden');
     controls.classList.remove('hidden');
-    controlsTitle.textContent = 'Music Player Setup';
+    controlsTitle.textContent = '🎵 Music Player Setup';
     startButtonText.textContent = 'Start Music Player';
     tabNav.style.display = 'none';
     photosTab.classList.remove('active');

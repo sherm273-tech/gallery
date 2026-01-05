@@ -1,0 +1,75 @@
+/* Dark Theme Overrides for Settings */
+
+.settings-panel {
+    background: rgba(30, 30, 45, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.settings-header {
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.settings-header h1 {
+    color: white !important;
+}
+
+.settings-section {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.settings-section h2 {
+    color: white !important;
+}
+
+.section-help {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Form Elements */
+.form-group label {
+    color: white !important;
+}
+
+.help-text {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.checkbox-label {
+    color: white !important;
+}
+
+.checkbox-label span {
+    color: white !important;
+}
+
+/* AWS Status */
+.aws-status {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+}
+
+.status-label {
+    color: white;
+    font-weight: 500;
+}
+
+.status-value {
+    color: #10b981;
+    font-weight: 600;
+}
+
+/* Settings Footer */
+.settings-footer {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}

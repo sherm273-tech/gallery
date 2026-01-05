@@ -328,11 +328,14 @@ const FolderManager = (() => {
      * @returns {Object} Configuration object for API
      */
     function getConfig() {
+        const excludeVideosCheckbox = document.getElementById('excludeVideosCheckbox');
+        
         return {
             startFolder: getStartFolder(),
             randomize: isRandomizeEnabled(),
             shuffleAll: isShuffleAllEnabled(),
-            selectedFolders: isShuffleAllEnabled() ? [] : getSelected()
+            selectedFolders: isShuffleAllEnabled() ? [] : getSelected(),
+            excludeVideos: excludeVideosCheckbox ? excludeVideosCheckbox.checked : false
         };
     }
     

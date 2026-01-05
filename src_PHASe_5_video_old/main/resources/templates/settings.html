@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Sang's and Sherm's Station</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/notification-settings.css">
+    <link rel="stylesheet" href="/css/settings-tabs.css">
+</head>
+<body>
+
+    <!-- Slideshow Background -->
+    <div th:replace="~{fragments/slideshow/slideshow-background :: slideshow-background}"></div>
+
+    <!-- Loading Overlay -->
+    <div th:replace="~{fragments/slideshow/loading-overlay :: loading-overlay}"></div>
+
+    <!-- Menu -->
+    <div th:replace="~{fragments/menu :: initial-menu}"></div>
+
+    <!-- Toast Notification (for errors only) -->
+    <div id="toastNotification" class="toast-notification">
+        <span id="toastMessage"></span>
+    </div>
+
+    <!-- Settings Container -->
+    <div class="settings-container">
+        <div class="settings-panel">
+            <div class="settings-header">
+                <h1>⚙️ Settings</h1>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="settings-tabs">
+                <button class="settings-tab active" data-tab="notifications">🔔 Notifications</button>
+                <button class="settings-tab" data-tab="memories">🧠 Memories</button>
+            </div>
+
+            <!-- Notifications Tab -->
+            <div id="notifications-tab" class="settings-tab-content active">
+                <!-- Contact Configuration -->
+                <div class="settings-section">
+                    <h2>📧 Contact Information</h2>
+                    <p class="section-help">Configure where notifications should be sent</p>
+                    
+                    <div class="form-group">
+                        <label for="defaultEmail">Email Address</label>
+                        <input type="email" id="defaultEmail" placeholder="your@email.com">
+                        <button class="test-btn" id="testEmailBtn">📧 Send Test Email</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="defaultPhone">Phone Number (SMS)</label>
+                        <input type="tel" id="defaultPhone" placeholder="+61 4XX XXX XXX">
+                        <small class="help-text">Include country code (e.g., +61 for Australia)</small>
+                        <button class="test-btn" id="testSmsBtn">📱 Send Test SMS (~$0.08 AUD)</button>
+                    </div>
+                </div>
+
+                <!-- Notification Preferences -->
+                <div class="settings-section">
+                    <h2>🔕 Notification Preferences</h2>
+                    <p class="section-help">Choose how you want to receive notifications</p>
+                    
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="enableBrowser" checked>
+                            <span>🖥️ Browser Notifications (Free)</span>
+                        </label>
+                        <small class="help-text">Show notifications in your browser</small>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="enableEmail">
+                            <span>📧 Email Notifications (Free)</span>
+                        </label>
+                        <small class="help-text">Send notifications via email</small>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="enableSms">
+                            <span>📱 SMS Notifications (~$0.08 AUD per message)</span>
+                        </label>
+                        <small class="help-text">Send notifications via SMS (charges apply)</small>
+                    </div>
+                </div>
+
+                <!-- AWS Configuration Status -->
+                <div class="settings-section">
+                    <h2>☁️ AWS Configuration Status</h2>
+                    <div id="awsStatus" class="aws-status">
+                        <div class="status-item">
+                            <span class="status-label">AWS SNS:</span>
+                            <span id="snsStatus" class="status-value">Checking...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save Buttons (Original Style) -->
+                <div class="settings-section">
+                    <div class="settings-footer">
+                        <button class="btn-primary btn-large" id="saveSettingsBtn">Save Settings</button>
+                        <button class="btn-secondary btn-large" onclick="window.location.href='/'">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Memories Tab -->
+            <div id="memories-tab" class="settings-tab-content">
+                <div class="settings-section">
+                    <h2>📸 Photo & Video Indexing</h2>
+                    <p class="section-help">Scan your gallery folder for photos and videos</p>
+                    
+                    <div class="indexing-controls">
+                        <button class="index-btn" id="runIndexingBtn">
+                            🔄 Index All Photos & Videos
+                        </button>
+                        <div id="indexingStatus" class="indexing-status"></div>
+                        <div id="indexingProgress" class="indexing-progress"></div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h2>⚙️ Indexing Schedule</h2>
+                    <p class="section-help">Automatic background indexing</p>
+                    
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="enableAutoIndex">
+                            <span>Enable Automatic Daily Indexing</span>
+                        </label>
+                        <small class="help-text">Automatically index new photos/videos daily at 2:00 AM</small>
+                    </div>
+                </div>
+
+                <!-- Close Button -->
+                <div class="settings-section">
+                    <div class="settings-footer">
+                        <button class="btn-secondary btn-large" onclick="window.location.href='/'">Close</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/shared/utils.js"></script>
+    <script src="/js/settings/notification-settings.js"></script>
+    <script src="/js/settings/memories-settings.js"></script>
+    <script src="/js/settings/settings-tabs.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <!-- Weather Display Overlay -->
+    <div th:fragment="weather-overlay" class="weather-display-overlay" id="weatherDisplayOverlay">
+        <button class="close-weather-btn" id="closeWeatherBtn">✕ Exit</button>
+            
+        <!-- Magic Mirror Overlay -->
+        <div class="mirror-overlay" id="mirrorOverlay">
+            
+            <!-- Weather Alerts (if any) -->
+            <div class="weather-alerts" id="weatherAlerts" style="display: none;">
+                <!-- Populated by JavaScript -->
+            </div>
+            
+            <!-- Top Row: Clock (centered), then Weather and Quote below -->
+            <div class="mirror-top">
+                <!-- Clock Widget (spans full width at top) -->
+                <div class="clock-widget">
+                    <div class="clock-time" id="clockTime">12:00</div>
+                    <div class="clock-date" id="clockDate">Monday, January 1, 2024</div>
+                </div>
+
+                <!-- Weather Widget (left column) -->
+                <div class="weather-widget">
+                    <div class="weather-location-group">
+                        <!-- Clickable Location Selector with Dropdown -->
+                        <div class="weather-location-clickable" id="weatherLocationClickable">
+                            <span class="weather-location-icon">📍</span>
+                            <span class="weather-location-text" id="weatherLocation">Loading...</span>
+                            <span class="weather-location-arrow">▼</span>
+                        </div>
+                        
+                        <!-- Enhanced Dropdown (appears below location when clicked) -->
+                        <div class="location-dropdown location-dropdown-enhanced" id="locationDropdown"></div>
+                        
+                        <div class="weather-feels-inline" id="weatherFeelsInline">Feels like --°</div>
+                    </div>
+                    <div class="weather-main">
+                        <img class="weather-icon" id="weatherIcon" src="" alt="Weather">
+                        <div class="weather-temp" id="weatherTemp">--°</div>
+                    </div>
+                    <div class="weather-desc" id="weatherDesc">Loading...</div>
+                    <div class="weather-details">
+                        <div class="weather-detail">
+                            <span>💧</span>
+                            <span id="weatherHumidity">--%</span>
+                        </div>
+                        <div class="weather-detail">
+                            <span id="windIcon">💨</span>
+                            <span id="weatherWind">-- km/h</span>
+                        </div>
+                        <div class="weather-detail">
+                            <span>☀️</span>
+                            <span id="weatherUV">UV --</span>
+                        </div>
+                    </div>
+                    <div class="sun-times">
+                        <div class="sun-time">
+                            <span class="sun-icon">🌅</span>
+                            <div class="sun-info">
+                                <span class="sun-label">Sunrise</span>
+                                <span class="sun-value" id="weatherSunrise">--:--</span>
+                            </div>
+                        </div>
+                        <div class="sun-time">
+                            <span class="sun-icon">🌇</span>
+                            <div class="sun-info">
+                                <span class="sun-label">Sunset</span>
+                                <span class="sun-value" id="weatherSunset">--:--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weather Summary Widget (right column) -->
+                <div class="summary-widget">
+                    <div class="summary-header">Today's Weather</div>
+                    <div class="summary-temps">
+                        <div class="summary-temp-item">
+                            <span class="summary-label">High</span>
+                            <span class="summary-value temp-high" id="summaryHigh">--°</span>
+                        </div>
+                        <div class="summary-temp-item">
+                            <span class="summary-label">Low</span>
+                            <span class="summary-value temp-low" id="summaryLow">--°</span>
+                        </div>
+                    </div>
+                    <div class="summary-details">
+                        <div class="summary-detail" id="summaryUV">
+                            <span class="summary-icon">☀️</span>
+                            <span class="summary-text">UV Peak: --</span>
+                        </div>
+                        <div class="summary-detail" id="summaryRain">
+                            <span class="summary-icon">🌧️</span>
+                            <span class="summary-text">Rain: --%</span>
+                        </div>
+                    </div>
+                    <div class="summary-recommendations" id="summaryRecommendations">
+                        <div class="summary-recommendation">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Middle Row: Precipitation Chart -->
+            <div class="mirror-middle">
+                <div class="precipitation-widget">
+                    <div class="forecast-title">24-Hour Weather Forecast</div>
+                    <canvas id="precipitationChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Hourly Forecast Row -->
+            <div class="mirror-middle">
+                <div class="hourly-widget">
+                    <div class="forecast-title">Hourly Forecast</div>
+                    <div id="hourlyForecast">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bottom Row: Weekly Forecast -->
+            <div class="mirror-bottom">
+                <div class="weekly-widget">
+                    <div class="forecast-title">5-Day Forecast</div>
+                    <div id="weeklyForecast">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- UV Index Legend -->
+            <div class="mirror-bottom">
+                <div class="uv-legend-widget">
+                    <div class="forecast-title">UV Index Guide</div>
+                    <div class="uv-legend-grid">
+                        <div class="uv-legend-item uv-legend-low">
+                            <div class="uv-legend-range">0-2</div>
+                            <div class="uv-legend-label">Low</div>
+                            <div class="uv-legend-desc">Minimal protection needed</div>
+                        </div>
+                        <div class="uv-legend-item uv-legend-moderate">
+                            <div class="uv-legend-range">3-5</div>
+                            <div class="uv-legend-label">Moderate</div>
+                            <div class="uv-legend-desc">Seek shade during midday</div>
+                        </div>
+                        <div class="uv-legend-item uv-legend-high">
+                            <div class="uv-legend-range">6-7</div>
+                            <div class="uv-legend-label">High</div>
+                            <div class="uv-legend-desc">Protection essential</div>
+                        </div>
+                        <div class="uv-legend-item uv-legend-very-high">
+                            <div class="uv-legend-range">8-10</div>
+                            <div class="uv-legend-label">Very High</div>
+                            <div class="uv-legend-desc">Extra precautions needed</div>
+                        </div>
+                        <div class="uv-legend-item uv-legend-extreme">
+                            <div class="uv-legend-range">11+</div>
+                            <div class="uv-legend-label">Extreme</div>
+                            <div class="uv-legend-desc">Avoid sun exposure</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

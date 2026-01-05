@@ -422,7 +422,7 @@
 .close-form-btn {
     background: #f0f0f0;
     border: none;
-    color: #666;
+    color: #333;
     font-size: 24px;
     cursor: pointer;
     line-height: 1;
@@ -518,13 +518,13 @@
 
 .btn-secondary {
     background: #f0f0f0;
-    color: #666;
+    color: #333;
     border: 1px solid #ddd;
 }
 
 .btn-secondary:hover {
     background: #e0e0e0;
-    color: #333;
+    color: #000;
 }
 
 /* Responsive Design */
@@ -636,7 +636,7 @@
 
 .slideshow-help-text {
     font-size: 13px;
-    color: #666;
+    color: #333;
     margin-left: 30px;
     display: block;
 }
@@ -678,7 +678,7 @@
     background: white;
     border: 1px solid #ddd;
     border-radius: 6px;
-    color: #666;
+    color: #333;
     font-size: 13px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -930,7 +930,7 @@
 
 .notification-help-text {
     font-size: 13px;
-    color: #666;
+    color: #333;
     margin-left: 30px;
 }
 
@@ -1081,7 +1081,7 @@
 }
 
 .in-page-notif-body {
-    color: #666;
+    color: #333;
     font-size: 13px;
 }
 

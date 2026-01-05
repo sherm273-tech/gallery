@@ -224,12 +224,12 @@
 
 .btn-secondary {
     background: #f0f0f0;
-    color: #666;
+    color: #333;
 }
 
 .btn-secondary:hover {
     background: #e0e0e0;
-    color: #333;
+    color: #000;
 }
 
 @media (max-width: 768px) {

@@ -34,7 +34,8 @@ const EventSlideshowPlayer = {
                 startFolder: config.startFolder || '',
                 randomize: config.randomizeImages !== false,
                 shuffleAll: config.shuffleAll || false,
-                speed: config.displayDuration || 5000
+                speed: config.displayDuration || 5000,
+                excludeVideos: config.excludeVideos || false
             };
             
             const musicSettings = {

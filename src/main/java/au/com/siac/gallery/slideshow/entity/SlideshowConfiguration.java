@@ -37,6 +37,9 @@ public class SlideshowConfiguration {
     
     @Column(name = "mute_music_during_video")
     private Boolean muteMusicDuringVideo = true;
+
+    @Column(nullable = false, name = "exclude_videos")
+    private Boolean excludeVideos = false;
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -146,6 +149,13 @@ public class SlideshowConfiguration {
     
     public void setMuteMusicDuringVideo(Boolean muteMusicDuringVideo) {
         this.muteMusicDuringVideo = muteMusicDuringVideo;
+    }
+
+    public Boolean getExcludeVideos() {
+        return excludeVideos;
+    }
+    public void setExcludeVideos(Boolean excludeVideos) {
+        this.excludeVideos = excludeVideos;
     }
     
     public LocalDateTime getCreatedAt() {

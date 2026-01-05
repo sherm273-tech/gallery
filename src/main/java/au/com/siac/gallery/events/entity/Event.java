@@ -63,6 +63,9 @@ public class Event {
     // Slideshow video settings
     @Column(nullable = false, name = "mute_music_during_video")
     private Boolean muteMusicDuringVideo = true;
+
+    @Column(nullable = false, name = "exclude_videos")
+    private Boolean excludeVideos = false;
     
     @PrePersist
     protected void onCreate() {
@@ -235,5 +238,12 @@ public class Event {
     
     public void setMuteMusicDuringVideo(Boolean muteMusicDuringVideo) {
         this.muteMusicDuringVideo = muteMusicDuringVideo;
+    }
+
+    public Boolean getExcludeVideos() {
+        return excludeVideos;
+    }
+    public void setExcludeVideos(Boolean excludeVideos) {
+        this.excludeVideos = excludeVideos;
     }
 }

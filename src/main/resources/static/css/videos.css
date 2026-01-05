@@ -5,9 +5,6 @@
     padding: 20px;
     max-width: 1400px;
     margin: 0 auto;
-    height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
 }
 
 /* Override mirror-overlay pointer-events for videos */
@@ -15,7 +12,13 @@
     pointer-events: auto;
     display: block;
     min-height: 100vh;
-    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+#videosOverlay {
+    overflow-y: auto !important;
+    overflow-x: hidden;
 }
 
 #videosMirrorOverlay .video-library-container {
@@ -29,6 +32,7 @@
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 15px;
+    padding-top: 20px;
     border-bottom: 2px solid #333;
 }
 
@@ -36,6 +40,7 @@
     font-size: 28px;
     color: #fff;
     margin: 0;
+    flex: 1;
 }
 
 .video-library-stats {
@@ -155,13 +160,57 @@ select.video-sort {
     width: 100%;
     aspect-ratio: 16/9;
     overflow: hidden;
-    background: #000;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.video-thumbnail.thumbnail-error {
+    background: linear-gradient(135deg, #2d1b1b 0%, #1a0f0f 100%);
 }
 
 .video-thumbnail img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
+}
+
+.video-thumbnail-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px;
+}
+
+.video-icon {
+    font-size: 64px;
+    opacity: 0.6;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.video-filename {
+    font-size: 12px;
+    color: #aaa;
+    text-align: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0 10px;
+}
+
+.video-thumbnail video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
 }
 
 .video-play-overlay {
@@ -266,11 +315,23 @@ select.video-sort {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    gap: 20px;
 }
 
 .playlists-header h2 {
     margin: 0;
     color: #fff;
+    flex: 0 0 auto;
+}
+
+.playlists-header button,
+.playlists-header .btn-primary {
+    width: auto !important;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 10px 20px;
+    min-width: 150px;
+    max-width: 200px;
 }
 
 .playlists-list {
@@ -407,6 +468,8 @@ select.video-sort {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 4px;
     position: relative;
+    overflow: visible;
+    padding-right: 50px;
 }
 
 .breakdown-fill {
@@ -418,12 +481,13 @@ select.video-sort {
 
 .breakdown-count {
     position: absolute;
-    right: 8px;
+    right: 15px;
     top: 50%;
     transform: translateY(-50%);
     font-size: 12px;
     color: #fff;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 /* Duration Chart */
@@ -443,6 +507,9 @@ select.video-sort {
     color: #fff;
     font-size: 12px;
     font-weight: 600;
+    min-width: 80px;
+    padding: 8px 5px;
+    position: relative;
 }
 
 .duration-segment.short {
@@ -458,13 +525,18 @@ select.video-sort {
 }
 
 .segment-label {
-    font-size: 11px;
+    font-size: 10px;
     opacity: 0.9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .segment-count {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
+    white-space: nowrap;
 }
 
 .duration-legend {
@@ -599,12 +671,15 @@ select.video-sort {
     background: #5568d3;
 }
 
-.btn-secondary {
+/* Video Dialog Buttons */
+.video-dialog .btn-secondary,
+#videosOverlay .btn-secondary {
     background: rgba(255, 255, 255, 0.1);
     color: #fff;
 }
 
-.btn-secondary:hover {
+.video-dialog .btn-secondary:hover,
+#videosOverlay .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.2);
 }
 
@@ -615,5 +690,66 @@ select.video-sort {
     text-align: center;
     color: #777;
     padding: 40px;
+    font-size: 14px;
+}
+
+/* Floating Exit Button (matching Calendar style) */
+#videosOverlay .close-calendar-btn {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    padding: 12px 24px;
+    background: rgba(255, 77, 77, 0.2);
+    color: #ff6b6b;
+    border: 2px solid rgba(255, 77, 77, 0.3);
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    z-index: 200;
+    white-space: nowrap;
+}
+
+#videosOverlay .close-calendar-btn:hover {
+    background: rgba(255, 77, 77, 0.3);
+    border-color: rgba(255, 77, 77, 0.5);
+    transform: translateY(-2px);
+}
+
+#videosOverlay .close-calendar-btn:active {
+    transform: translateY(0);
+}
+
+/* Playlist Selection Dialog */
+.playlist-select-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.playlist-select-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(5px);
+}
+
+.playlist-select-item .playlist-icon {
+    font-size: 20px;
+}
+
+.playlist-select-item .playlist-name {
+    flex: 1;
+    color: #fff;
+    font-weight: 500;
+}
+
+.playlist-select-item .playlist-count {
+    color: #aaa;
     font-size: 14px;
 }

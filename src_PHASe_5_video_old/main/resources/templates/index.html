@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sang's and Sherm's Station</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/location-ui.css">
+    <link rel="stylesheet" href="/css/location-dropdown-enhanced.css">
+    <link rel="stylesheet" href="/css/location-weather-widget.css">
+    <link rel="stylesheet" href="/css/calendar.css?v=11.0">
+    <link rel="stylesheet" href="/css/fullcalendar-custom.css?v=13.0">
+    <link rel="stylesheet" href="/css/memories.css">
+    <link rel="stylesheet" href="/css/video-player.css">
+    <link rel="stylesheet" href="/css/videos.css">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+    <!-- Slideshow Background -->
+    <div th:replace="~{fragments/slideshow/slideshow-background :: slideshow-background}"></div>
+
+    <!-- Loading Overlay -->
+    <div th:replace="~{fragments/slideshow/loading-overlay :: loading-overlay}"></div>
+
+    <!-- Weather Display Overlay -->
+    <div th:replace="~{fragments/weather/weather-overlay :: weather-overlay}"></div>
+
+    <!-- Music Player Overlay -->
+    <div th:replace="~{fragments/music/music-player :: music-player}"></div>
+
+    <!-- Initial Menu -->
+    <div th:replace="~{fragments/menu :: initial-menu}"></div>
+
+    <!-- Calendar Display Overlay -->
+    <div class="weather-display-overlay" id="calendarDisplayOverlay">
+        <div class="mirror-overlay" id="calendarMirrorOverlay">
+            <!-- FullCalendar Layout -->
+            <div class="fullcalendar-layout">
+                <!-- Left: FullCalendar -->
+                <div class="fullcalendar-container">
+                    <div class="calendar-header">
+                        <button class="close-calendar-btn" id="closeCalendarBtn">✕ Exit</button>
+                        <h1 class="calendar-heading">Calendar & Events</h1>
+                        <div class="calendar-header-right">
+                            <button class="settings-btn" onclick="window.location.href='/settings'" title="Notification Settings">
+                                ⚙️ Settings
+                            </button>
+                            <div class="notification-status" id="notificationStatus" title="Click to enable browser notifications">
+                                <span class="notif-status-icon">🔔</span>
+                                <span class="notif-status-text">Notifications: <span id="notifPermissionText">Checking...</span></span>
+                            </div>
+                            <button class="add-event-btn-header" id="addEventBtn">+ Add Event</button>
+                        </div>
+                    </div>
+                    <div id="fullcalendar"></div>
+                </div>
+                
+                <!-- Right: Event Details & Stats -->
+                <div class="events-sidebar">
+                    <!-- Event List -->
+                    <div class="sidebar-events">
+                        <div class="sidebar-title-row">
+                            <h3 class="sidebar-title">Upcoming Events</h3>
+                            <label class="completed-toggle-inline">
+                                <input type="checkbox" id="showCompletedCheckbox">
+                                <span>Show Completed</span>
+                            </label>
+                        </div>
+                        
+                        <!-- Search Box -->
+                        <div class="event-search-container">
+                            <input type="text" id="eventSearchInput" class="event-search-input" placeholder="🔍 Search events...">
+                            <button id="clearSearchBtn" class="clear-search-btn" style="display: none;">✕</button>
+                        </div>
+                        
+                        <!-- Filter Chips -->
+                        <div class="filter-chips-container">
+                            <div class="filter-chips-scroll">
+                                <button class="filter-chip" data-type="appointment">📅 Appointments</button>
+                                <button class="filter-chip" data-type="birthday">🎂 Birthdays</button>
+                                <button class="filter-chip" data-type="bill">💳 Bills</button>
+                                <button class="filter-chip" data-type="reminder">⏰ Reminders</button>
+                                <button class="filter-chip" data-type="holiday">🎉 Holidays</button>
+                                <button class="filter-chip" data-type="val-athletics">🏃 VAL Athletics</button>
+                                <button class="filter-chip" data-type="other">📌 Other</button>
+                            </div>
+                            <button id="clearChipsBtn" class="clear-chips-btn" style="display: none;">Clear All</button>
+                        </div>
+                        
+                        <div class="events-list" id="eventsList">
+                            <div class="empty-state">
+                                <p>No events selected</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Form Modal -->
+
+    <!-- Event Form Modal -->
+    <div class="event-form-modal" id="eventFormModal">
+        <div class="event-form-container">
+            <div class="event-form-header">
+                <h2 id="eventFormTitle">📅 Add Event</h2>
+                <button class="close-form-btn" id="closeFormBtn">✕</button>
+            </div>
+            
+            <form id="eventForm">
+                <div class="form-row">
+                    <label>Title *</label>
+                    <input type="text" id="eventTitle" required>
+                </div>
+                
+                <div class="form-row">
+                    <label>Description</label>
+                    <textarea id="eventDescription" rows="3"></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <label>Start Date & Time *</label>
+                    <input type="datetime-local" id="eventStartDatetime" required>
+                </div>
+                
+                <div class="form-row">
+                    <label>End Date & Time <span class="optional-label">(optional, defaults to start)</span></label>
+                    <input type="datetime-local" id="eventEndDatetime">
+                </div>
+                
+                <div class="form-row">
+                    <label>Type *</label>
+                    <select id="eventType" required>
+                        <option value="appointment">📅 Appointment</option>
+                        <option value="birthday">🎂 Birthday</option>
+                        <option value="bill">💳 Bill Payment</option>
+                        <option value="reminder">⏰ Reminder</option>
+                        <option value="holiday">🎉 Holiday</option>
+                        <option value="val-athletics">🏃 VAL Athletics</option>
+                        <option value="other">📌 Other</option>
+                    </select>
+                </div>
+                
+                <!-- Slideshow Configuration Section -->
+                <div class="form-section-divider"></div>
+                <div class="slideshow-config-section">
+                    <div class="slideshow-config-header">
+                        <label class="slideshow-toggle-label">
+                            <input type="checkbox" id="enableSlideshowConfig">
+                            <span class="slideshow-toggle-text">📸 Configure Slideshow</span>
+                        </label>
+                        <span class="slideshow-help-text">Link photos and music to this event</span>
+                    </div>
+                    
+                    <div id="slideshowConfigContent" class="slideshow-config-content" style="display: none;">
+                        <!-- Folder Selection -->
+                        <div class="config-subsection">
+                            <h4 class="config-subsection-title">Photo Folders</h4>
+                            <div class="folder-controls-mini">
+                                <button type="button" class="control-btn-mini" id="selectAllFoldersEvent">Select All</button>
+                                <button type="button" class="control-btn-mini" id="selectNoFoldersEvent">Clear</button>
+                            </div>
+                            <div class="search-container-mini">
+                                <input type="text" id="folderSearchEvent" class="search-input-mini" placeholder="🔍 Search folders...">
+                            </div>
+                            <div id="folderListEvent" class="item-list-mini">
+                                <p style="color: #aaa;">Loading folders...</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Music Selection -->
+                        <div class="config-subsection">
+                            <h4 class="config-subsection-title">Music</h4>
+                            <div class="music-controls-mini">
+                                <button type="button" class="control-btn-mini" id="selectAllMusicEvent">Select All</button>
+                                <button type="button" class="control-btn-mini" id="selectNoMusicEvent">Clear</button>
+                            </div>
+                            <div class="search-container-mini">
+                                <input type="text" id="musicSearchEvent" class="search-input-mini" placeholder="🔍 Search music...">
+                            </div>
+                            <div id="musicListEvent" class="item-list-mini">
+                                <p style="color: #aaa;">Loading music...</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Playback Options -->
+                        <div class="config-subsection">
+                            <h4 class="config-subsection-title">Playback Options</h4>
+                            
+                            <div class="form-group-mini">
+                                <label for="startFolderSelectEvent">Starting folder</label>
+                                <select id="startFolderSelectEvent" class="form-select-mini">
+                                    <option value="">None</option>
+                                </select>
+                            </div>
+                            
+                            <div class="checkbox-container-mini">
+                                <input type="checkbox" id="shuffleAllCheckboxEvent">
+                                <label for="shuffleAllCheckboxEvent">Shuffle all images together</label>
+                            </div>
+                            
+                            <div class="checkbox-container-mini">
+                                <input type="checkbox" id="randomizeCheckboxEvent" checked>
+                                <label for="randomizeCheckboxEvent">Randomise within folders</label>
+                            </div>
+                            
+                            <div class="checkbox-container-mini">
+                                <input type="checkbox" id="randomizeMusicCheckboxEvent">
+                                <label for="randomizeMusicCheckboxEvent">Randomise music playback</label>
+                            </div>
+                            
+                            <div class="checkbox-container-mini">
+                                <input type="checkbox" id="muteMusicDuringVideoEvent" checked>
+                                <label for="muteMusicDuringVideoEvent">Mute music during videos</label>
+                            </div>
+                            
+                            <div class="form-group-mini">
+                                <label for="speedSelectEvent">Image duration</label>
+                                <select id="speedSelectEvent" class="form-select-mini">
+                                    <option value="2000">Fast (2 seconds)</option>
+                                    <option value="3000">Medium (3 seconds)</option>
+                                    <option value="5000" selected>Normal (5 seconds)</option>
+                                    <option value="7000">Slow (7 seconds)</option>
+                                    <option value="10000">Very Slow (10 seconds)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Notification Configuration Section -->
+                <div class="form-section-divider"></div>
+                <div class="notification-config-section">
+                    <div class="notification-config-header">
+                        <label class="notification-toggle-label">
+                            <input type="checkbox" id="enableNotifications">
+                            <span class="notification-toggle-text">🔔 Enable Notifications</span>
+                        </label>
+                        <span class="notification-help-text">Get reminded about this event</span>
+                    </div>
+                    
+                    <div id="notificationConfigContent" class="notification-config-content" style="display: none;">
+                        <!-- Notification Timing -->
+                        <div class="config-subsection">
+                            <h4 class="config-subsection-title">When to Notify</h4>
+                            <div class="timing-options">
+                                <div class="checkbox-container-mini">
+                                    <input type="checkbox" id="timing1WeekBefore" value="1_week_before">
+                                    <label for="timing1WeekBefore">1 week before (9:00 AM)</label>
+                                </div>
+                                <div class="checkbox-container-mini">
+                                    <input type="checkbox" id="timing3DaysBefore" value="3_days_before">
+                                    <label for="timing3DaysBefore">3 days before (9:00 AM)</label>
+                                </div>
+                                <div class="checkbox-container-mini">
+                                    <input type="checkbox" id="timing1DayBefore" value="1_day_before">
+                                    <label for="timing1DayBefore">1 day before (9:00 AM)</label>
+                                </div>
+                                <div class="checkbox-container-mini">
+                                    <input type="checkbox" id="timingMorningOf" value="morning_of">
+                                    <label for="timingMorningOf">Morning of event (9:00 AM)</label>
+                                </div>
+                                <div class="checkbox-container-mini">
+                                    <input type="checkbox" id="timing1HourBefore" value="1_hour_before">
+                                    <label for="timing1HourBefore">1 hour before event time</label>
+                                </div>
+                                <div class="checkbox-container-mini">
+                                    <input type="checkbox" id="timing30MinsBefore" value="30_mins_before">
+                                    <label for="timing30MinsBefore">30 minutes before event time</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Notification Channels -->
+                        <div class="config-subsection">
+                            <h4 class="config-subsection-title">Send Via</h4>
+                            <div class="channel-options">
+                                <div class="checkbox-container-mini">
+                                    <input type="checkbox" id="notifyBrowser" checked>
+                                    <label for="notifyBrowser">🔔 Browser notification (Free)</label>
+                                </div>
+                                <div class="checkbox-container-mini">
+                                    <input type="checkbox" id="notifyEmail">
+                                    <label for="notifyEmail">📧 Email notification (Free)</label>
+                                </div>
+                                <div class="checkbox-container-mini">
+                                    <input type="checkbox" id="notifySms">
+                                    <label for="notifySms">📱 SMS notification (Paid ~$0.08/msg)</label>
+                                </div>
+                            </div>
+                            <p class="notification-info-text">
+                                <span id="notificationRecipientInfo" style="color: #888; font-size: 12px;">
+                                    📧 Email & 📱 Phone can be configured in Settings
+                                </span>
+                            </p>
+                        </div>
+                        
+                        <!-- Quick Presets -->
+                        <div class="config-subsection">
+                            <h4 class="config-subsection-title">Quick Presets</h4>
+                            <div class="preset-buttons">
+                                <button type="button" class="preset-btn" id="presetLowPriority">
+                                    Low Priority
+                                    <span class="preset-desc">Browser only, 1 day before</span>
+                                </button>
+                                <button type="button" class="preset-btn" id="presetStandard">
+                                    Standard
+                                    <span class="preset-desc">Browser + Email, 1 day before</span>
+                                </button>
+                                <button type="button" class="preset-btn" id="presetCritical">
+                                    Critical
+                                    <span class="preset-desc">All channels, multiple reminders</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Event</button>
+                    <button type="button" class="btn-secondary" id="cancelEventBtn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Memories Modal -->
+
+    <!-- Videos Overlay -->
+    <div th:replace="~{fragments/videos/videos-overlay :: videos-overlay}"></div>
+    <div th:replace="~{fragments/memories/memories-modal :: memories-modal}"></div>
+
+    <!-- Controls Panel -->
+    <div th:replace="~{fragments/slideshow/controls-panel :: controls-panel}"></div>
+
+    <!-- Scripts -->
+    <div th:replace="~{fragments/scripts :: all-scripts}"></div>
+    
+</body>
+</html>
