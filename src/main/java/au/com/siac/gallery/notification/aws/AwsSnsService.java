@@ -30,11 +30,11 @@ public class AwsSnsService {
     
     @Value("${aws.sns.region:ap-southeast-2}")
     private String awsRegion;
-    
-    @Value("${aws.sns.role.arn:}")
+
+    @Value("${aws.sns.role.arn:${AWS_ROLE_ARN:}}")
     private String roleArn;
-    
-    @Value("${aws.sns.role.session.name:gallery-notification-session}")
+
+    @Value("${aws.sns.role.session.name:${AWS_ROLE_SESSION_NAME:gallery-notification-session}}")
     private String roleSessionName;
     
     private SnsClient snsClient;

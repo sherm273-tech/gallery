@@ -96,34 +96,44 @@ const NotificationSettingsManager = {
             console.error('[NotificationSettingsManager] Error loading settings:', error);
         }
     },
-    
+
     /**
      * Save settings
      */
     async saveSettings() {
+        // Get all elements with null checks
+        const defaultEmail = document.getElementById('defaultEmail');
+        const defaultPhone = document.getElementById('defaultPhone');
+        const enableBrowser = document.getElementById('enableBrowser');
+        const enableEmail = document.getElementById('enableEmail');
+        const enableSms = document.getElementById('enableSms');
+        const quietHoursEnabled = document.getElementById('quietHoursEnabled');
+        const quietHoursStart = document.getElementById('quietHoursStart');
+        const quietHoursEnd = document.getElementById('quietHoursEnd');
+
         const settings = {
-            defaultEmail: document.getElementById('defaultEmail').value.trim() || null,
-            defaultPhone: document.getElementById('defaultPhone').value.trim() || null,
-            defaultBrowserEnabled: document.getElementById('enableBrowser').checked,
-            defaultEmailEnabled: document.getElementById('enableEmail').checked,
-            defaultSmsEnabled: document.getElementById('enableSms').checked,
-            quietHoursEnabled: document.getElementById('quietHoursEnabled').checked,
-            quietHoursStart: document.getElementById('quietHoursStart').value,
-            quietHoursEnd: document.getElementById('quietHoursEnd').value
+            defaultEmail: defaultEmail?.value.trim() || null,
+            defaultPhone: defaultPhone?.value.trim() || null,
+            defaultBrowserEnabled: enableBrowser?.checked ?? true,
+            defaultEmailEnabled: enableEmail?.checked ?? false,
+            defaultSmsEnabled: enableSms?.checked ?? false,
+            quietHoursEnabled: quietHoursEnabled?.checked ?? true,
+            quietHoursStart: quietHoursStart?.value || '22:00:00',
+            quietHoursEnd: quietHoursEnd?.value || '07:00:00'
         };
-        
+
         try {
             const response = await fetch('/api/notifications/settings', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(settings)
             });
-            
+
             if (!response.ok) throw new Error('Failed to save settings');
-            
+
             // Success - just redirect back to home
             window.location.href = '/';
-            
+
         } catch (error) {
             console.error('[NotificationSettingsManager] Error saving settings:', error);
             this.showToast('❌ Failed to save settings', 'error');
